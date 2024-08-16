@@ -89,3 +89,46 @@ func TestPositionSetPieceAt(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestParseFen(t *testing.T) {
+	pos, err := ParseFen(DefaultFen)
+	if err != nil {
+		t.Error("ParseFen set error nil when fen is valid")
+	}
+	if pos != getDefaultPosition() {
+		t.Errorf("ParseFen incorrect output. Actual:%+v\nExpected%+v", pos, getDefaultPosition())
+	}
+
+	pos, err = ParseFen("Pnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQq e6 32 16")
+	if err != nil {
+		t.Error("ParseFen set error nil when fen is valid")
+	}
+	updatedPos := getDefaultPosition()
+	updatedPos.Board[0] = WhitePawn
+	updatedPos.Turn = Black
+	updatedPos.BlackKingSideCastle = false
+	*updatedPos.EnPassant = E6
+	updatedPos.HalfMove = 32
+	updatedPos.FullMove = 16
+	if pos != updatedPos {
+		t.Errorf("ParseFen incorrect output. Actual:%+v\nExpected%+v", pos, updatedPos)
+	}
+}
+
+func TestParseFenInvalid(t *testing.T) {
+	_, err := ParseFen("Pnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQq e6 3216")
+	if err == nil {
+		t.Error("ParseFen failed to set error for Pnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQq e6 3216")
+	}
+
+	_, err = ParseFen("Pnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQq e6 3a2 16")
+	if err == nil {
+		t.Error("ParseFen failed to set error for Pnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQq e6 3a2 16")
+	}
+}
+
+func BenchmarkParseFen(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ParseFen(DefaultFen)
+	}
+}

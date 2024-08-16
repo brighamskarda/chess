@@ -1,6 +1,11 @@
 package chess
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
+
+const DefaultFen string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 // Position represents a chess position as described by Forsyth-Edwards Notation (FEN).
 // Board is the actual representation of the pieces on the squares. It starts at A8 and moves left
@@ -35,17 +40,33 @@ func (p *Position) String() string {
 }
 
 func (p *Position) PieceAt(s Square) Piece {
-
+	if !isValidSquare(s) || s == NoSquare {
+		return NoPiece
+	}
 	return p.Board[squareToIndex(s)]
 }
 
 func (p *Position) SetPieceAt(s Square, piece Piece) {
-	p.Board[squareToIndex(s)] = piece
+	if isValidSquare(s) && s != NoSquare {
+		p.Board[squareToIndex(s)] = piece
+	}
 }
 
 func squareToIndex(s Square) int {
 	index := 0
-	index += int(s.File)
+	index += int(s.File - 1)
 	index += int(Rank8-s.Rank) * 8
 	return index
 }
+
+func ParseFen(fen string) (Position, error) {
+	pos := Position{}
+	words := strings.Split(fen, " ")
+	if len(words) != 6 {
+		return pos, errors.New("invalid fen, fen does not have 6 required parts")
+	}
+
+	return pos, nil
+}
+
+// func parseFenPos

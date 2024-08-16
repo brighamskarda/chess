@@ -65,7 +65,7 @@ var (
 )
 
 func (p Piece) String() string {
-	if !isPieceValid(p) {
+	if !isValidPiece(p) {
 		return "INVALID PIECE"
 	}
 	if p.Color == NoColor || p.Type == NoPieceType {
@@ -78,9 +78,14 @@ func (p Piece) String() string {
 	return pieceStr
 }
 
-func isPieceValid(p Piece) bool {
+func isValidPiece(p Piece) bool {
 	if !isValidPieceType(p.Type) || !isValidColor(p.Color) {
 		return false
+	}
+	if p.Type == NoPieceType || p.Color == NoColor {
+		if p.Type != NoPieceType || p.Color != NoColor {
+			return false
+		}
 	}
 	return true
 }

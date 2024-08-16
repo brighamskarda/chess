@@ -3,12 +3,14 @@ package chess
 import (
 	"errors"
 	"fmt"
+	"unicode"
 )
 
 type File uint8
 
 const (
-	FileA File = iota
+	NoFile File = iota
+	FileA       = iota
 	FileB
 	FileC
 	FileD
@@ -19,21 +21,24 @@ const (
 )
 
 func (f File) String() string {
-	if !isFileValid(f) {
+	if !isValidFile(f) {
 		return "INVALID FILE"
 	}
-
-	return string('A' + rune(f))
+	if f == NoFile {
+		return "NO FILE"
+	}
+	return string('@' + rune(f))
 }
 
-func isFileValid(f File) bool {
+func isValidFile(f File) bool {
 	return f <= FileH
 }
 
 type Rank uint8
 
 const (
-	Rank1 Rank = iota
+	NoRank Rank = iota
+	Rank1
 	Rank2
 	Rank3
 	Rank4
@@ -44,13 +49,16 @@ const (
 )
 
 func (r Rank) String() string {
-	if !isRankValid(r) {
+	if !isValidRank(r) {
 		return "INVALID RANK"
 	}
-	return string('1' + rune(r))
+	if r == NoRank {
+		return "NO RANK"
+	}
+	return string('0' + rune(r))
 }
 
-func isRankValid(r Rank) bool {
+func isValidRank(r Rank) bool {
 	return r <= Rank8
 }
 
@@ -60,6 +68,8 @@ type Square struct {
 }
 
 var (
+	NoSquare = Square{}
+
 	A8 = Square{FileA, Rank8}
 	B8 = Square{FileB, Rank8}
 	C8 = Square{FileC, Rank8}
@@ -133,51 +143,55 @@ var (
 	H1 = Square{FileH, Rank1}
 )
 
-func (s *Square) String() string {
-	if s == nil {
-		return "-"
-	}
-	if !isSquareValid(*s) {
+func (s Square) String() string {
+	if !isValidSquare(s) {
 		return "INVALID SQUARE"
+	}
+	if s == NoSquare {
+		return "-"
 	}
 	return s.File.String() + s.Rank.String()
 }
 
-func isSquareValid(s Square) bool {
-	return isFileValid(s.File) && isRankValid(s.Rank)
+func isValidSquare(s Square) bool {
+	if s.File == NoFile || s.Rank == NoRank {
+		if s.File != NoFile || s.Rank != NoRank {
+			return false
+		}
+	}
+	return isValidFile(s.File) && isValidRank(s.Rank)
 }
 
-func ParseSquare(s string) (*Square, error) {
+func ParseSquare(s string) (Square, error) {
 	if s == "-" {
-		return nil, nil
+		return NoSquare, nil
 	}
-
 	runes := []rune(s)
 	if len(runes) != 2 {
-		return nil, errors.New("invalid square - string is not two characters long")
+		return NoSquare, errors.New("invalid square - string is not two characters long")
 	}
 	file, err := parseFile(runes[0])
 	if err != nil {
-		return nil, fmt.Errorf("invalid square: %w", err)
+		return NoSquare, fmt.Errorf("invalid square: %w", err)
 	}
 	rank, err := parseRank(runes[1])
 	if err != nil {
-		return nil, fmt.Errorf("invalid square: %w", err)
+		return NoSquare, fmt.Errorf("invalid square: %w", err)
 	}
-	return &Square{file, rank}, nil
+	return Square{file, rank}, nil
 }
 
 func parseFile(r rune) (File, error) {
-	var f File = File(r - 'A')
-	if !isFileValid(f) {
+	var f File = File(unicode.ToUpper(r) - '@')
+	if !isValidFile(f) || f == NoFile {
 		return 0, errors.New("invalid file")
 	}
 	return f, nil
 }
 
 func parseRank(r rune) (Rank, error) {
-	var rank Rank = Rank(r - '1')
-	if !isRankValid(rank) {
+	var rank Rank = Rank(r - '0')
+	if !isValidRank(rank) || rank == NoRank {
 		return 0, errors.New("invalid rank")
 	}
 	return rank, nil
