@@ -46,6 +46,24 @@ type Piece struct {
 	Type  PieceType
 }
 
+var (
+	NoPiece Piece = Piece{NoColor, NoPieceType}
+
+	WhitePawn   Piece = Piece{White, Pawn}
+	WhiteRook   Piece = Piece{White, Rook}
+	WhiteKnight Piece = Piece{White, Knight}
+	WhiteBishop Piece = Piece{White, Bishop}
+	WhiteQueen  Piece = Piece{White, Queen}
+	WhiteKing   Piece = Piece{White, King}
+
+	BlackPawn   Piece = Piece{Black, Pawn}
+	BlackRook   Piece = Piece{Black, Rook}
+	BlackKnight Piece = Piece{Black, Knight}
+	BlackBishop Piece = Piece{Black, Bishop}
+	BlackQueen  Piece = Piece{Black, Queen}
+	BlackKing   Piece = Piece{Black, King}
+)
+
 func (p Piece) String() string {
 	if !pieceIsValid(p) {
 		return "INVALID PIECE"
@@ -66,21 +84,3 @@ func pieceIsValid(p Piece) bool {
 	}
 	return true
 }
-
-var (
-	NoPiece Piece = Piece{NoColor, NoPieceType}
-
-	WhitePawn   Piece = Piece{White, Pawn}
-	WhiteRook   Piece = Piece{White, Rook}
-	WhiteKnight Piece = Piece{White, Knight}
-	WhiteBishop Piece = Piece{White, Bishop}
-	WhiteQueen  Piece = Piece{White, Queen}
-	WhiteKing   Piece = Piece{White, King}
-
-	BlackPawn   Piece = Piece{Black, Pawn}
-	BlackRook   Piece = Piece{Black, Rook}
-	BlackKnight Piece = Piece{Black, Knight}
-	BlackBishop Piece = Piece{Black, Bishop}
-	BlackQueen  Piece = Piece{Black, Queen}
-	BlackKing   Piece = Piece{Black, King}
-)
