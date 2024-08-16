@@ -19,14 +19,14 @@ const (
 )
 
 func (f File) String() string {
-	if !fileIsValid(f) {
+	if !isFileValid(f) {
 		return "INVALID FILE"
 	}
 
 	return string('A' + rune(f))
 }
 
-func fileIsValid(f File) bool {
+func isFileValid(f File) bool {
 	return f <= FileH
 }
 
@@ -44,13 +44,13 @@ const (
 )
 
 func (r Rank) String() string {
-	if !rankIsValid(r) {
+	if !isRankValid(r) {
 		return "INVALID RANK"
 	}
 	return string('1' + rune(r))
 }
 
-func rankIsValid(r Rank) bool {
+func isRankValid(r Rank) bool {
 	return r <= Rank8
 }
 
@@ -137,14 +137,14 @@ func (s *Square) String() string {
 	if s == nil {
 		return "-"
 	}
-	if !squareIsValid(*s) {
+	if !isSquareValid(*s) {
 		return "INVALID SQUARE"
 	}
 	return s.File.String() + s.Rank.String()
 }
 
-func squareIsValid(s Square) bool {
-	return fileIsValid(s.File) && rankIsValid(s.Rank)
+func isSquareValid(s Square) bool {
+	return isFileValid(s.File) && isRankValid(s.Rank)
 }
 
 func ParseSquare(s string) (*Square, error) {
@@ -169,7 +169,7 @@ func ParseSquare(s string) (*Square, error) {
 
 func parseFile(r rune) (File, error) {
 	var f File = File(r - 'A')
-	if !fileIsValid(f) {
+	if !isFileValid(f) {
 		return 0, errors.New("invalid file")
 	}
 	return f, nil
@@ -177,7 +177,7 @@ func parseFile(r rune) (File, error) {
 
 func parseRank(r rune) (Rank, error) {
 	var rank Rank = Rank(r - '1')
-	if !rankIsValid(rank) {
+	if !isRankValid(rank) {
 		return 0, errors.New("invalid rank")
 	}
 	return rank, nil

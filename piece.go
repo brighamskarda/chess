@@ -37,7 +37,7 @@ func (pt PieceType) String() string {
 	}
 }
 
-func pieceTypeIsValid(pt PieceType) bool {
+func isValidPieceType(pt PieceType) bool {
 	return pt <= 6
 }
 
@@ -65,7 +65,7 @@ var (
 )
 
 func (p Piece) String() string {
-	if !pieceIsValid(p) {
+	if !isPieceValid(p) {
 		return "INVALID PIECE"
 	}
 	if p.Color == NoColor || p.Type == NoPieceType {
@@ -78,8 +78,8 @@ func (p Piece) String() string {
 	return pieceStr
 }
 
-func pieceIsValid(p Piece) bool {
-	if !pieceTypeIsValid(p.Type) || !colorIsValid(p.Color) {
+func isPieceValid(p Piece) bool {
+	if !isValidPieceType(p.Type) || !isValidColor(p.Color) {
 		return false
 	}
 	return true

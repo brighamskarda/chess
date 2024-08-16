@@ -21,6 +21,6 @@ func (c Color) String() string {
 	}
 }
 
-func colorIsValid(c Color) bool {
+func isValidColor(c Color) bool {
 	return c <= 2
 }
