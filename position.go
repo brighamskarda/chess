@@ -164,3 +164,73 @@ func parseCastleRights(castleRights string) ([4]bool, error) {
 	}
 	return rights, nil
 }
+
+func GenerateFen(p *Position) string {
+	fen := strings.Builder{}
+	fen.WriteString(generateFenPos(p))
+	fen.WriteString(" " + generateFenTurn(p))
+	fen.WriteString(" " + generateFenCastleRights(p))
+	fen.WriteString(" " + strings.ToLower(p.EnPassant.String()))
+	fen.WriteString(" " + strconv.FormatUint(uint64(p.HalfMove), 10))
+	fen.WriteString(" " + strconv.FormatUint(uint64(p.FullMove), 10))
+	return fen.String()
+}
+
+func generateFenPos(p *Position) string {
+	fen := strings.Builder{}
+	currentFile := FileA
+	numBlank := 0
+	for _, piece := range p.Board {
+		if currentFile > FileH {
+			if numBlank > 0 {
+				fen.WriteString(strconv.FormatUint(uint64(numBlank), 10))
+				numBlank = 0
+			}
+			fen.WriteRune('/')
+			currentFile = FileA
+		}
+		if piece != NoPiece && numBlank > 0 {
+			fen.WriteString(strconv.FormatUint(uint64(numBlank), 10))
+		}
+		if piece == NoPiece {
+			numBlank++
+			currentFile++
+			continue
+		}
+		fen.WriteString(piece.String())
+		currentFile++
+	}
+
+	return fen.String()
+}
+
+func generateFenTurn(p *Position) string {
+	switch p.Turn {
+	case White:
+		return "w"
+	case Black:
+		return "b"
+	default:
+		return "-"
+	}
+}
+
+func generateFenCastleRights(p *Position) string {
+	if !p.WhiteKingSideCastle && !p.WhiteQueenSideCastle && !p.BlackKingSideCastle && !p.BlackQueenSideCastle {
+		return "-"
+	}
+	rights := ""
+	if p.WhiteKingSideCastle {
+		rights += "K"
+	}
+	if p.WhiteQueenSideCastle {
+		rights += "Q"
+	}
+	if p.BlackKingSideCastle {
+		rights += "k"
+	}
+	if p.BlackQueenSideCastle {
+		rights += "q"
+	}
+	return rights
+}

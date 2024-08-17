@@ -137,3 +137,27 @@ func BenchmarkParseFen(b *testing.B) {
 		ParseFen(DefaultFen)
 	}
 }
+
+func TestGenerateFen(t *testing.T) {
+	pos := getDefaultPosition()
+	if GenerateFen(&pos) != DefaultFen {
+		t.Error("GenerateFen did not generate default fen")
+	}
+	pos.Board[0] = WhitePawn
+	pos.Turn = Black
+	pos.BlackKingSideCastle = false
+	pos.EnPassant = E6
+	pos.HalfMove = 32
+	pos.FullMove = 16
+	if GenerateFen(&pos) != "Pnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQq e6 32 16" {
+		t.Errorf(`GenerateFen expected "Pnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQq e6 32 16" but got %s`, GenerateFen(&pos))
+	}
+}
+
+func BenchmarkGenerateFen(b *testing.B) {
+	pos := getDefaultPosition()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		GenerateFen(&pos)
+	}
+}
