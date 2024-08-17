@@ -67,7 +67,7 @@ func getDefaultPosition() Position {
 	pos.BlackKingSideCastle = true
 	pos.BlackQueenSideCastle = true
 
-	pos.EnPassant = nil
+	pos.EnPassant = NoSquare
 
 	pos.HalfMove = 0
 	pos.FullMove = 1
@@ -107,7 +107,7 @@ func TestParseFen(t *testing.T) {
 	updatedPos.Board[0] = WhitePawn
 	updatedPos.Turn = Black
 	updatedPos.BlackKingSideCastle = false
-	*updatedPos.EnPassant = E6
+	updatedPos.EnPassant = E6
 	updatedPos.HalfMove = 32
 	updatedPos.FullMove = 16
 	if pos != updatedPos {
@@ -124,6 +124,11 @@ func TestParseFenInvalid(t *testing.T) {
 	_, err = ParseFen("Pnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQq e6 3a2 16")
 	if err == nil {
 		t.Error("ParseFen failed to set error for Pnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQq e6 3a2 16")
+	}
+
+	_, err = ParseFen("Pnbqkbnr/pppopppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQq e6 32 16")
+	if err == nil {
+		t.Error("ParseFen failed to set error for Pnbqkbnr/pppopppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQq e6 32 16")
 	}
 }
 

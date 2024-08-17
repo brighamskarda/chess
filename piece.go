@@ -1,7 +1,9 @@
 package chess
 
 import (
+	"errors"
 	"strings"
+	"unicode"
 )
 
 type PieceType uint8
@@ -39,6 +41,26 @@ func (pt PieceType) String() string {
 
 func isValidPieceType(pt PieceType) bool {
 	return pt <= 6
+}
+
+func parsePieceType(r rune) (PieceType, error) {
+	r = unicode.ToLower(r)
+	switch r {
+	case 'p':
+		return Pawn, nil
+	case 'r':
+		return Rook, nil
+	case 'n':
+		return Knight, nil
+	case 'b':
+		return Bishop, nil
+	case 'q':
+		return Queen, nil
+	case 'k':
+		return King, nil
+	default:
+		return NoPieceType, errors.New("can't parse piece type")
+	}
 }
 
 type Piece struct {
@@ -88,4 +110,18 @@ func isValidPiece(p Piece) bool {
 		}
 	}
 	return true
+}
+
+func ParsePiece(r rune) (Piece, error) {
+	pieceType, err := parsePieceType(r)
+	if err != nil {
+		return NoPiece, errors.New("can't parse piece type")
+	}
+	var color Color
+	if unicode.IsUpper(r) {
+		color = White
+	} else {
+		color = Black
+	}
+	return Piece{color, pieceType}, nil
 }

@@ -2,7 +2,10 @@ package chess
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 	"strings"
+	"unicode"
 )
 
 const DefaultFen string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -17,7 +20,7 @@ type Position struct {
 	WhiteQueenSideCastle bool
 	BlackKingSideCastle  bool
 	BlackQueenSideCastle bool
-	EnPassant            *Square
+	EnPassant            Square
 	HalfMove             uint16
 	FullMove             uint16
 }
@@ -60,13 +63,104 @@ func squareToIndex(s Square) int {
 }
 
 func ParseFen(fen string) (Position, error) {
-	pos := Position{}
 	words := strings.Split(fen, " ")
 	if len(words) != 6 {
-		return pos, errors.New("invalid fen, fen does not have 6 required parts")
+		return Position{}, errors.New("invalid fen, fen does not have 6 required parts")
+	}
+	board, err := parseFenPos(words[0])
+	if err != nil {
+		return Position{}, fmt.Errorf("invalid fen, %w", err)
+	}
+	turn, err := parseTurn(words[1])
+	if err != nil {
+		return Position{}, fmt.Errorf("invalid fen, %w", err)
+	}
+	castleRights, err := parseCastleRights(words[2])
+	if err != nil {
+		return Position{}, fmt.Errorf("invalid fen, %w", err)
+	}
+	enPassant, err := ParseSquare(words[3])
+	if err != nil {
+		return Position{}, fmt.Errorf("invalid fen, %w", err)
+	}
+	halfMove, err := strconv.ParseUint(words[4], 10, 16)
+	if err != nil {
+		return Position{}, fmt.Errorf("invalid fen, can't parse halfMove, %w", err)
+	}
+	fullMove, err := strconv.ParseUint(words[5], 10, 16)
+	if err != nil {
+		return Position{}, fmt.Errorf("invalid fen, can't parse fullMove, %w", err)
 	}
 
+	return Position{
+		Board:                board,
+		Turn:                 turn,
+		WhiteKingSideCastle:  castleRights[0],
+		WhiteQueenSideCastle: castleRights[1],
+		BlackKingSideCastle:  castleRights[2],
+		BlackQueenSideCastle: castleRights[3],
+		EnPassant:            enPassant,
+		HalfMove:             uint16(halfMove),
+		FullMove:             uint16(fullMove),
+	}, nil
+}
+
+func parseFenPos(fen string) ([64]Piece, error) {
+	pos := [64]Piece{}
+	posIndex := 0
+	for _, char := range fen {
+		if posIndex >= 64 {
+			return pos, errors.New("invalid pos, too many pieces on board")
+		}
+		if unicode.IsNumber(char) {
+			posIndex += int(char - '0')
+			continue
+		}
+		if char == '/' {
+			if posIndex%8 != 0 {
+				return pos, errors.New("invalid pos, '/' in wrong position")
+			}
+			continue
+		}
+		piece, err := ParsePiece(char)
+		if err != nil {
+			return pos, errors.New("invalid pos, can't parse " + string(char) + "to piece")
+		}
+		pos[posIndex] = piece
+		posIndex++
+	}
 	return pos, nil
 }
 
-// func parseFenPos
+func parseTurn(turn string) (Color, error) {
+	switch strings.ToLower(turn) {
+	case "w":
+		return White, nil
+	case "b":
+		return Black, nil
+	default:
+		return NoColor, errors.New("can't parse color")
+	}
+}
+
+func parseCastleRights(castleRights string) ([4]bool, error) {
+	rights := [4]bool{}
+	if castleRights == "-" {
+		return rights, nil
+	}
+	for _, char := range castleRights {
+		switch char {
+		case 'K':
+			rights[0] = true
+		case 'Q':
+			rights[1] = true
+		case 'k':
+			rights[2] = true
+		case 'q':
+			rights[3] = true
+		default:
+			return rights, errors.New("invalid castling rights")
+		}
+	}
+	return rights, nil
+}

@@ -10,18 +10,18 @@ func TestNoPieceToString(t *testing.T) {
 		Type:  NoPieceType,
 	}
 	if pieceToTest.String() != " " {
-		t.Error("No Piece does not equal \"3\"")
+		t.Error("No Piece does not equal \" \"")
 	}
 
 	pieceToTest.Color = White
-	if pieceToTest.String() != " " {
-		t.Error("No Piece does not equal \" \" when piece.Color == White")
+	if pieceToTest.String() != "INVALID PIECE" {
+		t.Error("No Piece does not equal \"INVALID PIECE\" when piece.Color == White")
 	}
 
 	pieceToTest.Color = NoColor
 	pieceToTest.Type = Pawn
-	if pieceToTest.String() != " " {
-		t.Error("No Piece does not equal \" \" when piece.Type == Pawn")
+	if pieceToTest.String() != "INVALID PIECE" {
+		t.Error("No Piece does not equal \"INVALID PIECE\" when piece.Type == Pawn")
 	}
 }
 
