@@ -172,19 +172,27 @@ func TestIsValidPosition(t *testing.T) {
 	if !IsValidPosition(&pos) {
 		t.Error("Default position should be valid")
 	}
+}
 
+func TestIsValidPositionCastleRights(t *testing.T) {
+	pos := getDefaultPosition()
 	pos.Board[63] = BlackRook
 	if IsValidPosition(&pos) {
 		t.Error("Castle rights not checked properly")
 	}
+}
 
+func TestIsValidPositionKings(t *testing.T) {
+	pos := getDefaultPosition()
 	pos.WhiteKingSideCastle = false
 	pos.Board[4] = NoPiece
 	if IsValidPosition(&pos) {
 		t.Error("Kings not checked properly")
 	}
+}
 
-	pos = getDefaultPosition()
+func TestIsValidPositionPawns(t *testing.T) {
+	pos := getDefaultPosition()
 	pos.Board[0] = WhitePawn
 	pos.BlackQueenSideCastle = false
 	if IsValidPosition(&pos) {
@@ -197,36 +205,109 @@ func TestIsValidPosition(t *testing.T) {
 	if IsValidPosition(&pos) {
 		t.Error("Pawns not checked properly")
 	}
+}
 
-	pos = getDefaultPosition()
+func TestIsValidPositionEnPassant(t *testing.T) {
+	pos := getDefaultPosition()
 	pos.SetPieceAt(E4, WhitePawn)
 	pos.EnPassant = E3
+	pos.Turn = Black
 	if !IsValidPosition(&pos) {
 		t.Error("En Passant was logical")
 	}
 
 	pos.EnPassant = E4
-	if !IsValidPosition(&pos) {
+	if IsValidPosition(&pos) {
 		t.Error("En Passant was not logical")
 	}
 
 	pos.EnPassant = E6
-	if !IsValidPosition(&pos) {
+	if IsValidPosition(&pos) {
 		t.Error("En Passant was not logical")
 	}
 
 	pos.SetPieceAt(E5, WhitePawn)
-	if !IsValidPosition(&pos) {
+	if IsValidPosition(&pos) {
 		t.Error("En Passant was not logical")
 	}
 
 	pos.SetPieceAt(E5, BlackPawn)
-	if !IsValidPosition(&pos) {
+	if IsValidPosition(&pos) {
 		t.Error("En Passant was not logical")
 	}
 
+	pos.Turn = White
+	if !IsValidPosition(&pos) {
+		t.Error("En Passant was logical")
+	}
+}
+
+func TestIsValidPositionTurn(t *testing.T) {
+	pos := getDefaultPosition()
 	pos.Turn = NoColor
 	if IsValidPosition(&pos) {
 		t.Error("Turn was not set, position not valid")
+	}
+}
+
+func TestIsValidPositionInvalidPieces(t *testing.T) {
+	pos := getDefaultPosition()
+	pos.Board[9].Color = NoColor
+	if IsValidPosition(&pos) {
+		t.Error("Invalid Piece on board, position not valid")
+	}
+
+	pos.Board[9].Color = Black
+	pos.Board[9].Type = NoPieceType
+	if IsValidPosition(&pos) {
+		t.Error("Invalid Piece on board, position not valid")
+	}
+}
+
+func TestIsValidPositionMoveCounts(t *testing.T) {
+	pos := getDefaultPosition()
+	pos.HalfMove = 9
+	pos.FullMove = 5
+	if !IsValidPosition(&pos) {
+		t.Error("Move counts are legal")
+	}
+
+	pos.HalfMove = 8
+	if !IsValidPosition(&pos) {
+		t.Error("Move counts are legal")
+	}
+
+	pos.HalfMove = 7
+	if IsValidPosition(&pos) {
+		t.Error("Move counts are illegal")
+	}
+
+	pos.HalfMove = 1
+	pos.FullMove = 1
+	if !IsValidPosition(&pos) {
+		t.Error("Move counts are legal")
+	}
+
+	pos.HalfMove = 0
+	if !IsValidPosition(&pos) {
+		t.Error("Move counts are legal")
+	}
+
+	pos.HalfMove = 2
+	if IsValidPosition(&pos) {
+		t.Error("Move counts are illegal")
+	}
+
+	pos.FullMove = 2
+	if !IsValidPosition(&pos) {
+		t.Error("Move counts are legal")
+	}
+}
+
+func BenchmarkIsValidPosition(b *testing.B) {
+	pos := getDefaultPosition()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		IsValidPosition(&pos)
 	}
 }

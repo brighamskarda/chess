@@ -241,26 +241,128 @@ func generateFenCastleRights(p *Position) string {
 //   - Castling rights are logical
 //   - The enPassant Square is logical
 //   - Turn is set
+//   - All pieces are valid chess pieces
+//   - Half move and full move numbers are logical numbers (full move is usually about half the size of half move)
 func IsValidPosition(p *Position) bool {
+	return checkKings(p) &&
+		checkNoInvalidPawns(p) &&
+		checkCastlingRightsLogical(p) &&
+		checkEnPassantLogical(p) &&
+		checkTurnIsSet(p) &&
+		checkAllPiecesValid(p) &&
+		checkMoveCountsLogical(p)
+}
+
+func checkKings(p *Position) bool {
+	numWhiteKings := 0
+	numBlackKings := 0
+	for _, piece := range p.Board {
+		if piece == WhiteKing {
+			numWhiteKings++
+		}
+		if piece == BlackKing {
+			numBlackKings++
+		}
+	}
+	if numWhiteKings != 1 || numBlackKings != 1 {
+		return false
+	}
 	return true
 }
 
-func checkBothKingsPresent(p *Position) bool {
-	return false
+func checkNoInvalidPawns(p *Position) bool {
+	return checkNoInvalidWhitePawns(p) && checkNoInvalidBlackPawns(p)
 }
 
-func checkNoInvalidPawns(p *Position) bool {
-	return false
+func checkNoInvalidWhitePawns(p *Position) bool {
+	for i := 0; i < 8; i++ {
+		if p.Board[i] == WhitePawn {
+			return false
+		}
+	}
+	return true
+}
+
+func checkNoInvalidBlackPawns(p *Position) bool {
+	for i := 56; i < 64; i++ {
+		if p.Board[i] == BlackPawn {
+			return false
+		}
+	}
+	return true
 }
 
 func checkCastlingRightsLogical(p *Position) bool {
-	return false
+	if p.WhiteKingSideCastle {
+		if p.PieceAt(E1) != WhiteKing || p.PieceAt(H1) != WhiteRook {
+			return false
+		}
+	}
+	if p.WhiteQueenSideCastle {
+		if p.PieceAt(E1) != WhiteKing || p.PieceAt(A1) != WhiteRook {
+			return false
+		}
+	}
+	if p.BlackKingSideCastle {
+		if p.PieceAt(E8) != BlackKing || p.PieceAt(H8) != BlackRook {
+			return false
+		}
+	}
+	if p.BlackQueenSideCastle {
+		if p.PieceAt(E8) != BlackKing || p.PieceAt(A8) != BlackRook {
+			return false
+		}
+	}
+	return true
 }
 
 func checkEnPassantLogical(p *Position) bool {
-	return false
+	if p.EnPassant == NoSquare {
+		return true
+	}
+	if !isValidColor(p.Turn) || p.Turn == NoColor {
+		return false
+	}
+	if !isValidSquare(p.EnPassant) {
+		return false
+	}
+
+	if p.Turn == White {
+		return checkValidBlackEnPassant(p)
+	} else {
+		return checkValidWhiteEnPassant(p)
+	}
+}
+
+func checkValidWhiteEnPassant(p *Position) bool {
+	if p.EnPassant.Rank != Rank3 {
+		return false
+	}
+	expectedSquare := Square{p.EnPassant.File, p.EnPassant.Rank + 1}
+	return p.PieceAt(expectedSquare) == WhitePawn
+}
+
+func checkValidBlackEnPassant(p *Position) bool {
+	if p.EnPassant.Rank != Rank6 {
+		return false
+	}
+	expectedSquare := Square{p.EnPassant.File, p.EnPassant.Rank - 1}
+	return p.PieceAt(expectedSquare) == BlackPawn
 }
 
 func checkTurnIsSet(p *Position) bool {
-	return false
+	return p.Turn == White || p.Turn == Black
+}
+
+func checkAllPiecesValid(p *Position) bool {
+	for _, piece := range p.Board {
+		if !isValidPiece(piece) {
+			return false
+		}
+	}
+	return true
+}
+
+func checkMoveCountsLogical(p *Position) bool {
+	return (p.HalfMove/2)+1 == p.FullMove
 }
