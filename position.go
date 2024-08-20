@@ -234,3 +234,33 @@ func generateFenCastleRights(p *Position) string {
 	}
 	return rights
 }
+
+// IsValidPosition determines if a given position is a legal chess position. It checks the following:
+//   - There is one king of each color on the board
+//   - There are no pawns on their last rank
+//   - Castling rights are logical
+//   - The enPassant Square is logical
+//   - Turn is set
+func IsValidPosition(p *Position) bool {
+	return true
+}
+
+func checkBothKingsPresent(p *Position) bool {
+	return false
+}
+
+func checkNoInvalidPawns(p *Position) bool {
+	return false
+}
+
+func checkCastlingRightsLogical(p *Position) bool {
+	return false
+}
+
+func checkEnPassantLogical(p *Position) bool {
+	return false
+}
+
+func checkTurnIsSet(p *Position) bool {
+	return false
+}

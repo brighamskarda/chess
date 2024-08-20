@@ -161,3 +161,72 @@ func BenchmarkGenerateFen(b *testing.B) {
 		GenerateFen(&pos)
 	}
 }
+
+func TestIsValidPosition(t *testing.T) {
+	pos := Position{}
+	if IsValidPosition(&pos) {
+		t.Error("Zeroed position should not be valid.")
+	}
+
+	pos = getDefaultPosition()
+	if !IsValidPosition(&pos) {
+		t.Error("Default position should be valid")
+	}
+
+	pos.Board[63] = BlackRook
+	if IsValidPosition(&pos) {
+		t.Error("Castle rights not checked properly")
+	}
+
+	pos.WhiteKingSideCastle = false
+	pos.Board[4] = NoPiece
+	if IsValidPosition(&pos) {
+		t.Error("Kings not checked properly")
+	}
+
+	pos = getDefaultPosition()
+	pos.Board[0] = WhitePawn
+	pos.BlackQueenSideCastle = false
+	if IsValidPosition(&pos) {
+		t.Error("Pawns not checked properly")
+	}
+
+	pos = getDefaultPosition()
+	pos.Board[63] = BlackPawn
+	pos.WhiteKingSideCastle = false
+	if IsValidPosition(&pos) {
+		t.Error("Pawns not checked properly")
+	}
+
+	pos = getDefaultPosition()
+	pos.SetPieceAt(E4, WhitePawn)
+	pos.EnPassant = E3
+	if !IsValidPosition(&pos) {
+		t.Error("En Passant was logical")
+	}
+
+	pos.EnPassant = E4
+	if !IsValidPosition(&pos) {
+		t.Error("En Passant was not logical")
+	}
+
+	pos.EnPassant = E6
+	if !IsValidPosition(&pos) {
+		t.Error("En Passant was not logical")
+	}
+
+	pos.SetPieceAt(E5, WhitePawn)
+	if !IsValidPosition(&pos) {
+		t.Error("En Passant was not logical")
+	}
+
+	pos.SetPieceAt(E5, BlackPawn)
+	if !IsValidPosition(&pos) {
+		t.Error("En Passant was not logical")
+	}
+
+	pos.Turn = NoColor
+	if IsValidPosition(&pos) {
+		t.Error("Turn was not set, position not valid")
+	}
+}
