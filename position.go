@@ -62,37 +62,37 @@ func squareToIndex(s Square) int {
 	return index
 }
 
-func ParseFen(fen string) (Position, error) {
+func ParseFen(fen string) (*Position, error) {
 	words := strings.Split(fen, " ")
 	if len(words) != 6 {
-		return Position{}, errors.New("invalid fen, fen does not have 6 required parts")
+		return &Position{}, errors.New("invalid fen, fen does not have 6 required parts")
 	}
 	board, err := parseFenPos(words[0])
 	if err != nil {
-		return Position{}, fmt.Errorf("invalid fen, %w", err)
+		return &Position{}, fmt.Errorf("invalid fen, %w", err)
 	}
 	turn, err := parseTurn(words[1])
 	if err != nil {
-		return Position{}, fmt.Errorf("invalid fen, %w", err)
+		return &Position{}, fmt.Errorf("invalid fen, %w", err)
 	}
 	castleRights, err := parseCastleRights(words[2])
 	if err != nil {
-		return Position{}, fmt.Errorf("invalid fen, %w", err)
+		return &Position{}, fmt.Errorf("invalid fen, %w", err)
 	}
 	enPassant, err := ParseSquare(words[3])
 	if err != nil {
-		return Position{}, fmt.Errorf("invalid fen, %w", err)
+		return &Position{}, fmt.Errorf("invalid fen, %w", err)
 	}
 	halfMove, err := strconv.ParseUint(words[4], 10, 16)
 	if err != nil {
-		return Position{}, fmt.Errorf("invalid fen, can't parse halfMove, %w", err)
+		return &Position{}, fmt.Errorf("invalid fen, can't parse halfMove, %w", err)
 	}
 	fullMove, err := strconv.ParseUint(words[5], 10, 16)
 	if err != nil {
-		return Position{}, fmt.Errorf("invalid fen, can't parse fullMove, %w", err)
+		return &Position{}, fmt.Errorf("invalid fen, can't parse fullMove, %w", err)
 	}
 
-	return Position{
+	return &Position{
 		Board:                board,
 		Turn:                 turn,
 		WhiteKingSideCastle:  castleRights[0],
