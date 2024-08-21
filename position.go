@@ -242,15 +242,13 @@ func generateFenCastleRights(p *Position) string {
 //   - The enPassant Square is logical
 //   - Turn is set
 //   - All pieces are valid chess pieces
-//   - Half move and full move numbers are logical numbers (full move is usually about half the size of half move)
 func IsValidPosition(p *Position) bool {
 	return checkKings(p) &&
 		checkNoInvalidPawns(p) &&
 		checkCastlingRightsLogical(p) &&
 		checkEnPassantLogical(p) &&
 		checkTurnIsSet(p) &&
-		checkAllPiecesValid(p) &&
-		checkMoveCountsLogical(p)
+		checkAllPiecesValid(p)
 }
 
 func checkKings(p *Position) bool {
@@ -361,8 +359,4 @@ func checkAllPiecesValid(p *Position) bool {
 		}
 	}
 	return true
-}
-
-func checkMoveCountsLogical(p *Position) bool {
-	return (p.HalfMove/2)+1 == p.FullMove
 }

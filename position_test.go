@@ -264,46 +264,6 @@ func TestIsValidPositionInvalidPieces(t *testing.T) {
 	}
 }
 
-func TestIsValidPositionMoveCounts(t *testing.T) {
-	pos := getDefaultPosition()
-	pos.HalfMove = 9
-	pos.FullMove = 5
-	if !IsValidPosition(&pos) {
-		t.Error("Move counts are legal")
-	}
-
-	pos.HalfMove = 8
-	if !IsValidPosition(&pos) {
-		t.Error("Move counts are legal")
-	}
-
-	pos.HalfMove = 7
-	if IsValidPosition(&pos) {
-		t.Error("Move counts are illegal")
-	}
-
-	pos.HalfMove = 1
-	pos.FullMove = 1
-	if !IsValidPosition(&pos) {
-		t.Error("Move counts are legal")
-	}
-
-	pos.HalfMove = 0
-	if !IsValidPosition(&pos) {
-		t.Error("Move counts are legal")
-	}
-
-	pos.HalfMove = 2
-	if IsValidPosition(&pos) {
-		t.Error("Move counts are illegal")
-	}
-
-	pos.FullMove = 2
-	if !IsValidPosition(&pos) {
-		t.Error("Move counts are legal")
-	}
-}
-
 func BenchmarkIsValidPosition(b *testing.B) {
 	pos := getDefaultPosition()
 	b.ResetTimer()
