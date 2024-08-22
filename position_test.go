@@ -242,6 +242,18 @@ func TestIsValidPositionEnPassant(t *testing.T) {
 	}
 }
 
+func TestIsValidPositionEnPassantPawnOnSquare(t *testing.T) {
+	pos := getDefaultPosition()
+	pos.SetPieceAt(E4, WhitePawn)
+	pos.SetPieceAt(E2, NoPiece)
+	pos.SetPieceAt(E3, WhitePawn)
+	pos.EnPassant = E3
+	pos.Turn = Black
+	if IsValidPosition(pos) {
+		t.Error("incorrect result for pawns on e4 and e3: expected false, got true")
+	}
+}
+
 func TestIsValidPositionTurn(t *testing.T) {
 	pos := getDefaultPosition()
 	pos.Turn = NoColor

@@ -336,12 +336,18 @@ func checkValidWhiteEnPassant(p *Position) bool {
 	if p.EnPassant.Rank != Rank3 {
 		return false
 	}
+	if p.PieceAt(p.EnPassant) != NoPiece {
+		return false
+	}
 	expectedSquare := Square{p.EnPassant.File, p.EnPassant.Rank + 1}
 	return p.PieceAt(expectedSquare) == WhitePawn
 }
 
 func checkValidBlackEnPassant(p *Position) bool {
 	if p.EnPassant.Rank != Rank6 {
+		return false
+	}
+	if p.PieceAt(p.EnPassant) != NoPiece {
 		return false
 	}
 	expectedSquare := Square{p.EnPassant.File, p.EnPassant.Rank - 1}
