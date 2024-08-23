@@ -55,6 +55,12 @@ func (p *Position) SetPieceAt(s Square, piece Piece) {
 	}
 }
 
+// Position.Move does no checking of move legality. For checked moves use [Game.Move], or check that your move is in the
+// list provided by [GenerateLegalMoves].
+func (p *Position) Move(m Move) {
+
+}
+
 func squareToIndex(s Square) int {
 	index := 0
 	index += int(s.File - 1)
