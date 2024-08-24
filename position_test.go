@@ -283,3 +283,15 @@ func BenchmarkIsValidPosition(b *testing.B) {
 		IsValidPosition(pos)
 	}
 }
+
+func TestIndexToSquare(t *testing.T) {
+	square := indexToSquare(0)
+	if square != A8 {
+		t.Errorf("incorrect result: input 0: expected A8, got %v", square)
+	}
+
+	square = indexToSquare(33)
+	if square != B4 {
+		t.Errorf("incorrect result: input 33: expected B4, got %v", square)
+	}
+}

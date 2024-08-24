@@ -76,6 +76,16 @@ func squareToIndex(s Square) int {
 	return index
 }
 
+func indexToSquare(index int) Square {
+	file := File(index%8 + 1)
+	rank := Rank(8 - (index / 8))
+	square := Square{file, rank}
+	if !isValidSquare(square) {
+		return NoSquare
+	}
+	return square
+}
+
 func ParseFen(fen string) (*Position, error) {
 	words := strings.Split(fen, " ")
 	if len(words) != 6 {
