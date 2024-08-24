@@ -122,7 +122,7 @@ func TestIsCheckBishop(t *testing.T) {
 		t.Error("incorrect result for black bishop on H8: expected true, got false")
 	}
 
-	pos.SetPieceAt(E6, BlackQueen)
+	pos.SetPieceAt(E5, BlackQueen)
 	if IsCheck(pos) {
 		t.Error("incorrect result for black bishop on H8: blocked by own queen: expected false, got true")
 	}

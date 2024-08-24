@@ -390,3 +390,12 @@ func checkAllPiecesValid(p *Position) bool {
 	}
 	return true
 }
+
+func findKing(p *Position, c Color) Square {
+	for index, piece := range p.Board {
+		if piece.Type == King && piece.Color == c {
+			return indexToSquare(index)
+		}
+	}
+	return NoSquare
+}

@@ -196,3 +196,35 @@ func parseRank(r rune) (Rank, error) {
 	}
 	return rank, nil
 }
+
+func squareToLeft(s Square) Square {
+	s.File--
+	if !isValidSquare(s) {
+		return NoSquare
+	}
+	return s
+}
+
+func squareToRight(s Square) Square {
+	s.File++
+	if !isValidSquare(s) {
+		return NoSquare
+	}
+	return s
+}
+
+func squareAbove(s Square) Square {
+	s.Rank++
+	if !isValidSquare(s) {
+		return NoSquare
+	}
+	return s
+}
+
+func squareBelow(s Square) Square {
+	s.Rank--
+	if !isValidSquare(s) {
+		return NoSquare
+	}
+	return s
+}
