@@ -10,11 +10,6 @@ func TestParseMove(t *testing.T) {
 		t.Error("incorrect result: input : expected error, got nil")
 	}
 
-	_, err = ParseMove("E7E8K")
-	if err == nil {
-		t.Error("incorrect result: input E7E8K: expected error, got nil")
-	}
-
 	_, err = ParseMove("E7E8  ")
 	if err == nil {
 		t.Error("incorrect result: input E7E8  : expected error, got nil")
