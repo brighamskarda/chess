@@ -56,9 +56,33 @@ func (p *Position) SetPieceAt(s Square, piece Piece) {
 }
 
 // Position.Move does no checking of move legality. For checked moves use [Game.Move], or check that your move is in the
-// list provided by [GenerateLegalMoves].
+// list provided by [GenerateLegalMoves]. All parts of the position are updated including en passant and castling rights based
+// how the the move interacts with the board.
 func (p *Position) Move(m Move) {
 	if !IsValidMove(m) {
+		return
+	}
+	p.updateMoveCounts(m)
+	p.movePiece(m)
+	p.updateTurn()
+	p.UpdateCastleRights(m)
+	p.updateEnPassant(m)
+}
+
+func (p *Position) updateMoveCounts(m Move) {
+	if p.PieceAt(m.FromSquare).Type == Pawn || p.PieceAt(m.ToSquare) != NoPiece || isCastleMove(p, m) {
+		p.HalfMove = 0
+	} else {
+		p.HalfMove++
+	}
+	if p.Turn == Black {
+		p.FullMove++
+	}
+}
+
+func (p *Position) movePiece(m Move) {
+	if isCastleMove(p, m) {
+		p.performCastleMove(m)
 		return
 	}
 	pieceToMove := p.PieceAt(m.FromSquare)
@@ -67,6 +91,82 @@ func (p *Position) Move(m Move) {
 	}
 	p.SetPieceAt(m.FromSquare, NoPiece)
 	p.SetPieceAt(m.ToSquare, pieceToMove)
+	if m.ToSquare == p.EnPassant {
+		if p.PieceAt(m.ToSquare).Color == White {
+			p.SetPieceAt(Square{File: m.ToSquare.File, Rank: m.ToSquare.Rank - 1}, NoPiece)
+		}
+		if p.PieceAt(m.ToSquare).Color == Black {
+			p.SetPieceAt(Square{File: m.ToSquare.File, Rank: m.ToSquare.Rank + 1}, NoPiece)
+		}
+	}
+}
+
+func (p *Position) performCastleMove(m Move) {
+	p.SetPieceAt(m.ToSquare, p.PieceAt(m.FromSquare))
+	p.SetPieceAt(m.FromSquare, NoPiece)
+	if m.ToSquare == G1 {
+		p.SetPieceAt(H1, NoPiece)
+		p.SetPieceAt(F1, WhiteRook)
+	}
+	if m.ToSquare == C1 {
+		p.SetPieceAt(A1, NoPiece)
+		p.SetPieceAt(D1, WhiteRook)
+	}
+	if m.ToSquare == G8 {
+		p.SetPieceAt(H8, NoPiece)
+		p.SetPieceAt(F8, BlackRook)
+	}
+	if m.ToSquare == C8 {
+		p.SetPieceAt(A8, NoPiece)
+		p.SetPieceAt(D8, BlackRook)
+	}
+}
+
+func (p *Position) updateTurn() {
+	if p.Turn == White {
+		p.Turn = Black
+	} else if p.Turn == Black {
+		p.Turn = White
+	}
+}
+
+func (p *Position) UpdateCastleRights(m Move) {
+	switch m.FromSquare {
+	case E1:
+		p.WhiteKingSideCastle = false
+		p.WhiteQueenSideCastle = false
+	case E8:
+		p.BlackKingSideCastle = false
+		p.BlackQueenSideCastle = false
+	case A1:
+		p.WhiteQueenSideCastle = false
+	case H1:
+		p.WhiteKingSideCastle = false
+	case A8:
+		p.BlackQueenSideCastle = false
+	case H8:
+		p.BlackKingSideCastle = false
+	}
+}
+
+func (p *Position) updateEnPassant(m Move) {
+	if p.PieceAt(m.ToSquare).Type == Pawn &&
+		((m.ToSquare.Rank == Rank4 && m.FromSquare.Rank == Rank2) ||
+			(m.ToSquare.Rank == Rank5 && m.FromSquare.Rank == Rank7)) {
+		if m.FromSquare.Rank == Rank2 {
+			p.EnPassant = Square{File: m.ToSquare.File, Rank: Rank3}
+		} else if m.FromSquare.Rank == Rank7 {
+			p.EnPassant = Square{File: m.ToSquare.File, Rank: Rank6}
+
+		}
+	} else {
+		p.EnPassant = NoSquare
+	}
+}
+
+func isCastleMove(p *Position, m Move) bool {
+	return (m.FromSquare == E1 && (m.ToSquare == G1 || m.ToSquare == C1) && p.PieceAt(m.FromSquare) == WhiteKing) ||
+		(m.FromSquare == E8 && (m.ToSquare == G8 || m.ToSquare == C8) && p.PieceAt(E8) == BlackKing)
 }
 
 func squareToIndex(s Square) int {

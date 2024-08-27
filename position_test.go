@@ -295,3 +295,116 @@ func TestIndexToSquare(t *testing.T) {
 		t.Errorf("incorrect result: input 33: expected B4, got %v", square)
 	}
 }
+
+func TestMove(t *testing.T) {
+	pos := getDefaultPosition()
+	pos.Move(Move{FromSquare: E2, ToSquare: E4, Promotion: NoPieceType})
+	if pos.PieceAt(E4) != WhitePawn ||
+		pos.PieceAt(E2) != NoPiece ||
+		pos.EnPassant != E3 ||
+		pos.Turn != Black {
+		t.Errorf("incorrect result: move E2-E4: result %#v", pos)
+	}
+
+	pos.Move(Move{FromSquare: E7, ToSquare: E6, Promotion: NoPieceType})
+	if pos.EnPassant != NoSquare ||
+		pos.HalfMove != 0 ||
+		pos.FullMove != 2 {
+		t.Errorf("incorrect result: move E7-E6: result %#v", pos)
+	}
+
+	pos.Move(Move{FromSquare: B1, ToSquare: C3, Promotion: NoPieceType})
+	if pos.HalfMove != 1 ||
+		pos.FullMove != 2 {
+		t.Errorf("incorrect result: move B1-C3: result %#v", pos)
+	}
+}
+
+func TestMoveCastle(t *testing.T) {
+	pos := getDefaultPosition()
+	pos.SetPieceAt(F1, NoPiece)
+	pos.SetPieceAt(G1, NoPiece)
+	pos.Move(Move{FromSquare: E1, ToSquare: G1, Promotion: NoPieceType})
+	if pos.PieceAt(G1) != WhiteKing ||
+		pos.PieceAt(F1) != WhiteRook ||
+		pos.WhiteKingSideCastle ||
+		pos.WhiteQueenSideCastle ||
+		!pos.BlackKingSideCastle ||
+		!pos.BlackQueenSideCastle {
+		t.Errorf("incorrect result: move E1-G1: result %#v", pos)
+	}
+
+	pos = getDefaultPosition()
+	pos.Move(Move{FromSquare: E1, ToSquare: C1, Promotion: NoPieceType})
+	if pos.PieceAt(C1) != WhiteKing ||
+		pos.PieceAt(D1) != WhiteRook ||
+		pos.WhiteKingSideCastle ||
+		pos.WhiteQueenSideCastle ||
+		!pos.BlackKingSideCastle ||
+		!pos.BlackQueenSideCastle {
+		t.Errorf("incorrect result: move E1-C1: result %#v", pos)
+	}
+
+	pos = getDefaultPosition()
+	pos.Turn = Black
+	pos.Move(Move{FromSquare: E8, ToSquare: C8, Promotion: NoPieceType})
+	if pos.PieceAt(C8) != BlackKing ||
+		pos.PieceAt(D8) != BlackRook ||
+		!pos.WhiteKingSideCastle ||
+		!pos.WhiteQueenSideCastle ||
+		pos.BlackKingSideCastle ||
+		pos.BlackQueenSideCastle {
+		t.Errorf("incorrect result: move E8-C8: result %#v", pos)
+	}
+
+	pos = getDefaultPosition()
+	pos.Turn = Black
+	pos.Move(Move{FromSquare: E8, ToSquare: G8, Promotion: NoPieceType})
+	if pos.PieceAt(G8) != BlackKing ||
+		pos.PieceAt(F8) != BlackRook ||
+		!pos.WhiteKingSideCastle ||
+		!pos.WhiteQueenSideCastle ||
+		pos.BlackKingSideCastle ||
+		pos.BlackQueenSideCastle {
+		t.Errorf("incorrect result: move E8-G8: result %#v", pos)
+	}
+}
+
+func TestMoveEnPassant(t *testing.T) {
+	pos := &Position{}
+	pos.Turn = White
+	pos.SetPieceAt(E5, WhitePawn)
+	pos.SetPieceAt(D5, BlackPawn)
+	pos.EnPassant = D6
+	pos.Move(Move{FromSquare: E5, ToSquare: D6, Promotion: NoPieceType})
+	if pos.PieceAt(D5) != NoPiece ||
+		pos.PieceAt(D6) != WhitePawn ||
+		pos.PieceAt(E5) != NoPiece ||
+		pos.EnPassant != NoSquare {
+		t.Errorf("incorrect result: move E5-D6: result %#v", pos)
+	}
+
+	pos = &Position{}
+	pos.Turn = Black
+	pos.SetPieceAt(E4, WhitePawn)
+	pos.SetPieceAt(D4, BlackPawn)
+	pos.EnPassant = E3
+	pos.Move(Move{FromSquare: D4, ToSquare: E3, Promotion: NoPieceType})
+	if pos.PieceAt(D4) != NoPiece ||
+		pos.PieceAt(E3) != BlackPawn ||
+		pos.PieceAt(E4) != NoPiece ||
+		pos.EnPassant != NoSquare {
+		t.Errorf("incorrect result: move D4-E3: result %#v", pos)
+	}
+}
+
+func TestMovePromotion(t *testing.T) {
+	pos := &Position{}
+	pos.Turn = White
+	pos.SetPieceAt(D6, WhitePawn)
+	pos.Move(Move{FromSquare: D6, ToSquare: D8, Promotion: Queen})
+	if pos.PieceAt(D6) != NoPiece ||
+		pos.PieceAt(D8) != WhiteQueen {
+		t.Errorf("incorrect result: move D6-D8Q: result %#v", pos)
+	}
+}
