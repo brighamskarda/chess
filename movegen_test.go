@@ -318,6 +318,7 @@ func TestGenerateWhitePawnTakes(t *testing.T) {
 	pos.EnPassant = D6
 	expectedMoves = []Move{
 		{E5, D6, NoPieceType},
+		{E5, E6, NoPieceType},
 	}
 	moves = generateWhitePawnMoves(pos, E5)
 	if !moveSetsEqual(expectedMoves, moves) {

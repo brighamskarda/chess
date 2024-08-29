@@ -11,7 +11,11 @@ type Move struct {
 }
 
 func (m Move) String() string {
-	return ""
+	returnString := m.FromSquare.String() + m.ToSquare.String()
+	if m.Promotion != NoPieceType {
+		returnString += m.Promotion.String()
+	}
+	return returnString
 }
 
 // ParseMove expects a UCI compatible move string. Format should be Square1Square2Promotion, where promotion is optional.
