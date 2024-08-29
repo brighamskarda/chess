@@ -4,55 +4,67 @@ package chess
 // performance since move generation is a vital part to engine development.
 func GeneratePseudoLegalMoves(p *Position) []Move {
 	pseudoLegalMoves := []Move{}
-	pseudoLegalMoves = append(pseudoLegalMoves, generatePawnMoves(p)...)
-	pseudoLegalMoves = append(pseudoLegalMoves, generateRookMoves(p)...)
-	pseudoLegalMoves = append(pseudoLegalMoves, generateKnightMoves(p)...)
-	pseudoLegalMoves = append(pseudoLegalMoves, generateBishopMoves(p)...)
-	pseudoLegalMoves = append(pseudoLegalMoves, generateQueenMoves(p)...)
-	pseudoLegalMoves = append(pseudoLegalMoves, generateKingMoves(p)...)
-	pseudoLegalMoves = append(pseudoLegalMoves, generateCastleMoves(p)...)
+	for index, piece := range p.Board {
+		if piece.Color == p.Turn {
+			switch piece.Type {
+			case Pawn:
+				pseudoLegalMoves = append(pseudoLegalMoves, generatePawnMoves(p, indexToSquare(index))...)
+			case Rook:
+				pseudoLegalMoves = append(pseudoLegalMoves, generateRookMoves(p, indexToSquare(index))...)
+			case Knight:
+				pseudoLegalMoves = append(pseudoLegalMoves, generateKnightMoves(p, indexToSquare(index))...)
+			case Bishop:
+				pseudoLegalMoves = append(pseudoLegalMoves, generateBishopMoves(p, indexToSquare(index))...)
+			case Queen:
+				pseudoLegalMoves = append(pseudoLegalMoves, generateQueenMoves(p, indexToSquare(index))...)
+			case King:
+				pseudoLegalMoves = append(pseudoLegalMoves, generateKingMoves(p, indexToSquare(index))...)
+				pseudoLegalMoves = append(pseudoLegalMoves, generateCastleMoves(p, indexToSquare(index))...)
+			}
+		}
+	}
 	return pseudoLegalMoves
 }
 
-func generatePawnMoves(p *Position) []Move {
+func generatePawnMoves(p *Position, s Square) []Move {
 	if p.Turn == White {
-		return generateWhitePawnMoves(p)
+		return generateWhitePawnMoves(p, s)
 	} else if p.Turn == Black {
-		return generateBlackPawnMoves(p)
+		return generateBlackPawnMoves(p, s)
 	} else {
 		return []Move{}
 	}
 }
 
-func generateWhitePawnMoves(p *Position) []Move {
+func generateWhitePawnMoves(p *Position, s Square) []Move {
 	return []Move{}
 }
 
-func generateBlackPawnMoves(p *Position) []Move {
+func generateBlackPawnMoves(p *Position, s Square) []Move {
 	return []Move{}
 }
 
-func generateRookMoves(p *Position) []Move {
+func generateRookMoves(p *Position, s Square) []Move {
 	return []Move{}
 }
 
-func generateKnightMoves(p *Position) []Move {
+func generateKnightMoves(p *Position, s Square) []Move {
 	return []Move{}
 }
 
-func generateBishopMoves(p *Position) []Move {
+func generateBishopMoves(p *Position, s Square) []Move {
 	return []Move{}
 }
 
-func generateQueenMoves(p *Position) []Move {
+func generateQueenMoves(p *Position, s Square) []Move {
 	return []Move{}
 }
 
-func generateKingMoves(p *Position) []Move {
+func generateKingMoves(p *Position, s Square) []Move {
 	return []Move{}
 }
 
-func generateCastleMoves(p *Position) []Move {
+func generateCastleMoves(p *Position, s Square) []Move {
 	return []Move{}
 }
 
