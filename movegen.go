@@ -177,15 +177,79 @@ func generateBlackPawnPromotion(p *Position, s Square) []Move {
 }
 
 func generateRookMoves(p *Position, s Square) []Move {
-	return []Move{}
+	moves := []Move{}
+	moveFunctions := [4]func(Square) Square{squareToLeft, squareToRight, squareAbove, squareBelow}
+	for _, moveFunc := range moveFunctions {
+		for toSquare := moveFunc(s); toSquare != NoSquare; toSquare = moveFunc(toSquare) {
+			pieceAtSquare := p.PieceAt(toSquare)
+			if pieceAtSquare.Color == p.Turn {
+				break
+			}
+			moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+			if pieceAtSquare.Color != NoColor {
+				break
+			}
+		}
+	}
+	return moves
 }
 
 func generateKnightMoves(p *Position, s Square) []Move {
-	return []Move{}
+	moves := []Move{}
+	toSquare := squareAbove(squareAbove(squareToRight(s)))
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	toSquare = squareAbove(squareToRight(squareToRight(s)))
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	toSquare = squareBelow(squareToRight(squareToRight(s)))
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	toSquare = squareBelow(squareBelow(squareToRight(s)))
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	toSquare = squareBelow(squareBelow(squareToLeft(s)))
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	toSquare = squareBelow(squareToLeft(squareToLeft(s)))
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	toSquare = squareAbove(squareToLeft(squareToLeft(s)))
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	toSquare = squareAbove(squareAbove(squareToLeft(s)))
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	return moves
 }
 
 func generateBishopMoves(p *Position, s Square) []Move {
-	return []Move{}
+	moves := []Move{}
+	verticalFunctions := [2]func(Square) Square{squareAbove, squareBelow}
+	horizontalFunctions := [2]func(Square) Square{squareToLeft, squareToRight}
+	for _, verticalFunc := range verticalFunctions {
+		for _, horizontalFunc := range horizontalFunctions {
+			for toSquare := verticalFunc(horizontalFunc(s)); toSquare != NoSquare; toSquare = verticalFunc(horizontalFunc(toSquare)) {
+				pieceAtSquare := p.PieceAt(toSquare)
+				if pieceAtSquare.Color == p.Turn {
+					break
+				}
+				moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+				if pieceAtSquare.Color != NoColor {
+					break
+				}
+			}
+		}
+	}
+	return moves
 }
 
 func generateQueenMoves(p *Position, s Square) []Move {
