@@ -10,7 +10,7 @@ type File uint8
 
 const (
 	NoFile File = iota
-	FileA       = iota
+	FileA
 	FileB
 	FileC
 	FileD
