@@ -253,15 +253,97 @@ func generateBishopMoves(p *Position, s Square) []Move {
 }
 
 func generateQueenMoves(p *Position, s Square) []Move {
-	return []Move{}
+	moves := []Move{}
+	moves = append(moves, generateRookMoves(p, s)...)
+	moves = append(moves, generateBishopMoves(p, s)...)
+	return moves
 }
 
 func generateKingMoves(p *Position, s Square) []Move {
-	return []Move{}
+	moves := []Move{}
+	toSquare := squareAbove(s)
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	toSquare = squareToRight(squareAbove(s))
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	toSquare = squareToRight(s)
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	toSquare = squareBelow(squareToRight(s))
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	toSquare = squareBelow(s)
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	toSquare = squareToLeft(squareBelow(s))
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	toSquare = squareToLeft(s)
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	toSquare = squareAbove(squareToLeft(s))
+	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
+		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	}
+	return moves
 }
 
 func generateCastleMoves(p *Position, s Square) []Move {
+	if p.Turn == White && s == E1 {
+		return generateWhiteCastleMoves(p)
+	}
+	if p.Turn == Black && s == E8 {
+		return generateBlackCastleMoves(p)
+	}
 	return []Move{}
+}
+
+func generateWhiteCastleMoves(p *Position) []Move {
+	moves := []Move{}
+	if p.WhiteKingSideCastle &&
+		p.PieceAt(E1) == WhiteKing &&
+		p.PieceAt(F1) == NoPiece &&
+		p.PieceAt(G1) == NoPiece &&
+		p.PieceAt(H1) == WhiteRook {
+		moves = append(moves, Move{FromSquare: E1, ToSquare: G1, Promotion: NoPieceType})
+	}
+	if p.WhiteQueenSideCastle &&
+		p.PieceAt(E1) == WhiteKing &&
+		p.PieceAt(D1) == NoPiece &&
+		p.PieceAt(C1) == NoPiece &&
+		p.PieceAt(B1) == NoPiece &&
+		p.PieceAt(A1) == WhiteRook {
+		moves = append(moves, Move{FromSquare: E1, ToSquare: C1, Promotion: NoPieceType})
+	}
+	return moves
+}
+
+func generateBlackCastleMoves(p *Position) []Move {
+	moves := []Move{}
+	if p.BlackKingSideCastle &&
+		p.PieceAt(E8) == BlackKing &&
+		p.PieceAt(F8) == NoPiece &&
+		p.PieceAt(G8) == NoPiece &&
+		p.PieceAt(H8) == BlackRook {
+		moves = append(moves, Move{FromSquare: E8, ToSquare: G8, Promotion: NoPieceType})
+	}
+	if p.BlackQueenSideCastle &&
+		p.PieceAt(E8) == BlackKing &&
+		p.PieceAt(D8) == NoPiece &&
+		p.PieceAt(C8) == NoPiece &&
+		p.PieceAt(B8) == NoPiece &&
+		p.PieceAt(A8) == BlackRook {
+		moves = append(moves, Move{FromSquare: E8, ToSquare: C8, Promotion: NoPieceType})
+	}
+	return moves
 }
 
 // GenerateLegalMoves expects a valid position. Behavior is undefined for invalid positions. This is to improve
