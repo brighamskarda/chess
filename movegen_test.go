@@ -19,7 +19,23 @@ func moveSetsEqual(m1 []Move, m2 []Move) bool {
 	return true
 }
 
-func TestGeneratePsuedoLegalMoves(t *testing.T) {
+func moveSortFunc(a, b Move) int {
+	if squareToIndex(a.FromSquare) < squareToIndex(b.FromSquare) {
+		return -1
+	}
+	if squareToIndex(a.FromSquare) > squareToIndex(b.FromSquare) {
+		return 1
+	}
+	if squareToIndex(a.ToSquare) < squareToIndex(b.ToSquare) {
+		return -1
+	}
+	if squareToIndex(a.ToSquare) > squareToIndex(b.ToSquare) {
+		return 1
+	}
+	return 0
+}
+
+func TestGeneratePseudoLegalMoves(t *testing.T) {
 	defaultMoveSet := []Move{
 		{A2, A3, NoPieceType},
 		{A2, A4, NoPieceType},
@@ -98,10 +114,13 @@ func TestGeneratePsuedoLegalMoves(t *testing.T) {
 		{E1, D2, NoPieceType},
 		{E1, E2, NoPieceType},
 		{E1, F1, NoPieceType},
+		{E1, G1, NoPieceType},
 		{H1, G1, NoPieceType},
 		{H1, F1, NoPieceType},
 	}
 	moves = GeneratePseudoLegalMoves(pos)
+	slices.SortFunc(expectedMoves, moveSortFunc)
+	slices.SortFunc(moves, moveSortFunc)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Error("incorrect result: fen = r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R w KQkq - 2 14 ", cmp.Diff(expectedMoves, moves))
 	}
@@ -134,6 +153,7 @@ func TestGeneratePsuedoLegalMoves(t *testing.T) {
 		{F6, D5, NoPieceType},
 		{F6, G4, NoPieceType},
 		{F6, H5, NoPieceType},
+		{F6, G8, NoPieceType},
 		{A5, A4, NoPieceType},
 		{A5, A3, NoPieceType},
 		{A5, A2, NoPieceType},
@@ -149,6 +169,8 @@ func TestGeneratePsuedoLegalMoves(t *testing.T) {
 		{E4, E3, NoPieceType},
 	}
 	moves = GeneratePseudoLegalMoves(pos)
+	slices.SortFunc(expectedMoves, moveSortFunc)
+	slices.SortFunc(moves, moveSortFunc)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Error("incorrect result: fen = r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R b KQkq - 2 14 ", cmp.Diff(expectedMoves, moves))
 	}
@@ -197,6 +219,8 @@ func TestGenerateLegalMoves(t *testing.T) {
 		{E1, F1, NoPieceType},
 	}
 	moves = GenerateLegalMoves(pos)
+	slices.SortFunc(expectedMoves, moveSortFunc)
+	slices.SortFunc(moves, moveSortFunc)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Error("incorrect result: fen = r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R w KQkq - 2 14 ", cmp.Diff(expectedMoves, moves))
 	}
@@ -244,6 +268,8 @@ func TestGenerateLegalMoves(t *testing.T) {
 		{E4, E3, NoPieceType},
 	}
 	moves = GenerateLegalMoves(pos)
+	slices.SortFunc(expectedMoves, moveSortFunc)
+	slices.SortFunc(moves, moveSortFunc)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Error("incorrect result: fen = r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R b KQkq - 2 14 ", cmp.Diff(expectedMoves, moves))
 	}
