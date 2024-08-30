@@ -2,6 +2,7 @@ package chess
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -9,10 +10,10 @@ import (
 )
 
 func TestIsValidResult(t *testing.T) {
-	if(isValidResult(5)) {
+	if isValidResult(5) {
 		t.Error("incorrect result: input 5: expected false, got true")
 	}
-	if(!isValidResult(Draw)) {
+	if !isValidResult(Draw) {
 		t.Error("incorrect result: input Draw: expected true, got false")
 	}
 }
@@ -29,7 +30,7 @@ func TestNewGame(t *testing.T) {
 		t.Errorf(`default game tag "Site" incorrect: expected github.com/brighamskarda/chess, got %s`, game.tags["Event"])
 	}
 	currentDate := time.Now()
-	currentDateString := fmt.Sprintf("%4d.%2d.%2d", currentDate.Year(), currentDate.Month(), currentDate.Day()) 
+	currentDateString := fmt.Sprintf("%4d.%2d.%2d", currentDate.Year(), currentDate.Month(), currentDate.Day())
 	if game.tags["Date"] != currentDateString {
 		t.Errorf(`default game tag "Date" incorrect: expected %s, got %s`, currentDateString, game.tags["Event"])
 	}
@@ -50,5 +51,32 @@ func TestNewGame(t *testing.T) {
 	}
 	if game.result != NoResult {
 		t.Errorf("result incorrect: expected 0, got %v", game.result)
+	}
+}
+
+func TestGameMove(t *testing.T) {
+	game := NewGame()
+	err := game.Move(Move{E2, E4, NoPieceType})
+	if err != nil {
+		t.Errorf("incorrect result: input E2E4: expected nil, got %v", err)
+	}
+	tempGame := game.Copy()
+	err = game.Move(Move{D2, D4, NoPieceType})
+	if err == nil {
+		t.Errorf("incorrect result: input D2D4: expected error, got nil")
+	}
+	if !reflect.DeepEqual(game, tempGame) {
+		t.Error("incorrect result: after invalid move D2D4 game state changed: ", cmp.Diff(game, tempGame))
+	}
+	err = game.Move(Move{E7, E5, NoPieceType})
+	if err != nil {
+		t.Errorf("incorrect result: input E7E5: expected nil, got %v", err)
+	}
+	expectedMoveHistory := []Move{
+		{E2, E4, NoPieceType},
+		{E7, E5, NoPieceType},
+	}
+	if !reflect.DeepEqual(expectedMoveHistory, game.moveHistory) {
+		t.Errorf("incorrect result: moveHistory incorrect: expected %v, got %v", expectedMoveHistory, game.moveHistory)
 	}
 }

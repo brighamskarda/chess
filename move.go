@@ -42,7 +42,7 @@ func ParseMove(s string) (Move, error) {
 	return Move{fromSquare, toSquare, promotion}, nil
 }
 
-// IsValidMove makes sure each of its elements are logical. Namely that the squares can be found on a chess board.
+// IsValidMove makes sure each of the elements in Move m are logical. Namely that the squares can be found on a chess board.
 func IsValidMove(m Move) bool {
 	return isValidSquare(m.FromSquare) && m.FromSquare != NoSquare &&
 		isValidSquare(m.ToSquare) && m.ToSquare != NoSquare &&

@@ -65,7 +65,7 @@ func (p *Position) Move(m Move) {
 	p.updateMoveCounts(m)
 	p.movePiece(m)
 	p.updateTurn()
-	p.UpdateCastleRights(m)
+	p.updateCastleRights(m)
 	p.updateEnPassant(m)
 }
 
@@ -130,7 +130,7 @@ func (p *Position) updateTurn() {
 	}
 }
 
-func (p *Position) UpdateCastleRights(m Move) {
+func (p *Position) updateCastleRights(m Move) {
 	switch m.FromSquare {
 	case E1:
 		p.WhiteKingSideCastle = false
