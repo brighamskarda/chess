@@ -349,5 +349,17 @@ func generateBlackCastleMoves(p *Position) []Move {
 // GenerateLegalMoves expects a valid position. Behavior is undefined for invalid positions. This is to improve
 // performance since move generation is a vital part to engine development.
 func GenerateLegalMoves(p *Position) []Move {
-	return []Move{}
+	pseudoLegalMoves := GeneratePseudoLegalMoves(p)
+	isCurrentPositionCheck := IsCheck(p)
+	legalMoves := []Move{}
+	for _, move := range pseudoLegalMoves {
+		var tempPosition Position = *p
+		tempPosition.Move(move)
+		tempPosition.Turn = p.Turn
+		castleMove := isCastleMove(p, move)
+		if !IsCheck(&tempPosition) && ((castleMove && !isCurrentPositionCheck) || !castleMove) {
+			legalMoves = append(legalMoves, move)
+		}
+	}
+	return legalMoves
 }
