@@ -242,7 +242,7 @@ func TestIsCheckMate(t *testing.T) {
 }
 
 func BenchmarkIsCheckMate(b *testing.B) {
-	pos := getDefaultPosition()
+	pos, _ := ParseFen("3rkbnr/1p1bp3/1q1p3p/p5pQ/3n4/PPR5/5PPP/6K1 b - - 2 2")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		IsCheckMate(pos)

@@ -242,10 +242,10 @@ func isCheckKing(p *Position, kingSquare Square) bool {
 }
 
 func IsCheckMate(p *Position) bool {
-	return true
+	return IsCheck(p) && len(GenerateLegalMoves(p)) == 0
 }
 
 // IsStaleMate does not check the fifty rule move. It only checks if a player is not able to move, and is not in check.
 func IsStaleMate(p *Position) bool {
-	return true
+	return !IsCheck(p) && len(GenerateLegalMoves(p)) == 0
 }
