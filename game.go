@@ -80,3 +80,41 @@ func (g *Game) Copy() *Game {
 func (g *Game) String() string {
 	return g.position.String()
 }
+
+// Position returns a copy of the game's position
+func (g *Game) Position() *Position {
+	var pos Position = *g.position
+	return &pos
+}
+
+func (g *Game) Turn() Color {
+	return g.position.Turn
+}
+
+func (g *Game) WhiteKingSideCastle() bool {
+	return g.position.WhiteKingSideCastle
+}
+
+func (g *Game) WhiteQueenSideCastle() bool {
+	return g.position.WhiteQueenSideCastle
+}
+
+func (g *Game) BlackKingSideCastle() bool {
+	return g.position.BlackKingSideCastle
+}
+
+func (g *Game) BlackQueenSideCastle() bool {
+	return g.position.BlackQueenSideCastle
+}
+
+func (g *Game) HalfMove() uint16 {
+	return g.position.HalfMove
+}
+
+func (g *Game) FullMove() uint16 {
+	return g.position.FullMove
+}
+
+func (g *Game) EnPassant() Square {
+	return g.position.EnPassant
+}
