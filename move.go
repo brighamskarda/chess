@@ -18,8 +18,8 @@ func (m Move) String() string {
 	return returnString
 }
 
-// ParseMove expects a UCI compatible move string. Format should be Square1Square2Promotion, where promotion is optional.
-func ParseMove(s string) (Move, error) {
+// ParseUCIMove expects a UCI compatible move string. Format should be Square1Square2Promotion, where promotion is optional.
+func ParseUCIMove(s string) (Move, error) {
 	if len(s) != 4 && len(s) != 5 {
 		return Move{}, fmt.Errorf("invalid move string: string not 4 or 5 characters long: %s", s)
 	}
@@ -40,6 +40,10 @@ func ParseMove(s string) (Move, error) {
 	}
 
 	return Move{fromSquare, toSquare, promotion}, nil
+}
+
+func ParseSANMove(p *Position, s string) (Move, error) {
+	return Move{}, nil
 }
 
 // IsValidMove makes sure each of the elements in Move m are logical. Namely that the squares can be found on a chess board.
