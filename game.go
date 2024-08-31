@@ -69,10 +69,14 @@ func (g *Game) Move(m Move) error {
 func (g *Game) Copy() *Game {
 	positionCopy := *g.position
 	gameCopy := &Game{
-		position: &positionCopy,
+		position:    &positionCopy,
 		moveHistory: slices.Clone(g.moveHistory),
-		tags: maps.Clone(g.tags),
-		result: g.result,
+		tags:        maps.Clone(g.tags),
+		result:      g.result,
 	}
 	return gameCopy
+}
+
+func (g *Game) String() string {
+	return g.position.String()
 }
