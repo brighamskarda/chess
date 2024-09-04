@@ -565,7 +565,7 @@ func TestParseSANMoveCapturesBlackPawn(t *testing.T) {
 	}
 
 	moveString = "gxf3"
-	expectedMove := Move{F3, G4, NoPieceType}
+	expectedMove := Move{G4, F3, NoPieceType}
 	move, err := ParseSANMove(pos, moveString)
 	if err != nil {
 		t.Errorf("incorrect result: input %s: expected %v, got %v", moveString, nil, err)

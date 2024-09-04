@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode"
 )
 
 type Move struct {
@@ -55,8 +56,11 @@ func ParseSANMove(p *Position, s string) (Move, error) {
 	if len(cleanedString) == 2 {
 		return parseSANBasicPawnMove(p, cleanedString)
 	}
+	if len(cleanedString) == 4 && unicode.IsLower(rune(cleanedString[0])) && rune(cleanedString[1]) == 'x' {
+		return parseSANPawnCapture(p, cleanedString)
+	}
 
-	return Move{}, nil
+	return Move{}, errors.New("unknown error")
 }
 
 func parseSANBasicPawnMove(p *Position, s string) (Move, error) {
@@ -88,6 +92,38 @@ func parseSANBasicPawnMoveBlack(p *Position, s Square) (Move, error) {
 		return Move{FromSquare: squareAbove(squareAbove(s)), ToSquare: s, Promotion: NoPieceType}, nil
 	}
 	return Move{}, errors.New("could not parse SAN basic pawn move")
+}
+
+func parseSANPawnCapture(p *Position, s string) (Move, error) {
+	toSquare, err := ParseSquare(s[2:])
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse SAN pawn capture move: input %s: %w", s, err)
+	}
+	file, err := parseFile(rune(s[0]))
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse SAN pawn capture move: input %s: %w", s, err)
+	}
+	var fromSquare Square
+	if p.Turn == White {
+		fromSquare = Square{File: file, Rank: toSquare.Rank - 1}
+	}
+	if p.Turn == Black {
+		fromSquare = Square{File: file, Rank: toSquare.Rank + 1}
+	}
+
+	pieceAtFromSquare := p.PieceAt(fromSquare)
+	if pieceAtFromSquare == NoPiece || pieceAtFromSquare.Type != Pawn || pieceAtFromSquare.Color != p.Turn {
+		return Move{}, fmt.Errorf("invalid SAN pawn capture move: piece at %v is not %v", fromSquare, Piece{p.Turn, Pawn})
+	}
+
+	pieceAtToSquare := p.PieceAt(toSquare)
+	if pieceAtToSquare.Color == p.Turn && toSquare != p.EnPassant {
+		return Move{}, fmt.Errorf("invalid SAN pawn capture move: invalid piece to capture: square, %v piece, %v, en passant %v",
+			toSquare, pieceAtToSquare, p.EnPassant)
+	}
+
+	return Move{FromSquare: fromSquare, ToSquare: toSquare, Promotion: NoPieceType}, nil
+	// TODO Implement this
 }
 
 // IsValidMove makes sure each of the elements in Move m are logical. Namely that the squares can be found on a chess board.
