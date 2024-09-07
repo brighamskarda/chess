@@ -53,6 +53,9 @@ func ParseSANMove(p *Position, s string) (Move, error) {
 		return Move{}, errors.New("could not parse SAN move: position turn is not set to white or black")
 	}
 
+	if s == "O-O" || s == "O-O-O" {
+		return parseSANCastleMove(p, cleanedString)
+	}
 	if isSANBasicPawnMove(p, cleanedString) {
 		return parseSANBasicPawnMove(p, cleanedString)
 	}
@@ -81,6 +84,22 @@ func isSANPawnCapture(p *Position, s string) bool {
 		rune(s[1]) == 'x' &&
 		!(rune(s[3]) == '8' && p.Turn == White) &&
 		!(rune(s[3]) == '1' && p.Turn == Black)
+}
+
+func parseSANCastleMove(p *Position, s string) (Move, error) {
+	if p.Turn == White && s == "O-O" {
+		return Move{E1, G1, NoPieceType}, nil
+	}
+	if p.Turn == White && s == "O-O-O" {
+		return Move{E1, C1, NoPieceType}, nil
+	}
+	if p.Turn == Black && s == "O-O" {
+		return Move{E8, G8, NoPieceType}, nil
+	}
+	if p.Turn == Black && s == "O-O-O" {
+		return Move{E8, C8, NoPieceType}, nil
+	}
+	return Move{}, fmt.Errorf("could not parseSAN castle move: input %s", s)
 }
 
 func parseSANBasicPawnMove(p *Position, s string) (Move, error) {

@@ -703,7 +703,7 @@ func TestParseSANMoveWhitePromotions(t *testing.T) {
 func TestParseSANMoveCastling(t *testing.T) {
 	pos := getDefaultPosition()
 	moveString := "O-O"
-	expectedMove := Move{E1, G1, Rook}
+	expectedMove := Move{E1, G1, NoPieceType}
 	move, err := ParseSANMove(pos, moveString)
 	if err != nil {
 		t.Errorf("incorrect result: input %s: expected %v, got %v", moveString, nil, err)
@@ -713,7 +713,7 @@ func TestParseSANMoveCastling(t *testing.T) {
 	}
 
 	moveString = "O-O-O"
-	expectedMove = Move{E1, C1, Rook}
+	expectedMove = Move{E1, C1, NoPieceType}
 	move, err = ParseSANMove(pos, moveString)
 	if err != nil {
 		t.Errorf("incorrect result: input %s: expected %v, got %v", moveString, nil, err)
@@ -725,7 +725,7 @@ func TestParseSANMoveCastling(t *testing.T) {
 	pos = getDefaultPosition()
 	pos.Turn = Black
 	moveString = "O-O"
-	expectedMove = Move{E8, G8, Rook}
+	expectedMove = Move{E8, G8, NoPieceType}
 	move, err = ParseSANMove(pos, moveString)
 	if err != nil {
 		t.Errorf("incorrect result: input %s: expected %v, got %v", moveString, nil, err)
@@ -735,7 +735,7 @@ func TestParseSANMoveCastling(t *testing.T) {
 	}
 
 	moveString = "O-O-O"
-	expectedMove = Move{E8, C8, Rook}
+	expectedMove = Move{E8, C8, NoPieceType}
 	move, err = ParseSANMove(pos, moveString)
 	if err != nil {
 		t.Errorf("incorrect result: input %s: expected %v, got %v", moveString, nil, err)
