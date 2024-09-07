@@ -62,6 +62,9 @@ func ParseSANMove(p *Position, s string) (Move, error) {
 	if strings.ContainsRune(cleanedString, '=') {
 		return parseSANPromotion(p, cleanedString)
 	}
+	if len(cleanedString) == 3 {
+		return parseSANPieceMove(p, cleanedString)
+	}
 
 	return Move{}, errors.New("unknown error")
 }
@@ -168,6 +171,423 @@ func parseSANPromotion(p *Position, s string) (Move, error) {
 	move.Promotion = promotion
 
 	return move, nil
+}
+
+func parseSANPieceMove(p *Position, s string) (Move, error) {
+	pieceType, err := parsePieceType(rune(s[0]))
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse SAN move: invalid piece type: input, %s: %w", s, err)
+	}
+	square, err := ParseSquare(s[1:])
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse SAN move: could not parse destination square: input, %s: %w", s, err)
+	}
+	switch pieceType {
+	case Pawn:
+		return Move{}, fmt.Errorf("invalid SAN format: should not specify p for pawn: input %s", s)
+	case Rook:
+		return parseSANRookMove(p, square)
+	case Knight:
+		return parseSANKnightMove(p, square)
+	case Bishop:
+		return parseSANBishopMove(p, square)
+	case Queen:
+		return parseSANQueenMove(p, square)
+	case King:
+		return parseSANKingMove(p, square)
+	default:
+		return Move{}, fmt.Errorf("could not parse SAN move: input, %s", s)
+	}
+}
+
+// TODO reduce repetition
+func parseSANRookMove(p *Position, toSquare Square) (Move, error) {
+	isAmbiguous := false
+	fromSquare := NoSquare
+	for currentSquare := squareToLeft(toSquare); currentSquare != NoSquare; currentSquare = squareToLeft(currentSquare) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Rook && piece.Color == p.Turn {
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	for currentSquare := squareAbove(toSquare); currentSquare != NoSquare; currentSquare = squareAbove(currentSquare) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Rook && piece.Color == p.Turn {
+			if fromSquare != NoSquare {
+				isAmbiguous = true
+			}
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	for currentSquare := squareToRight(toSquare); currentSquare != NoSquare; currentSquare = squareToRight(currentSquare) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Rook && piece.Color == p.Turn {
+			if fromSquare != NoSquare {
+				isAmbiguous = true
+			}
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	for currentSquare := squareBelow(toSquare); currentSquare != NoSquare; currentSquare = squareBelow(currentSquare) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Rook && piece.Color == p.Turn {
+			if fromSquare != NoSquare {
+				isAmbiguous = true
+			}
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	if isAmbiguous {
+		return Move{}, fmt.Errorf("invalid SAN rook move: ambiguous move (multiple possible pieces)")
+	}
+	if fromSquare == NoSquare {
+		return Move{}, fmt.Errorf("invalid SAN rook move: could not find piece to move")
+	}
+	return Move{FromSquare: fromSquare, ToSquare: toSquare}, nil
+}
+
+func parseSANKnightMove(p *Position, toSquare Square) (Move, error) {
+	isAmbiguous := false
+	fromSquare := NoSquare
+	currentSquare := squareAbove(squareAbove(squareToRight(toSquare)))
+	piece := p.PieceAt(currentSquare)
+	if piece.Type == Knight && piece.Color == p.Turn {
+		fromSquare = currentSquare
+	}
+	currentSquare = squareAbove(squareToRight(squareToRight(toSquare)))
+	piece = p.PieceAt(currentSquare)
+	if piece.Type == Knight && piece.Color == p.Turn {
+		if fromSquare != NoSquare {
+			isAmbiguous = true
+		}
+		fromSquare = currentSquare
+	}
+	currentSquare = squareBelow(squareToRight(squareToRight(toSquare)))
+	piece = p.PieceAt(currentSquare)
+	if piece.Type == Knight && piece.Color == p.Turn {
+		if fromSquare != NoSquare {
+			isAmbiguous = true
+		}
+		fromSquare = currentSquare
+	}
+	currentSquare = squareBelow(squareBelow(squareToRight(toSquare)))
+	piece = p.PieceAt(currentSquare)
+	if piece.Type == Knight && piece.Color == p.Turn {
+		if fromSquare != NoSquare {
+			isAmbiguous = true
+		}
+		fromSquare = currentSquare
+	}
+	currentSquare = squareBelow(squareBelow(squareToLeft(toSquare)))
+	piece = p.PieceAt(currentSquare)
+	if piece.Type == Knight && piece.Color == p.Turn {
+		if fromSquare != NoSquare {
+			isAmbiguous = true
+		}
+		fromSquare = currentSquare
+	}
+	currentSquare = squareBelow(squareToLeft(squareToLeft(toSquare)))
+	piece = p.PieceAt(currentSquare)
+	if piece.Type == Knight && piece.Color == p.Turn {
+		if fromSquare != NoSquare {
+			isAmbiguous = true
+		}
+		fromSquare = currentSquare
+	}
+	currentSquare = squareAbove(squareToLeft(squareToLeft(toSquare)))
+	piece = p.PieceAt(currentSquare)
+	if piece.Type == Knight && piece.Color == p.Turn {
+		if fromSquare != NoSquare {
+			isAmbiguous = true
+		}
+		fromSquare = currentSquare
+	}
+	currentSquare = squareAbove(squareAbove(squareToLeft(toSquare)))
+	piece = p.PieceAt(currentSquare)
+	if piece.Type == Knight && piece.Color == p.Turn {
+		if fromSquare != NoSquare {
+			isAmbiguous = true
+		}
+		fromSquare = currentSquare
+	}
+	if isAmbiguous {
+		return Move{}, errors.New("")
+	}
+	if isAmbiguous {
+		return Move{}, fmt.Errorf("invalid SAN knight move: ambiguous move (multiple possible pieces)")
+	}
+	if fromSquare == NoSquare {
+		return Move{}, fmt.Errorf("invalid SAN knight move: could not find piece to move")
+	}
+	return Move{FromSquare: fromSquare, ToSquare: toSquare}, nil
+}
+
+// TODO reduce repetition
+func parseSANBishopMove(p *Position, toSquare Square) (Move, error) {
+	isAmbiguous := false
+	fromSquare := NoSquare
+	for currentSquare := squareAbove(squareToLeft(toSquare)); currentSquare != NoSquare; currentSquare = squareAbove(squareToLeft(currentSquare)) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Bishop && piece.Color == p.Turn {
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	for currentSquare := squareToRight(squareAbove(toSquare)); currentSquare != NoSquare; currentSquare = squareToRight(squareAbove(currentSquare)) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Bishop && piece.Color == p.Turn {
+			if fromSquare != NoSquare {
+				isAmbiguous = true
+			}
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	for currentSquare := squareBelow(squareToRight(toSquare)); currentSquare != NoSquare; currentSquare = squareBelow(squareToRight(currentSquare)) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Bishop && piece.Color == p.Turn {
+			if fromSquare != NoSquare {
+				isAmbiguous = true
+			}
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	for currentSquare := squareToLeft(squareBelow(toSquare)); currentSquare != NoSquare; currentSquare = squareToLeft(squareBelow(currentSquare)) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Bishop && piece.Color == p.Turn {
+			if fromSquare != NoSquare {
+				isAmbiguous = true
+			}
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	if isAmbiguous {
+		return Move{}, fmt.Errorf("invalid SAN bishop move: ambiguous move (multiple possible pieces)")
+	}
+	if fromSquare == NoSquare {
+		return Move{}, fmt.Errorf("invalid SAN bishop move: could not find piece to move")
+	}
+	return Move{FromSquare: fromSquare, ToSquare: toSquare}, nil
+}
+
+// TODO reduce repetition
+func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
+	isAmbiguous := false
+	fromSquare := NoSquare
+	for currentSquare := squareToLeft(toSquare); currentSquare != NoSquare; currentSquare = squareToLeft(currentSquare) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Queen && piece.Color == p.Turn {
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	for currentSquare := squareAbove(toSquare); currentSquare != NoSquare; currentSquare = squareAbove(currentSquare) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Queen && piece.Color == p.Turn {
+			if fromSquare != NoSquare {
+				isAmbiguous = true
+			}
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	for currentSquare := squareToRight(toSquare); currentSquare != NoSquare; currentSquare = squareToRight(currentSquare) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Queen && piece.Color == p.Turn {
+			if fromSquare != NoSquare {
+				isAmbiguous = true
+			}
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	for currentSquare := squareBelow(toSquare); currentSquare != NoSquare; currentSquare = squareBelow(currentSquare) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Queen && piece.Color == p.Turn {
+			if fromSquare != NoSquare {
+				isAmbiguous = true
+			}
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	for currentSquare := squareAbove(squareToLeft(toSquare)); currentSquare != NoSquare; currentSquare = squareAbove(squareToLeft(currentSquare)) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Queen && piece.Color == p.Turn {
+			if fromSquare != NoSquare {
+				isAmbiguous = true
+			}
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	for currentSquare := squareToRight(squareAbove(toSquare)); currentSquare != NoSquare; currentSquare = squareToRight(squareAbove(currentSquare)) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Queen && piece.Color == p.Turn {
+			if fromSquare != NoSquare {
+				isAmbiguous = true
+			}
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	for currentSquare := squareBelow(squareToRight(toSquare)); currentSquare != NoSquare; currentSquare = squareBelow(squareToRight(currentSquare)) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Queen && piece.Color == p.Turn {
+			if fromSquare != NoSquare {
+				isAmbiguous = true
+			}
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	for currentSquare := squareToLeft(squareBelow(toSquare)); currentSquare != NoSquare; currentSquare = squareToLeft(squareBelow(currentSquare)) {
+		piece := p.PieceAt(currentSquare)
+		if piece.Type == Queen && piece.Color == p.Turn {
+			if fromSquare != NoSquare {
+				isAmbiguous = true
+			}
+			fromSquare = currentSquare
+			break
+		}
+		if piece != NoPiece {
+			break
+		}
+	}
+	if isAmbiguous {
+		return Move{}, fmt.Errorf("invalid SAN Queen move: ambiguous move (multiple possible pieces)")
+	}
+	if fromSquare == NoSquare {
+		return Move{}, fmt.Errorf("invalid SAN Queen move: could not find piece to move")
+	}
+	return Move{FromSquare: fromSquare, ToSquare: toSquare}, nil
+}
+
+func parseSANKingMove(p *Position, toSquare Square) (Move, error) {
+	isAmbiguous := false
+	fromSquare := NoSquare
+	currentSquare := squareAbove(toSquare)
+	piece := p.PieceAt(currentSquare)
+	if piece.Type == King && piece.Color == p.Turn {
+		fromSquare = currentSquare
+	}
+	currentSquare = squareAbove(squareToRight(toSquare))
+	piece = p.PieceAt(currentSquare)
+	if piece.Type == King && piece.Color == p.Turn {
+		if fromSquare != NoSquare {
+			isAmbiguous = true
+		}
+		fromSquare = currentSquare
+	}
+	currentSquare = squareToRight(toSquare)
+	piece = p.PieceAt(currentSquare)
+	if piece.Type == King && piece.Color == p.Turn {
+		if fromSquare != NoSquare {
+			isAmbiguous = true
+		}
+		fromSquare = currentSquare
+	}
+	currentSquare = squareBelow(squareToRight(toSquare))
+	piece = p.PieceAt(currentSquare)
+	if piece.Type == King && piece.Color == p.Turn {
+		if fromSquare != NoSquare {
+			isAmbiguous = true
+		}
+		fromSquare = currentSquare
+	}
+	currentSquare = squareBelow(toSquare)
+	piece = p.PieceAt(currentSquare)
+	if piece.Type == King && piece.Color == p.Turn {
+		if fromSquare != NoSquare {
+			isAmbiguous = true
+		}
+		fromSquare = currentSquare
+	}
+	currentSquare = squareBelow(squareToLeft(toSquare))
+	piece = p.PieceAt(currentSquare)
+	if piece.Type == King && piece.Color == p.Turn {
+		if fromSquare != NoSquare {
+			isAmbiguous = true
+		}
+		fromSquare = currentSquare
+	}
+	currentSquare = squareToLeft(toSquare)
+	piece = p.PieceAt(currentSquare)
+	if piece.Type == King && piece.Color == p.Turn {
+		if fromSquare != NoSquare {
+			isAmbiguous = true
+		}
+		fromSquare = currentSquare
+	}
+	currentSquare = squareAbove(squareToLeft(toSquare))
+	piece = p.PieceAt(currentSquare)
+	if piece.Type == King && piece.Color == p.Turn {
+		if fromSquare != NoSquare {
+			isAmbiguous = true
+		}
+		fromSquare = currentSquare
+	}
+	if isAmbiguous {
+		return Move{}, errors.New("")
+	}
+	if isAmbiguous {
+		return Move{}, fmt.Errorf("invalid SAN King move: ambiguous move (multiple possible pieces)")
+	}
+	if fromSquare == NoSquare {
+		return Move{}, fmt.Errorf("invalid SAN King move: could not find piece to move")
+	}
+	return Move{FromSquare: fromSquare, ToSquare: toSquare}, nil
 }
 
 // IsValidMove makes sure each of the elements in Move m are logical. Namely that the squares can be found on a chess board.
