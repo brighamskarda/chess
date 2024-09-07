@@ -53,14 +53,31 @@ func ParseSANMove(p *Position, s string) (Move, error) {
 		return Move{}, errors.New("could not parse SAN move: position turn is not set to white or black")
 	}
 
-	if len(cleanedString) == 2 {
+	if isSANBasicPawnMove(p, cleanedString) {
 		return parseSANBasicPawnMove(p, cleanedString)
 	}
-	if len(cleanedString) == 4 && unicode.IsLower(rune(cleanedString[0])) && rune(cleanedString[1]) == 'x' {
+	if isSANPawnCapture(p, cleanedString) {
 		return parseSANPawnCapture(p, cleanedString)
+	}
+	if strings.ContainsRune(cleanedString, '=') {
+		return parseSANPromotion(p, cleanedString)
 	}
 
 	return Move{}, errors.New("unknown error")
+}
+
+func isSANBasicPawnMove(p *Position, s string) bool {
+	return len(s) == 2 &&
+		!(rune(s[1]) == '8' && p.Turn == White) &&
+		!(rune(s[1]) == '1' && p.Turn == Black)
+}
+
+func isSANPawnCapture(p *Position, s string) bool {
+	return len(s) == 4 &&
+		unicode.IsLower(rune(s[0])) &&
+		rune(s[1]) == 'x' &&
+		!(rune(s[3]) == '8' && p.Turn == White) &&
+		!(rune(s[3]) == '1' && p.Turn == Black)
 }
 
 func parseSANBasicPawnMove(p *Position, s string) (Move, error) {
@@ -117,13 +134,40 @@ func parseSANPawnCapture(p *Position, s string) (Move, error) {
 	}
 
 	pieceAtToSquare := p.PieceAt(toSquare)
-	if pieceAtToSquare.Color == p.Turn && toSquare != p.EnPassant {
+	if pieceAtToSquare.Color == p.Turn || (pieceAtToSquare.Color == NoColor && toSquare != p.EnPassant) {
 		return Move{}, fmt.Errorf("invalid SAN pawn capture move: invalid piece to capture: square, %v piece, %v, en passant %v",
 			toSquare, pieceAtToSquare, p.EnPassant)
 	}
 
 	return Move{FromSquare: fromSquare, ToSquare: toSquare, Promotion: NoPieceType}, nil
-	// TODO Implement this
+}
+
+func parseSANPromotion(p *Position, s string) (Move, error) {
+	sNoPromotion := s[:strings.IndexRune(s, '=')]
+	move := Move{}
+	var err error = nil
+	if len(sNoPromotion) == 2 {
+		move, err = parseSANBasicPawnMove(p, sNoPromotion)
+	} else if len(sNoPromotion) == 4 && unicode.IsLower(rune(sNoPromotion[0])) && rune(sNoPromotion[1]) == 'x' {
+		move, err = parseSANPawnCapture(p, sNoPromotion)
+	} else {
+		return Move{}, fmt.Errorf("could not parse move before promotion: num of chars before '=' is not 2 or 4: input %s", s)
+	}
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse move before promotion: %w", err)
+	}
+
+	promotion, err := parsePieceType(rune(s[len(s)-1]))
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse SAN promotion: input %s: %w", s, err)
+	}
+	if promotion == King || promotion == Pawn {
+		return Move{}, fmt.Errorf("invalid promotion: can't promote to king or pawn: input %s", s)
+	}
+
+	move.Promotion = promotion
+
+	return move, nil
 }
 
 // IsValidMove makes sure each of the elements in Move m are logical. Namely that the squares can be found on a chess board.
