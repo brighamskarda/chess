@@ -275,3 +275,9 @@ func positionsEqualNoMoveCounter(pos1 *Position, pos2 *Position) bool {
 		pos1.BlackQueenSideCastle == pos2.BlackQueenSideCastle &&
 		pos1.EnPassant == pos2.EnPassant
 }
+
+func (g *Game) CanClaimDraw() bool {
+	return (g.position.HalfMove >= 100 && !g.IsCheckMate()) ||
+		g.HasThreeFoldRepetition() ||
+		g.IsStaleMate()
+}
