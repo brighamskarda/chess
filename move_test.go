@@ -762,7 +762,7 @@ func TestParseSANMoveIgnoresOtherSymbols(t *testing.T) {
 
 	pos.SetPieceAt(B2, WhiteRook)
 	moveString = "Ra2#"
-	expectedMove = Move{B1, A1, NoPieceType}
+	expectedMove = Move{B2, A2, NoPieceType}
 	move, err = ParseSANMove(pos, moveString)
 	if err != nil {
 		t.Errorf("incorrect result: input %s: expected %v, got %v", moveString, nil, err)

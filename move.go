@@ -149,6 +149,10 @@ func parseSANPawnCapture(p *Position, s string) (Move, error) {
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN pawn capture move: input %s: %w", s, err)
 	}
+	diff := file - toSquare.File
+	if diff == 0 || (diff > 1 && diff < math.MaxUint8) {
+		return Move{}, fmt.Errorf("could not parse SAN pawn capture move: pawn capture square invalid: input, %s", s)
+	}
 	var fromSquare Square
 	if p.Turn == White {
 		fromSquare = Square{File: file, Rank: toSquare.Rank - 1}
