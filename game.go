@@ -17,7 +17,6 @@ type Game struct {
 	position    *Position
 	moveHistory []Move
 	tags        map[string]string
-	result      Result
 }
 
 type Result byte
@@ -31,6 +30,32 @@ const (
 
 func isValidResult(r Result) bool {
 	return r <= Draw
+}
+
+func parseResult(s string) Result {
+	switch s {
+	case "1-0":
+		return WhiteWins
+	case "0-1":
+		return BlackWins
+	case "1/2-1/2":
+		return Draw
+	default:
+		return NoResult
+	}
+}
+
+func (r Result) String() string {
+	switch r {
+	case WhiteWins:
+		return "1-0"
+	case BlackWins:
+		return "0-1"
+	case Draw:
+		return "1/2-1/2"
+	default:
+		return "*"
+	}
 }
 
 // NewGame returns a [*Game] representing the starting position for a game of chess.
@@ -50,11 +75,11 @@ func NewGame() *Game {
 		position:    position,
 		moveHistory: []Move{},
 		tags:        tags,
-		result:      NoResult,
 	}
 }
 
 // Move performs the given move. If move m is not legal g remains unchanged and an error is returned.
+// If the move is legal the result tag is set to * (NoResult)
 func (g *Game) Move(m Move) error {
 	legalMoves := GenerateLegalMoves(g.position)
 	if !slices.Contains(legalMoves, m) {
@@ -62,6 +87,7 @@ func (g *Game) Move(m Move) error {
 	}
 	g.position.Move(m)
 	g.moveHistory = append(g.moveHistory, m)
+	g.SetResult(NoResult)
 	return nil
 }
 
@@ -72,7 +98,6 @@ func (g *Game) Copy() *Game {
 		position:    &positionCopy,
 		moveHistory: slices.Clone(g.moveHistory),
 		tags:        maps.Clone(g.tags),
-		result:      g.result,
 	}
 	return gameCopy
 }
@@ -117,4 +142,20 @@ func (g *Game) FullMove() uint16 {
 
 func (g *Game) EnPassant() Square {
 	return g.position.EnPassant
+}
+
+func (g *Game) IsCheckMate() bool {
+	return IsCheckMate(g.position)
+}
+
+func (g *Game) IsStaleMate() bool {
+	return IsStaleMate(g.position)
+}
+
+func (g *Game) GetResult() Result {
+	return parseResult(g.tags["Result"])
+}
+
+func (g *Game) SetResult(r Result) {
+	g.tags["Result"] = r.String()
 }

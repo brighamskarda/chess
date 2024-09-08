@@ -49,9 +49,6 @@ func TestNewGame(t *testing.T) {
 	if len(game.moveHistory) != 0 {
 		t.Errorf("move history not empty: expected [], got %v", game.moveHistory)
 	}
-	if game.result != NoResult {
-		t.Errorf("result incorrect: expected 0, got %v", game.result)
-	}
 }
 
 func TestGameMove(t *testing.T) {
@@ -78,5 +75,22 @@ func TestGameMove(t *testing.T) {
 	}
 	if !reflect.DeepEqual(expectedMoveHistory, game.moveHistory) {
 		t.Errorf("incorrect result: moveHistory incorrect: expected %v, got %v", expectedMoveHistory, game.moveHistory)
+	}
+}
+
+func TestGameMoveUpdatesResultToNoResult(t *testing.T) {
+	game := NewGame()
+	game.SetResult(WhiteWins)
+	if game.GetResult() != WhiteWins {
+		t.Errorf("game.SetResult did not work")
+	}
+	game.Move(Move{E2, E4, NoPieceType})
+	if game.GetResult() != NoResult {
+		t.Errorf("game.Move did not updateResult")
+	}
+	game.SetResult(WhiteWins)
+	game.Move(Move{D2, D4, NoPieceType})
+	if game.GetResult() == NoResult {
+		t.Errorf("game.Move updates result when it shouldn't")
 	}
 }
