@@ -79,7 +79,8 @@ func NewGame() *Game {
 }
 
 // Move performs the given move. If move m is not legal g remains unchanged and an error is returned.
-// If the move is legal the result tag is set to * (NoResult)
+// If the move is legal the result tag is set to * (NoResult). If the position ends in checkmate
+// or stalemate the result tag is updated accordingly.
 func (g *Game) Move(m Move) error {
 	legalMoves := GenerateLegalMoves(g.position)
 	if !slices.Contains(legalMoves, m) {
@@ -87,7 +88,18 @@ func (g *Game) Move(m Move) error {
 	}
 	g.position.Move(m)
 	g.moveHistory = append(g.moveHistory, m)
-	g.SetResult(NoResult)
+	if IsCheckMate(g.position) {
+		if g.position.Turn == Black {
+			g.SetResult(WhiteWins)
+		}
+		if g.position.Turn == White {
+			g.SetResult(BlackWins)
+		}
+	} else if IsStaleMate(g.position) {
+		g.SetResult(Draw)
+	} else {
+		g.SetResult(NoResult)
+	}
 	return nil
 }
 

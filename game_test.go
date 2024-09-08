@@ -94,3 +94,35 @@ func TestGameMoveUpdatesResultToNoResult(t *testing.T) {
 		t.Errorf("game.Move updates result when it shouldn't")
 	}
 }
+
+func TestGameMoveUpdatesResultForCheckmate(t *testing.T) {
+	game := NewGame()
+	game.position, _ = ParseFen("r4r1k/pp3Q2/6pB/4P3/6P1/8/P5PP/R4R1K w - - 3 22")
+	game.Move(Move{F7, G7, NoPieceType})
+	if game.GetResult() != WhiteWins {
+		t.Errorf("game.Move did not update result for white winning")
+	}
+
+	game = NewGame()
+	game.position, _ = ParseFen("K7/4kpp1/5b1p/8/8/6P1/1q3P1P/2q5 b - - 9 44")
+	game.Move(Move{C1, A1, NoPieceType})
+	if game.GetResult() != BlackWins {
+		t.Errorf("game.Move did not update result for black winning")
+	}
+}
+
+func TestGameMoveUpdatesResultForStalemate(t *testing.T) {
+	game := NewGame()
+	game.position, _ = ParseFen("8/8/8/8/4K2p/7k/6p1/6B1 w - - 0 50")
+	game.Move(Move{E4, F3, NoPieceType})
+	if game.GetResult() != Draw {
+		t.Errorf("game.Move did not update result for black to move on stalemate")
+	}
+
+	game = NewGame()
+	game.position, _ = ParseFen("8/7p/3b2p1/4kp2/4p3/2pn3r/8/3K4 b - - 3 50")
+	game.Move(Move{H3, H2, NoPieceType})
+	if game.GetResult() != Draw {
+		t.Errorf("game.Move did not update result for white to move on stalemate")
+	}
+}
