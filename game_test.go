@@ -157,3 +157,19 @@ func TestGetandSetTags(t *testing.T) {
 		t.Errorf(`game.SetTag("Result", "1/2-1/2") set result when it shouldn't have`)
 	}
 }
+
+func TestRemoveTag(t *testing.T) {
+	game := NewGame()
+	game.RemoveTag("Site")
+	tag, err := game.GetTag("Site")
+	if tag != "github.com/brighamskarda/chess" || err != nil {
+		t.Errorf("game.RemoveTag removed a tag it shouldn't have")
+	}
+
+	game.SetTag("hi", "lol")
+	game.RemoveTag("hi")
+	_, err = game.GetTag("hi")
+	if err == nil {
+		t.Errorf("game.RemoveTag did not work")
+	}
+}

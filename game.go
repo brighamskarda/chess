@@ -192,3 +192,14 @@ func (g *Game) SetTag(tag string, value string) {
 	}
 	g.tags[tag] = value
 }
+
+// Remove tag will remove any pgn tag except the 7 required tags specified [here].
+//
+// [here]: http://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.1.1
+func (g *Game) RemoveTag(tag string) {
+	requiredTags := []string{"Event", "Site", "Date", "Round", "White", "Black", "Result"}
+	if slices.Contains(requiredTags, tag) {
+		return
+	}
+	delete(g.tags, tag)
+}
