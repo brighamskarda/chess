@@ -171,3 +171,24 @@ func (g *Game) GetResult() Result {
 func (g *Game) SetResult(r Result) {
 	g.tags["Result"] = r.String()
 }
+
+func (g *Game) ValidMoves() []Move {
+	return GenerateLegalMoves(g.position)
+}
+
+func (g *Game) GetTag(t string) (string, error) {
+	s, ok := g.tags[t]
+	if !ok {
+		return s, fmt.Errorf("game does not contain tag \"%s\"", t)
+	}
+	return s, nil
+}
+
+// SetTag sets any tag for the game so that it will show up in the pgn file. The Result tag cannot be
+// set with this function, please use [Game.SetResult] instead.
+func (g *Game) SetTag(tag string, value string) {
+	if tag == "Result" {
+		return
+	}
+	g.tags[tag] = value
+}

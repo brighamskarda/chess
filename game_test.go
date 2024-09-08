@@ -126,3 +126,34 @@ func TestGameMoveUpdatesResultForStalemate(t *testing.T) {
 		t.Errorf("game.Move did not update result for white to move on stalemate")
 	}
 }
+
+func TestGetandSetTags(t *testing.T) {
+	game := NewGame()
+	tag, err := game.GetTag("Round")
+	if err != nil {
+		t.Errorf("game.GetTag(\"Round\") returned err: %v", err)
+	}
+	if tag != "1" {
+		t.Errorf(`game.GetTag("Round") incorrect result: expected 1, got %s`, tag)
+	}
+
+	_, err = game.GetTag("fjdkslfjd")
+	if err == nil {
+		t.Errorf(`game.GetTag("fjdkslfjd") did not return error`)
+	}
+
+	game.SetTag("Round", "2")
+	tag, err = game.GetTag("Round")
+	if err != nil {
+		t.Errorf("game.GetTag(\"Round\") returned err: %v", err)
+	}
+	if tag != "2" {
+		t.Errorf(`game.GetTag("Round") incorrect result: expected 2, got %s`, tag)
+	}
+
+	game.SetTag("Result", "1/2-1/2")
+	tag, _ = game.GetTag("Result")
+	if tag != "*" {
+		t.Errorf(`game.SetTag("Result", "1/2-1/2") set result when it shouldn't have`)
+	}
+}
