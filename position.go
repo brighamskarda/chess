@@ -315,6 +315,7 @@ func generateFenPos(p *Position) string {
 		}
 		if piece != NoPiece && numBlank > 0 {
 			fen.WriteString(strconv.FormatUint(uint64(numBlank), 10))
+			numBlank = 0
 		}
 		if piece == NoPiece {
 			numBlank++
@@ -323,6 +324,9 @@ func generateFenPos(p *Position) string {
 		}
 		fen.WriteString(piece.String())
 		currentFile++
+	}
+	if numBlank > 0 {
+		fen.WriteString(strconv.FormatUint(uint64(numBlank), 10))
 	}
 
 	return fen.String()

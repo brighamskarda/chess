@@ -182,3 +182,44 @@ func TestGetAllTags(t *testing.T) {
 		t.Errorf("did not get all tags")
 	}
 }
+
+func TestSetPosition(t *testing.T) {
+	game := NewGame()
+	game.Move(Move{E2, E4, NoPieceType})
+	game.SetResult(WhiteWins)
+	position, _ := ParseFen("8/7p/3b2p1/2p2p2/3kpn2/7r/8/5K2 b - - 1 46")
+	err := game.SetPosition(position)
+	if err != nil {
+		t.Error("SetPosition game an error")
+	}
+	if *game.position != *position {
+		t.Error("SetPosition did not set the position")
+	}
+	if tag, _ := game.GetTag("SetUp"); tag != "1" {
+		t.Error("SetPosition did not set tag 'SetUp'")
+	}
+	if tag, _ := game.GetTag("FEN"); tag != "8/7p/3b2p1/2p2p2/3kpn2/7r/8/5K2 b - - 1 46" {
+		t.Error("SetPosition did not set tag 'FEN'")
+	}
+	if len(game.moveHistory) != 0 {
+		t.Error("SetPosition did not clear move history")
+	}
+	if game.GetResult() != NoResult {
+		t.Error("SetPosition did not reset result")
+	}
+
+	position, _ = ParseFen("8/7p/3b2p1/4kp2/4p3/2pn4/7r/3K4 w - - 4 51")
+	game.SetPosition(position)
+	if game.GetResult() != Draw {
+		t.Error("SetPosition did not set result")
+	}
+}
+
+func TestSetInvalidPosition(t *testing.T) {
+	game := NewGame()
+	position, _ := ParseFen("8/7p/3b2p1/4kp2/4p3/2pn4/7r/3KK3 w - - 4 51")
+	err := game.SetPosition(position)
+	if err == nil {
+		t.Errorf("game accepted an invalid position")
+	}
+}

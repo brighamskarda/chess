@@ -152,6 +152,13 @@ func TestGenerateFen(t *testing.T) {
 	if GenerateFen(pos) != "Pnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQq e6 32 16" {
 		t.Errorf(`GenerateFen expected "Pnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQq e6 32 16" but got %s`, GenerateFen(pos))
 	}
+
+	expected := "8/7p/3b2p1/2p2p2/3kpn2/7r/8/5K2 b - - 1 46"
+	pos, _ = ParseFen(expected)
+	actual := GenerateFen(pos)
+	if expected != actual {
+		t.Errorf("GenerateFen got wrong result: expected %s, got %s", expected, actual)
+	}
 }
 
 func BenchmarkGenerateFen(b *testing.B) {

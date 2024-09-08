@@ -193,11 +193,13 @@ func (g *Game) SetTag(tag string, value string) {
 	g.tags[tag] = value
 }
 
-// Remove tag will remove any pgn tag except the 7 required tags specified [here].
+// Remove tag will remove any pgn tag except the 7 required tags specified [here], and the SetUp and FEN
+// tags specified [here.]
 //
 // [here]: http://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.1.1
+// [here.]: http://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c9.7
 func (g *Game) RemoveTag(tag string) {
-	requiredTags := []string{"Event", "Site", "Date", "Round", "White", "Black", "Result"}
+	requiredTags := []string{"Event", "Site", "Date", "Round", "White", "Black", "Result", "SetUp", "FEN"}
 	if slices.Contains(requiredTags, tag) {
 		return
 	}
@@ -206,4 +208,29 @@ func (g *Game) RemoveTag(tag string) {
 
 func (g *Game) GetAllTags() map[string]string {
 	return maps.Clone(g.tags)
+}
+
+// SetPosition sets the games position to the given position only if the position is a valid chess
+// position. The result tag is updated to match if the game is in mate, or could still be going.
+// Move history is cleared, and the pgn tags "SetUp" and "FEN" are set accordingly.
+func (g *Game) SetPosition(p *Position) error {
+	if !IsValidPosition(p) {
+		return errors.New("invalid position: game can only set valid chess positions")
+	}
+	*g.position = *p
+	g.moveHistory = []Move{}
+	g.tags["SetUp"] = "1"
+	g.tags["FEN"] = GenerateFen(p)
+	if IsCheckMate(p) {
+		if p.Turn == White {
+			g.SetResult(BlackWins)
+		} else {
+			g.SetResult(WhiteWins)
+		}
+	} else if IsStaleMate(p) {
+		g.SetResult(Draw)
+	} else {
+		g.SetResult(NoResult)
+	}
+	return nil
 }
