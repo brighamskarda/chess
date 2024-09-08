@@ -203,3 +203,7 @@ func (g *Game) RemoveTag(tag string) {
 	}
 	delete(g.tags, tag)
 }
+
+func (g *Game) GetAllTags() map[string]string {
+	return maps.Clone(g.tags)
+}

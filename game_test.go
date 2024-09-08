@@ -173,3 +173,12 @@ func TestRemoveTag(t *testing.T) {
 		t.Errorf("game.RemoveTag did not work")
 	}
 }
+
+func TestGetAllTags(t *testing.T) {
+	game := NewGame()
+	game.SetTag("hi", "lol")
+	allTags := game.GetAllTags()
+	if len(allTags) != 8 {
+		t.Errorf("did not get all tags")
+	}
+}
