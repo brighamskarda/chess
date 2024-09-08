@@ -223,3 +223,43 @@ func TestSetInvalidPosition(t *testing.T) {
 		t.Errorf("game accepted an invalid position")
 	}
 }
+
+func TestHasThreeFoldRepetition(t *testing.T) {
+	game := NewGame()
+	pos, _ := ParseFen("n3k2r/8/8/8/8/8/8/N3K2R w Kk - 0 1")
+	game.SetPosition(pos)
+
+	if game.HasThreeFoldRepetition() {
+		t.Errorf("game should not have three fold repetition")
+	}
+
+	move1 := Move{A1, B3, NoPieceType}
+	move2 := Move{A8, B6, NoPieceType}
+	move3 := Move{B3, A1, NoPieceType}
+	move4 := Move{B6, A8, NoPieceType}
+	game.Move(move1)
+	game.Move(move2)
+	game.Move(move3)
+	game.Move(move4)
+	game.Move(Move{H1, H2, NoPieceType})
+	game.Move(Move{H8, H7, NoPieceType})
+	game.Move(Move{H2, H1, NoPieceType})
+	game.Move(Move{H7, H8, NoPieceType})
+	game.Move(move1)
+	game.Move(move2)
+	game.Move(move3)
+	game.Move(move4)
+
+	if game.HasThreeFoldRepetition() {
+		t.Errorf("game should not have three fold repetition")
+	}
+
+	game.Move(move1)
+	game.Move(move2)
+	game.Move(move3)
+	game.Move(move4)
+
+	if !game.HasThreeFoldRepetition() {
+		t.Errorf("game should  have three fold repetition")
+	}
+}

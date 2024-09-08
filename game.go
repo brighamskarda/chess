@@ -234,3 +234,44 @@ func (g *Game) SetPosition(p *Position) error {
 	}
 	return nil
 }
+
+func (g *Game) HasThreeFoldRepetition() bool {
+	allPositions := generateAllGamePositions(g)
+	for index, pos1 := range allPositions[:len(allPositions)-1] {
+		numEquivalentPositions := 1
+		for index2, pos2 := range allPositions[index+1:] {
+			if positionsEqualNoMoveCounter(&pos1, &pos2) {
+				numEquivalentPositions++
+				if numEquivalentPositions >= 3 {
+					numEquivalentPositions = index2
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func generateAllGamePositions(g *Game) []Position {
+	pos, _ := ParseFen(DefaultFen)
+	if fen, err := g.GetTag("FEN"); err == nil {
+		pos, _ = ParseFen(fen)
+	}
+	allPositions := make([]Position, 0, g.FullMove()*2+1)
+	allPositions = append(allPositions, *pos)
+	for _, move := range g.moveHistory {
+		pos.Move(move)
+		allPositions = append(allPositions, *pos)
+	}
+	return allPositions
+}
+
+func positionsEqualNoMoveCounter(pos1 *Position, pos2 *Position) bool {
+	return pos1.Board == pos2.Board &&
+		pos1.Turn == pos2.Turn &&
+		pos1.WhiteKingSideCastle == pos2.WhiteKingSideCastle &&
+		pos1.WhiteQueenSideCastle == pos2.WhiteQueenSideCastle &&
+		pos1.BlackKingSideCastle == pos2.BlackKingSideCastle &&
+		pos1.BlackQueenSideCastle == pos2.BlackQueenSideCastle &&
+		pos1.EnPassant == pos2.EnPassant
+}
