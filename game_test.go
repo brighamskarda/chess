@@ -3,6 +3,7 @@ package chess
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -261,5 +262,52 @@ func TestHasThreeFoldRepetition(t *testing.T) {
 
 	if !game.HasThreeFoldRepetition() {
 		t.Errorf("game should  have three fold repetition")
+	}
+}
+
+func TestWritePgn(t *testing.T) {
+	game := NewGame()
+	game.SetTag("Event", "Rated blitz game")
+	game.SetTag("Site", "https://lichess.org/0T2akByS")
+	game.SetTag("Date", "2024.09.11")
+	game.SetTag("White", "Kathulu9")
+	game.SetTag("Black", "ostoorah")
+	game.SetTag("WhiteElo", "1525")
+	game.SetTag("BlackElo", "1455")
+	moveList := []string{
+		"e4", "c5", "Nf3", "Nc6", "Bc4", "Nf6", "c3", "Nxe4", "O-O", "Nd6", "d4", "Nxc4", "dxc5", "g6", "Qxd7+", "Qxd7", "Rd1", "Qxd1+", "Ne1", "Qxe1#",
+	}
+	for _, moveString := range moveList {
+		err := game.MoveSan(moveString)
+		if err != nil {
+			t.Fatalf("game failed to perform move: input %s: %s", moveString, err)
+		}
+	}
+	expected := `[Event "Rated blitz game"]
+[Site "https://lichess.org/0T2akByS"]
+[Date "2024.09.11"]
+[Round "1"]
+[White "Kathulu9"]
+[Black "ostoorah"]
+[Result "0-1"]
+[WhiteElo "1525"]
+[BlackElo "1455"]
+
+1. e4 c5 2. Nf3 Nc6 3. Bc4 Nf6 4. c3 Nxe4 5. O-O Nd6 6. d4 Nxc4 7. dxc5 g6 8. Qxd7+ Qxd7 9. Rd1 Qxd1+ 10. Ne1 Qxe1# 0-1`
+	altExptected := `[Event "Rated blitz game"]
+[Site "https://lichess.org/0T2akByS"]
+[Date "2024.09.11"]
+[Round "1"]
+[White "Kathulu9"]
+[Black "ostoorah"]
+[Result "0-1"]
+[BlackElo "1455"]
+[WhiteElo "1525"]
+
+1. e4 c5 2. Nf3 Nc6 3. Bc4 Nf6 4. c3 Nxe4 5. O-O Nd6 6. d4 Nxc4 7. dxc5 g6 8. Qxd7+ Qxd7 9. Rd1 Qxd1+ 10. Ne1 Qxe1# 0-1`
+	actual := &strings.Builder{}
+	WritePgn(game, actual)
+	if actual.String() != expected && actual.String() != altExptected {
+		t.Errorf("did not get expected value: %s", cmp.Diff(expected, actual.String()))
 	}
 }

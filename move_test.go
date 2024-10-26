@@ -771,3 +771,12 @@ func TestParseSANMoveIgnoresOtherSymbols(t *testing.T) {
 		t.Errorf("incorrect result: input %s: expected %v, got %v", moveString, expectedMove, move)
 	}
 }
+
+func TestResolveSanStringAmbiguity(t *testing.T) {
+	pos, _ := ParseFen("k7/8/8/8/2Q5/2Q1Q3/8/K7 w - - 0 1")
+	move := Move{C3, D4, NoPieceType}
+	result := resolveSanStringAmbiguity(move, pos)
+	if result != "c3" {
+		t.Errorf("incorrect result: expected %v, got %v", "C3", result)
+	}
+}

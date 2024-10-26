@@ -22,6 +22,110 @@ func (m Move) String() string {
 	return returnString
 }
 
+// SanString converts a move to standard algebraic notation. It needs position information to do this. The position provided should be the position just before the move was made.
+// Expects that move and position are valid. Results are undefined otherwise.
+func (m Move) SanString(p *Position) string {
+	piece := p.PieceAt(m.FromSquare)
+	if piece.Type == Pawn {
+		return sanStringPawn(m, p)
+	}
+	if isCastleMove(p, m) {
+		return sanStringCastleMove(m)
+	}
+
+	sanString := piece.Type.String()
+	sanString += resolveSanStringAmbiguity(m, p)
+	if p.PieceAt(m.ToSquare) != NoPiece {
+		sanString += "x"
+	}
+	sanString += strings.ToLower(m.ToSquare.String())
+
+	newPosition := *p
+	newPosition.Move(m)
+
+	if IsCheckMate(&newPosition) {
+		sanString += "#"
+		return sanString
+	}
+
+	if IsCheck(&newPosition) {
+		sanString += "+"
+		return sanString
+	}
+
+	return sanString
+}
+
+func sanStringPawn(m Move, p *Position) string {
+	sanString := ""
+	if p.PieceAt(m.ToSquare) == NoPiece {
+		sanString += strings.ToLower(m.ToSquare.String())
+	} else {
+		sanString += strings.ToLower(m.FromSquare.File.String()) + "x" + strings.ToLower(m.ToSquare.String())
+	}
+
+	if m.Promotion != NoPieceType {
+		sanString += "=" + m.Promotion.String()
+	}
+
+	newPosition := *p
+	newPosition.Move(m)
+
+	if IsCheckMate(&newPosition) {
+		sanString += "#"
+		return sanString
+	}
+
+	if IsCheck(&newPosition) {
+		sanString += "+"
+		return sanString
+	}
+
+	return sanString
+}
+
+func sanStringCastleMove(m Move) string {
+	if m.ToSquare.File == FileG {
+		return "O-O"
+	}
+	if m.ToSquare.File == FileC {
+		return "O-O-O"
+	}
+	return "O?O"
+}
+
+func resolveSanStringAmbiguity(m Move, p *Position) string {
+	piece := p.PieceAt(m.FromSquare)
+	validMoves := GenerateLegalMoves(p)
+	disambiguator := ""
+	hasFile := false
+	hasRank := false
+	for _, move := range validMoves {
+		if move == m {
+			continue
+		}
+		if move.ToSquare == m.ToSquare {
+			possibleAmbiguousPiece := p.PieceAt(move.FromSquare)
+			if possibleAmbiguousPiece == piece {
+				// different files
+				if move.FromSquare.File != m.FromSquare.File && !hasFile {
+					disambiguator = m.FromSquare.File.String() + disambiguator
+					hasFile = true
+				} else if move.FromSquare.Rank != m.FromSquare.Rank && !hasRank {
+					// different rank
+					disambiguator += m.FromSquare.Rank.String()
+					hasRank = true
+				}
+
+				if hasFile && hasRank {
+					break
+				}
+			}
+		}
+	}
+	return strings.ToLower(disambiguator)
+}
+
 // ParseUCIMove expects a UCI compatible move string. Format should be Square1Square2Promotion, where promotion is optional.
 func ParseUCIMove(s string) (Move, error) {
 	if len(s) != 4 && len(s) != 5 {

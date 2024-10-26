@@ -3,6 +3,7 @@ package chess
 import (
 	"errors"
 	"fmt"
+	"io"
 	"maps"
 	"slices"
 	"time"
@@ -103,6 +104,14 @@ func (g *Game) Move(m Move) error {
 	return nil
 }
 
+func (g *Game) MoveSan(s string) error {
+	move, err := ParseSANMove(g.position, s)
+	if err != nil {
+		return err
+	}
+	return g.Move(move)
+}
+
 // Returns a copy of current game.
 func (g *Game) Copy() *Game {
 	positionCopy := *g.position
@@ -184,19 +193,19 @@ func (g *Game) GetTag(t string) (string, error) {
 	return s, nil
 }
 
-// SetTag sets any tag for the game so that it will show up in the pgn file. The Result tag cannot be
-// set with this function, please use [Game.SetResult] instead.
+// SetTag sets any tag for the game so that it will show up in the pgn file. The Result, SetUp, and FEN tags cannot be set with this function. Please use the [Game.SetResult] function to set the result, the [Game.SetPosition] function to set the other two tags.
 func (g *Game) SetTag(tag string, value string) {
-	if tag == "Result" {
+	if tag == "Result" || tag == "SetUp" || tag == "FEN" {
 		return
 	}
 	g.tags[tag] = value
 }
 
 // Remove tag will remove any pgn tag except the 7 required tags specified [here], and the SetUp and FEN
-// tags specified [here.]
+// tags specified [here]. If you wish to remove the SetUp and FEN tags it is best to simply make a new game.
 //
 // [here]: http://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.1.1
+//
 // [here.]: http://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c9.7
 func (g *Game) RemoveTag(tag string) {
 	requiredTags := []string{"Event", "Site", "Date", "Round", "White", "Black", "Result", "SetUp", "FEN"}
@@ -235,6 +244,7 @@ func (g *Game) SetPosition(p *Position) error {
 	return nil
 }
 
+// TODO Use a map instead for more efficiency
 func (g *Game) HasThreeFoldRepetition() bool {
 	allPositions := generateAllGamePositions(g)
 	for index, pos1 := range allPositions[:len(allPositions)-1] {
@@ -280,4 +290,62 @@ func (g *Game) CanClaimDraw() bool {
 	return (g.position.HalfMove >= 100 && !g.IsCheckMate()) ||
 		g.HasThreeFoldRepetition() ||
 		g.IsStaleMate()
+}
+
+// Writes a pgn representation to w. Supposedly you will want to write to a file or a string, but any writer is accepted.
+func WritePgn(g *Game, w io.Writer) error {
+	sevenTags := []string{"Event", "Site", "Date", "Round", "White", "Black", "Result"}
+	for _, tag := range sevenTags {
+		_, err := fmt.Fprintf(w, "[%s \"%s\"]\n", tag, g.tags[tag])
+		if err != nil {
+			return fmt.Errorf("unable to write pgn: %w", err)
+		}
+	}
+	for tag, val := range g.tags {
+		if !slices.Contains(sevenTags, tag) {
+			_, err := fmt.Fprintf(w, "[%s \"%s\"]\n", tag, val)
+			if err != nil {
+				return fmt.Errorf("unable to write pgn: %w", err)
+			}
+		}
+	}
+	_, err := fmt.Fprint(w, "\n")
+	if err != nil {
+		return fmt.Errorf("unable to write pgn: %w", err)
+	}
+
+	newGame := NewGame()
+	if fen, keyExists := g.tags["FEN"]; keyExists {
+		new_position, err := ParseFen(fen)
+		if err != nil {
+			return fmt.Errorf("unable to write pgn: game contains invalid FEN tag: %w", err)
+		}
+		newGame.SetPosition(new_position)
+	}
+	counter := 1
+	for _, move := range g.moveHistory {
+		sanMoveString := move.SanString(newGame.position)
+		if newGame.Turn() == White {
+			_, err := fmt.Fprintf(w, "%d. %s ", counter, sanMoveString)
+			if err != nil {
+				return fmt.Errorf("unable to write pgn: %w", err)
+			}
+			counter++
+		}
+		if newGame.Turn() == Black {
+			_, err := fmt.Fprintf(w, "%s ", sanMoveString)
+			if err != nil {
+				return fmt.Errorf("unable to write pgn: %w", err)
+			}
+		}
+		err := newGame.Move(move)
+		if err != nil {
+			return fmt.Errorf("unable to write pgn: %w", err)
+		}
+	}
+	_, err = fmt.Fprintf(w, "%s", g.GetResult().String())
+	if err != nil {
+		return fmt.Errorf("unable to write pgn: %w", err)
+	}
+	return nil
 }
