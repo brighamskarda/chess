@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"unicode"
 )
@@ -59,7 +60,11 @@ func (m Move) SanString(p *Position) string {
 func sanStringPawn(m Move, p *Position) string {
 	sanString := ""
 	if p.PieceAt(m.ToSquare) == NoPiece {
-		sanString += strings.ToLower(m.ToSquare.String())
+		if p.EnPassant == m.ToSquare {
+			sanString += strings.ToLower(m.FromSquare.File.String()) + "x" + strings.ToLower(m.ToSquare.String())
+		} else {
+			sanString += strings.ToLower(m.ToSquare.String())
+		}
 	} else {
 		sanString += strings.ToLower(m.FromSquare.File.String()) + "x" + strings.ToLower(m.ToSquare.String())
 	}
@@ -210,7 +215,7 @@ func parseSANCastleMove(p *Position, s string) (Move, error) {
 	if p.Turn == Black && s == "O-O-O" {
 		return Move{E8, C8, NoPieceType}, nil
 	}
-	return Move{}, fmt.Errorf("could not parseSAN castle move: input %s", s)
+	return Move{}, fmt.Errorf("could not parse SAN castle move: input %s", s)
 }
 
 func parseSANBasicPawnMove(p *Position, s string) (Move, error) {
@@ -231,7 +236,7 @@ func parseSANBasicPawnMoveWhite(p *Position, s Square) (Move, error) {
 	if s.Rank == 4 && p.PieceAt(squareBelow(s)) == NoPiece && p.PieceAt(squareBelow(squareBelow(s))) == WhitePawn {
 		return Move{FromSquare: squareBelow(squareBelow(s)), ToSquare: s, Promotion: NoPieceType}, nil
 	}
-	return Move{}, errors.New("could not parse SAN basic pawn move")
+	return Move{}, fmt.Errorf("could not parse SAN basic pawn move: input %s", s)
 }
 
 func parseSANBasicPawnMoveBlack(p *Position, s Square) (Move, error) {
@@ -241,7 +246,7 @@ func parseSANBasicPawnMoveBlack(p *Position, s Square) (Move, error) {
 	if s.Rank == 5 && p.PieceAt(squareAbove(s)) == NoPiece && p.PieceAt(squareAbove(squareAbove(s))) == BlackPawn {
 		return Move{FromSquare: squareAbove(squareAbove(s)), ToSquare: s, Promotion: NoPieceType}, nil
 	}
-	return Move{}, errors.New("could not parse SAN basic pawn move")
+	return Move{}, fmt.Errorf("could not parse SAN basic pawn move: input %s", s)
 }
 
 func parseSANPawnCapture(p *Position, s string) (Move, error) {
@@ -335,7 +340,7 @@ func parseSANPieceMove(p *Position, s string) (Move, error) {
 	}
 	piece := p.PieceAt(move.ToSquare)
 	if err != nil {
-		return Move{}, err
+		return Move{}, fmt.Errorf("could not parse SAN move: input, %s: %w", s, err)
 	}
 	if piece != NoPiece {
 		return Move{}, fmt.Errorf("invalid SAN move: take piece without x: input, %s", s)
@@ -346,10 +351,12 @@ func parseSANPieceMove(p *Position, s string) (Move, error) {
 // TODO reduce repetition
 func parseSANRookMove(p *Position, toSquare Square) (Move, error) {
 	isAmbiguous := false
+	ambiguousMoves := []Move{}
 	fromSquare := NoSquare
 	for currentSquare := squareToLeft(toSquare); currentSquare != NoSquare; currentSquare = squareToLeft(currentSquare) {
 		piece := p.PieceAt(currentSquare)
 		if piece.Type == Rook && piece.Color == p.Turn {
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -362,6 +369,7 @@ func parseSANRookMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Rook && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
+				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
 			fromSquare = currentSquare
 			break
@@ -375,6 +383,7 @@ func parseSANRookMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Rook && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
+				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
 			fromSquare = currentSquare
 			break
@@ -388,6 +397,7 @@ func parseSANRookMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Rook && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
+				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
 			fromSquare = currentSquare
 			break
@@ -397,7 +407,16 @@ func parseSANRookMove(p *Position, toSquare Square) (Move, error) {
 		}
 	}
 	if isAmbiguous {
-		return Move{}, fmt.Errorf("invalid SAN rook move: ambiguous move (multiple possible pieces)")
+		legalMoves := GenerateLegalMoves(p)
+		moveIWant := Move{}
+		for _, move := range legalMoves {
+			if moveIWant.FromSquare == NoSquare && slices.Contains(ambiguousMoves, move) {
+				moveIWant = move
+			} else if moveIWant.FromSquare != NoSquare && slices.Contains(ambiguousMoves, move) {
+				return Move{}, fmt.Errorf("invalid SAN rook move: ambiguous move (multiple possible pieces)")
+			}
+		}
+		return moveIWant, nil
 	}
 	if fromSquare == NoSquare {
 		return Move{}, fmt.Errorf("invalid SAN rook move: could not find piece to move")
@@ -407,10 +426,12 @@ func parseSANRookMove(p *Position, toSquare Square) (Move, error) {
 
 func parseSANKnightMove(p *Position, toSquare Square) (Move, error) {
 	isAmbiguous := false
+	ambiguousMoves := []Move{}
 	fromSquare := NoSquare
 	currentSquare := squareAbove(squareAbove(squareToRight(toSquare)))
 	piece := p.PieceAt(currentSquare)
 	if piece.Type == Knight && piece.Color == p.Turn {
+		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 		fromSquare = currentSquare
 	}
 	currentSquare = squareAbove(squareToRight(squareToRight(toSquare)))
@@ -419,6 +440,7 @@ func parseSANKnightMove(p *Position, toSquare Square) (Move, error) {
 		if fromSquare != NoSquare {
 			isAmbiguous = true
 		}
+		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 		fromSquare = currentSquare
 	}
 	currentSquare = squareBelow(squareToRight(squareToRight(toSquare)))
@@ -427,6 +449,7 @@ func parseSANKnightMove(p *Position, toSquare Square) (Move, error) {
 		if fromSquare != NoSquare {
 			isAmbiguous = true
 		}
+		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 		fromSquare = currentSquare
 	}
 	currentSquare = squareBelow(squareBelow(squareToRight(toSquare)))
@@ -435,6 +458,7 @@ func parseSANKnightMove(p *Position, toSquare Square) (Move, error) {
 		if fromSquare != NoSquare {
 			isAmbiguous = true
 		}
+		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 		fromSquare = currentSquare
 	}
 	currentSquare = squareBelow(squareBelow(squareToLeft(toSquare)))
@@ -443,6 +467,7 @@ func parseSANKnightMove(p *Position, toSquare Square) (Move, error) {
 		if fromSquare != NoSquare {
 			isAmbiguous = true
 		}
+		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 		fromSquare = currentSquare
 	}
 	currentSquare = squareBelow(squareToLeft(squareToLeft(toSquare)))
@@ -451,6 +476,7 @@ func parseSANKnightMove(p *Position, toSquare Square) (Move, error) {
 		if fromSquare != NoSquare {
 			isAmbiguous = true
 		}
+		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 		fromSquare = currentSquare
 	}
 	currentSquare = squareAbove(squareToLeft(squareToLeft(toSquare)))
@@ -459,6 +485,7 @@ func parseSANKnightMove(p *Position, toSquare Square) (Move, error) {
 		if fromSquare != NoSquare {
 			isAmbiguous = true
 		}
+		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 		fromSquare = currentSquare
 	}
 	currentSquare = squareAbove(squareAbove(squareToLeft(toSquare)))
@@ -467,13 +494,20 @@ func parseSANKnightMove(p *Position, toSquare Square) (Move, error) {
 		if fromSquare != NoSquare {
 			isAmbiguous = true
 		}
+		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 		fromSquare = currentSquare
 	}
 	if isAmbiguous {
-		return Move{}, errors.New("")
-	}
-	if isAmbiguous {
-		return Move{}, fmt.Errorf("invalid SAN knight move: ambiguous move (multiple possible pieces)")
+		legalMoves := GenerateLegalMoves(p)
+		moveIWant := Move{}
+		for _, move := range legalMoves {
+			if moveIWant.FromSquare == NoSquare && slices.Contains(ambiguousMoves, move) {
+				moveIWant = move
+			} else if moveIWant.FromSquare != NoSquare && slices.Contains(ambiguousMoves, move) {
+				return Move{}, fmt.Errorf("invalid SAN knight move: ambiguous move (multiple possible pieces)")
+			}
+		}
+		return moveIWant, nil
 	}
 	if fromSquare == NoSquare {
 		return Move{}, fmt.Errorf("invalid SAN knight move: could not find piece to move")
@@ -484,10 +518,12 @@ func parseSANKnightMove(p *Position, toSquare Square) (Move, error) {
 // TODO reduce repetition
 func parseSANBishopMove(p *Position, toSquare Square) (Move, error) {
 	isAmbiguous := false
+	ambiguousMoves := []Move{}
 	fromSquare := NoSquare
 	for currentSquare := squareAbove(squareToLeft(toSquare)); currentSquare != NoSquare; currentSquare = squareAbove(squareToLeft(currentSquare)) {
 		piece := p.PieceAt(currentSquare)
 		if piece.Type == Bishop && piece.Color == p.Turn {
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -500,6 +536,7 @@ func parseSANBishopMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Bishop && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
+				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
 			fromSquare = currentSquare
 			break
@@ -513,6 +550,7 @@ func parseSANBishopMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Bishop && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
+				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
 			fromSquare = currentSquare
 			break
@@ -526,6 +564,7 @@ func parseSANBishopMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Bishop && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
+				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
 			fromSquare = currentSquare
 			break
@@ -535,7 +574,16 @@ func parseSANBishopMove(p *Position, toSquare Square) (Move, error) {
 		}
 	}
 	if isAmbiguous {
-		return Move{}, fmt.Errorf("invalid SAN bishop move: ambiguous move (multiple possible pieces)")
+		legalMoves := GenerateLegalMoves(p)
+		moveIWant := Move{}
+		for _, move := range legalMoves {
+			if moveIWant.FromSquare == NoSquare && slices.Contains(ambiguousMoves, move) {
+				moveIWant = move
+			} else if moveIWant.FromSquare != NoSquare && slices.Contains(ambiguousMoves, move) {
+				return Move{}, fmt.Errorf("invalid SAN bishop move: ambiguous move (multiple possible pieces)")
+			}
+		}
+		return moveIWant, nil
 	}
 	if fromSquare == NoSquare {
 		return Move{}, fmt.Errorf("invalid SAN bishop move: could not find piece to move")
@@ -546,10 +594,12 @@ func parseSANBishopMove(p *Position, toSquare Square) (Move, error) {
 // TODO reduce repetition
 func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 	isAmbiguous := false
+	ambiguousMoves := []Move{}
 	fromSquare := NoSquare
 	for currentSquare := squareToLeft(toSquare); currentSquare != NoSquare; currentSquare = squareToLeft(currentSquare) {
 		piece := p.PieceAt(currentSquare)
 		if piece.Type == Queen && piece.Color == p.Turn {
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -562,6 +612,7 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Queen && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
+				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
 			fromSquare = currentSquare
 			break
@@ -575,6 +626,7 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Queen && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
+				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
 			fromSquare = currentSquare
 			break
@@ -588,6 +640,7 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Queen && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
+				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
 			fromSquare = currentSquare
 			break
@@ -601,6 +654,7 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Queen && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
+				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
 			fromSquare = currentSquare
 			break
@@ -614,6 +668,7 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Queen && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
+				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
 			fromSquare = currentSquare
 			break
@@ -627,6 +682,7 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Queen && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
+				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
 			fromSquare = currentSquare
 			break
@@ -640,6 +696,7 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Queen && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
+				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
 			fromSquare = currentSquare
 			break
@@ -649,7 +706,16 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		}
 	}
 	if isAmbiguous {
-		return Move{}, fmt.Errorf("invalid SAN Queen move: ambiguous move (multiple possible pieces)")
+		legalMoves := GenerateLegalMoves(p)
+		moveIWant := Move{}
+		for _, move := range legalMoves {
+			if moveIWant.FromSquare == NoSquare && slices.Contains(ambiguousMoves, move) {
+				moveIWant = move
+			} else if moveIWant.FromSquare != NoSquare && slices.Contains(ambiguousMoves, move) {
+				return Move{}, fmt.Errorf("invalid SAN queen move: ambiguous move (multiple possible pieces)")
+			}
+		}
+		return moveIWant, nil
 	}
 	if fromSquare == NoSquare {
 		return Move{}, fmt.Errorf("invalid SAN Queen move: could not find piece to move")

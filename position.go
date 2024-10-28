@@ -91,7 +91,7 @@ func (p *Position) movePiece(m Move) {
 	}
 	p.SetPieceAt(m.FromSquare, NoPiece)
 	p.SetPieceAt(m.ToSquare, pieceToMove)
-	if m.ToSquare == p.EnPassant {
+	if m.ToSquare == p.EnPassant && p.PieceAt(m.ToSquare).Type == Pawn {
 		if p.PieceAt(m.ToSquare).Color == White {
 			p.SetPieceAt(Square{File: m.ToSquare.File, Rank: m.ToSquare.Rank - 1}, NoPiece)
 		}

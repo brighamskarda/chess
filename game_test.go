@@ -2,6 +2,8 @@ package chess
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -309,5 +311,114 @@ func TestWritePgn(t *testing.T) {
 	WritePgn(game, actual)
 	if actual.String() != expected && actual.String() != altExptected {
 		t.Errorf("did not get expected value: %s", cmp.Diff(expected, actual.String()))
+	}
+}
+
+func TestReadPgn(t *testing.T) {
+	reader := strings.NewReader(`[Event "Rated blitz game"]
+[Site "https://lichess.org/0T2akByS"]
+[Date "2024.09.11"]
+[Round "1"]
+[White "Kathulu9"]
+[Black "ostoorah"]
+[Result "0-1"]
+[WhiteElo "1525"]
+[BlackElo "1455"]
+
+1. e4 c5 2. Nf3 Nc6 3. Bc4 Nf6 0-1`)
+
+	game, err := ReadPgn(reader)
+	if err != nil {
+		t.Error("Returned error for valid pgn")
+	}
+
+	position, _ := ParseFen("r1bqkb1r/pp1ppppp/2n2n2/2p5/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4")
+
+	expected := &Game{position: position,
+		moveHistory: []Move{{E2, E4, NoPieceType},
+			{C7, C5, NoPieceType},
+			{G1, F3, NoPieceType},
+			{B8, C6, NoPieceType},
+			{F1, C4, NoPieceType},
+			{G8, F6, NoPieceType}},
+		tags: map[string]string{
+			"Event":    "Rated blitz game",
+			"Site":     "https://lichess.org/0T2akByS",
+			"Date":     "2024.09.11",
+			"Round":    "1",
+			"White":    "Kathulu9",
+			"Black":    "ostoorah",
+			"Result":   "0-1",
+			"WhiteElo": "1525",
+			"BlackElo": "1455",
+		}}
+
+	expectedPgn := strings.Builder{}
+	WritePgn(expected, &expectedPgn)
+	gamePgn := strings.Builder{}
+	WritePgn(game, &gamePgn)
+
+	if gamePgn.String() != expectedPgn.String() {
+		t.Errorf("did not get expected value: %v", cmp.Diff(expectedPgn.String(), gamePgn.String()))
+	}
+}
+
+func TestReadPgnError(t *testing.T) {
+	reader := strings.NewReader(`[Event "Rated blitz game"]
+[Site "https://lichess.org/0T2akByS"]
+[Date "2024.09.11"]
+[Round "1"]
+[White "Kathulu9"]
+[Black "ostoorah"]
+[Result "0-1"]
+[WhiteElo "1525"]
+[BlackElo "1455"]
+
+1. e4 c5 2. Nf3 Nc6 3. Bc4 Nf6 4. 0-0-0 0-1`)
+
+	_, err := ReadPgn(reader)
+	if err == nil {
+		t.Error("Did not return error for invalid PGN")
+	}
+}
+
+func TestReadWritePgn(t *testing.T) {
+	files, err := os.ReadDir("testPGNs")
+	if err != nil {
+		t.Fatalf("failed to read directory \"testPGNs\"")
+	}
+	for i, dirEntry := range files {
+		if i%1000 == 0 && i > 0 {
+			fmt.Printf("Evaluating %v/%v\n", i, len(files))
+		}
+
+		fileName := "testPGNs/" + dirEntry.Name()
+
+		file, err := os.Open(fileName)
+		if err != nil {
+			t.Errorf("failed to read file \"%s\"", fileName)
+		}
+		fileBytes, _ := io.ReadAll(file)
+		fileString := strings.ReplaceAll(string(fileBytes), "\r\n", "\n")
+
+		if fileName != "testPGNs/game_1014.pgn" {
+			continue
+		}
+
+		game, err := ReadPgn(strings.NewReader(string(fileString)))
+		if err != nil {
+			t.Errorf("failed to read pgn: %s: %v", fileName, err)
+		}
+
+		gameString := strings.Builder{}
+
+		err = WritePgn(game, &gameString)
+		if err != nil {
+			t.Errorf("failed to write pgn: %s: %v", fileName, err)
+		}
+
+		if gameString.String() != fileString {
+			t.Errorf("ReadPgn and Write Pgn produced different output: %s", cmp.Diff(gameString.String(), fileString))
+		}
 	}
 }

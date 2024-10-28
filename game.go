@@ -6,6 +6,7 @@ import (
 	"io"
 	"maps"
 	"slices"
+	"strings"
 	"time"
 )
 
@@ -85,7 +86,7 @@ func NewGame() *Game {
 func (g *Game) Move(m Move) error {
 	legalMoves := GenerateLegalMoves(g.position)
 	if !slices.Contains(legalMoves, m) {
-		return errors.New("m is not a legal move")
+		return fmt.Errorf("%s is not a legal move", m)
 	}
 	g.position.Move(m)
 	g.moveHistory = append(g.moveHistory, m)
@@ -347,5 +348,66 @@ func WritePgn(g *Game, w io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("unable to write pgn: %w", err)
 	}
+	return nil
+}
+
+func ReadPgn(r io.Reader) (*Game, error) {
+	pgn_bytes, err := io.ReadAll(r)
+	if err != nil {
+		return nil, fmt.Errorf("read pgn failed: %w", err)
+	}
+
+	pgn_lines := strings.Split(strings.Replace(string(pgn_bytes), "\r", "", -1), "\n")
+
+	game := NewGame()
+	var result Result
+	tagsComplete := false
+	for _, line := range pgn_lines {
+		if tagsComplete {
+			err := parsePgnMoves(game, line)
+			if err != nil {
+				return nil, fmt.Errorf("read pgn failed: %w", err)
+			}
+		} else if line == "" {
+			tagsComplete = true
+			result = game.GetResult()
+		} else {
+			err := parsePgnTag(game, line)
+			if err != nil {
+				return nil, fmt.Errorf("read pgn failed: %w", err)
+			}
+		}
+	}
+
+	game.SetResult(result)
+
+	return game, nil
+}
+
+func parsePgnMoves(g *Game, moves string) error {
+	splitMoves := strings.Split(moves, " ")
+	possibleResults := []string{"1-0", "0-1", "1/2-1/2", "*"}
+
+	for _, move := range splitMoves {
+		if strings.Contains(move, ".") || slices.Contains(possibleResults, move) {
+			continue
+		}
+		err := g.MoveSan(move)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func parsePgnTag(g *Game, tag string) error {
+	splitTag := strings.SplitN(tag[1:len(tag)-1], " ", 2)
+	if len(splitTag) != 2 {
+		return fmt.Errorf("invalid pgn tag: %s", tag)
+	}
+	if splitTag[0] == "Result" {
+		g.SetResult(parseResult(strings.ReplaceAll(splitTag[1], "\"", "")))
+	}
+	g.SetTag(splitTag[0], strings.ReplaceAll(splitTag[1], "\"", ""))
 	return nil
 }
