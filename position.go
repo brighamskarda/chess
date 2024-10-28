@@ -59,7 +59,7 @@ func (p *Position) SetPieceAt(s Square, piece Piece) {
 // list provided by [GenerateLegalMoves]. All parts of the position are updated including en passant and castling rights based
 // how the the move interacts with the board.
 func (p *Position) Move(m Move) {
-	if !IsValidMove(m) {
+	if !isValidMove(m) {
 		return
 	}
 	p.updateMoveCounts(m)

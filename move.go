@@ -369,8 +369,8 @@ func parseSANRookMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Rook && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
-				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -383,8 +383,8 @@ func parseSANRookMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Rook && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
-				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -397,8 +397,8 @@ func parseSANRookMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Rook && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
-				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -536,8 +536,8 @@ func parseSANBishopMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Bishop && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
-				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -550,8 +550,8 @@ func parseSANBishopMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Bishop && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
-				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -564,8 +564,8 @@ func parseSANBishopMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Bishop && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
-				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -612,8 +612,8 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Queen && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
-				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -626,8 +626,8 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Queen && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
-				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -640,8 +640,8 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Queen && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
-				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -654,8 +654,8 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Queen && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
-				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -668,8 +668,8 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Queen && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
-				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -682,8 +682,8 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Queen && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
-				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -696,8 +696,8 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		if piece.Type == Queen && piece.Color == p.Turn {
 			if fromSquare != NoSquare {
 				isAmbiguous = true
-				ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			}
+			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
 			fromSquare = currentSquare
 			break
 		}
@@ -1637,7 +1637,7 @@ func parseSANPieceCapture(p *Position, s string) (Move, error) {
 }
 
 // IsValidMove makes sure each of the elements in Move m are logical. Namely that the squares can be found on a chess board.
-func IsValidMove(m Move) bool {
+func isValidMove(m Move) bool {
 	return isValidSquare(m.FromSquare) && m.FromSquare != NoSquare &&
 		isValidSquare(m.ToSquare) && m.ToSquare != NoSquare &&
 		isValidPieceType(m.Promotion)
