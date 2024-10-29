@@ -323,7 +323,6 @@ func TestReadPgn(t *testing.T) {
 [Black "ostoorah"]
 [Result "0-1"]
 [WhiteElo "1525"]
-[BlackElo "1455"]
 
 1. e4 c5 2. Nf3 Nc6 3. Bc4 Nf6 0-1`)
 
@@ -350,7 +349,6 @@ func TestReadPgn(t *testing.T) {
 			"Black":    "ostoorah",
 			"Result":   "0-1",
 			"WhiteElo": "1525",
-			"BlackElo": "1455",
 		}}
 
 	expectedPgn := strings.Builder{}

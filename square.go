@@ -3,6 +3,7 @@ package chess
 import (
 	"errors"
 	"fmt"
+	"math"
 	"unicode"
 )
 
@@ -227,4 +228,42 @@ func squareBelow(s Square) Square {
 		return NoSquare
 	}
 	return s
+}
+
+func ChebyshevDistance(s1 Square, s2 Square) uint8 {
+	if !isValidSquare(s1) || !isValidSquare(s2) {
+		return math.MaxUint8
+	}
+	var fileDistance uint8
+	if s1.File-s2.File < 9 {
+		fileDistance = uint8(s1.File) - uint8(s2.File)
+	} else {
+		fileDistance = uint8(s2.File) - uint8(s1.File)
+	}
+	var rankDistance uint8
+	if s1.Rank-s2.Rank < 9 {
+		rankDistance = uint8(s1.Rank) - uint8(s2.Rank)
+	} else {
+		rankDistance = uint8(s2.Rank) - uint8(s1.Rank)
+	}
+	return min(fileDistance, rankDistance)
+}
+
+func ManhattanDistance(s1 Square, s2 Square) uint8 {
+	if !isValidSquare(s1) || !isValidSquare(s2) {
+		return math.MaxUint8
+	}
+	var fileDistance uint8
+	if s1.File-s2.File < 9 {
+		fileDistance = uint8(s1.File) - uint8(s2.File)
+	} else {
+		fileDistance = uint8(s2.File) - uint8(s1.File)
+	}
+	var rankDistance uint8
+	if s1.Rank-s2.Rank < 9 {
+		rankDistance = uint8(s1.Rank) - uint8(s2.Rank)
+	} else {
+		rankDistance = uint8(s2.Rank) - uint8(s1.Rank)
+	}
+	return fileDistance + rankDistance
 }
