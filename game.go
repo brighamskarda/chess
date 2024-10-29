@@ -12,9 +12,12 @@ import (
 
 // Game is guaranteed to always represent a valid game of chess. Invalid positions are not allowed,
 // but the move history may not represent an entire game (undoing all moves may not lead to the starting
-// chess position). Game can be used to parse and generate PGNs.
+// chess position). Game can be used to parse and generate PGNs. Additionally Game provides many wrapper methods for
+// functions that normally take position as an argument, increasing convenience and decreasing the need to copy Game's
+// position excessively.
 //
-// The zero value for Game is not valid and should not be used.
+// The zero value for Game is not valid and should not be used. Game should always be duplicated using the
+// [Game.Copy] function.
 type Game struct {
 	position    *Position
 	moveHistory []Move
@@ -47,6 +50,11 @@ func parseResult(s string) Result {
 	}
 }
 
+// String returns
+//   - "1-0" if [WhiteWins]
+//   - "0-1" if [BlackWins]
+//   - "1/2-1/2" if [Draw]
+//   - "*" otherwise
 func (r Result) String() string {
 	switch r {
 	case WhiteWins:
@@ -105,6 +113,7 @@ func (g *Game) Move(m Move) error {
 	return nil
 }
 
+// MoveSan is a helper function that automatically performs an SAN formatted move. SAN format is specified here: http://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
 func (g *Game) MoveSan(s string) error {
 	move, err := ParseSANMove(g.position, s)
 	if err != nil {
@@ -124,11 +133,12 @@ func (g *Game) Copy() *Game {
 	return gameCopy
 }
 
+// String returns the games current position as a string..
 func (g *Game) String() string {
 	return g.position.String()
 }
 
-// Position returns a copy of the game's position
+// Position returns a copy of the game's position.
 func (g *Game) Position() *Position {
 	var pos Position = *g.position
 	return &pos
@@ -182,7 +192,7 @@ func (g *Game) SetResult(r Result) {
 	g.tags["Result"] = r.String()
 }
 
-func (g *Game) ValidMoves() []Move {
+func (g *Game) LegalMoves() []Move {
 	return GenerateLegalMoves(g.position)
 }
 
@@ -194,7 +204,7 @@ func (g *Game) GetTag(t string) (string, error) {
 	return s, nil
 }
 
-// SetTag sets any tag for the game so that it will show up in the pgn file. The Result, SetUp, and FEN tags cannot be set with this function. Please use the [Game.SetResult] function to set the result, the [Game.SetPosition] function to set the other two tags.
+// SetTag sets any tag for the game so that it will show up in the pgn file. The Result, SetUp, and FEN tags cannot be set with this function. Please use the [Game.SetResult] function to set the result, and the [Game.SetPosition] function to set the other two tags.
 func (g *Game) SetTag(tag string, value string) {
 	if tag == "Result" || tag == "SetUp" || tag == "FEN" {
 		return
@@ -245,16 +255,17 @@ func (g *Game) SetPosition(p *Position) error {
 	return nil
 }
 
-// TODO Use a map instead for more efficiency
+// HasThreeFoldRepetition returns true if the game has been in the exact same position (including castling rights)
+// At least three times at any point during the entire game.
 func (g *Game) HasThreeFoldRepetition() bool {
+	// TODO Use a map instead for more efficiency
 	allPositions := generateAllGamePositions(g)
 	for index, pos1 := range allPositions[:len(allPositions)-1] {
 		numEquivalentPositions := 1
-		for index2, pos2 := range allPositions[index+1:] {
+		for _, pos2 := range allPositions[index+1:] {
 			if positionsEqualNoMoveCounter(&pos1, &pos2) {
 				numEquivalentPositions++
 				if numEquivalentPositions >= 3 {
-					numEquivalentPositions = index2
 					return true
 				}
 			}
@@ -287,13 +298,17 @@ func positionsEqualNoMoveCounter(pos1 *Position, pos2 *Position) bool {
 		pos1.EnPassant == pos2.EnPassant
 }
 
+// CanClaimDraw returns true if one of the following conditions is true and the game is not in checkmate
+//   - The half move counter is >= 100 (indicating that no piece has been taken, nor pawn moved forward for 50 moves)
+//   - The game contains a three fold repetition (the exact same position has occurred three times in the game)
+//   - The game is in stalemate
 func (g *Game) CanClaimDraw() bool {
-	return (g.position.HalfMove >= 100 && !g.IsCheckMate()) ||
+	return (g.position.HalfMove >= 100 ||
 		g.HasThreeFoldRepetition() ||
-		g.IsStaleMate()
+		g.IsStaleMate()) && !g.IsCheckMate()
 }
 
-// Writes a pgn representation to w. Supposedly you will want to write to a file or a string, but any writer is accepted.
+// WritePgn writes a pgn representation of g to w.
 func WritePgn(g *Game, w io.Writer) error {
 	sevenTags := []string{"Event", "Site", "Date", "Round", "White", "Black", "Result"}
 	for _, tag := range sevenTags {
@@ -351,6 +366,9 @@ func WritePgn(g *Game, w io.Writer) error {
 	return nil
 }
 
+// ReadPgn attempts to create a [Game] from r. Parsing should be improved in the future, but for now only well formatted
+// pgns containing a single game are accepted. Refer to http://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm for
+// specific details of how a pgn should be formatted.
 func ReadPgn(r io.Reader) (*Game, error) {
 	pgn_bytes, err := io.ReadAll(r)
 	if err != nil {

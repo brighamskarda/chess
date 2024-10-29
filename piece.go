@@ -18,6 +18,7 @@ const (
 	King
 )
 
+// String returns the uppercase ascii letter representation of the piece. NO-PIECE-TYPE, or INVALID PIECE TYPE otherwise.
 func (pt PieceType) String() string {
 	switch pt {
 	case NoPieceType:
@@ -86,6 +87,7 @@ var (
 	BlackKing   Piece = Piece{Black, King}
 )
 
+// String gives a one letter ascii character representing the piece. " " for no piece. INVALID PIECE otherwise.
 func (p Piece) String() string {
 	if !isValidPiece(p) {
 		return "INVALID PIECE"
@@ -112,6 +114,7 @@ func isValidPiece(p Piece) bool {
 	return true
 }
 
+// ParsePiece attempts to parse a piece from a given rune. Currently only supports ascii characters (no piece symbols). Uppercase is white, lowercase is black.
 func ParsePiece(r rune) (Piece, error) {
 	pieceType, err := parsePieceType(r)
 	if err != nil {

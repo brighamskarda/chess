@@ -21,6 +21,7 @@ const (
 	FileH
 )
 
+// String returns a single uppercase letter representing the file.
 func (f File) String() string {
 	if !isValidFile(f) {
 		return "INVALID FILE"
@@ -49,6 +50,7 @@ const (
 	Rank8
 )
 
+// String returns either a single number, INVALID RANK, or NO RANK.
 func (r Rank) String() string {
 	if !isValidRank(r) {
 		return "INVALID RANK"
@@ -144,6 +146,7 @@ var (
 	H1 = Square{FileH, Rank1}
 )
 
+// String returns a two letter uppercase representation of a square. "-" will be returned for [NoSquare] and INVALID SQUARE will be returned for all other squares that can't be found on a chess board.
 func (s Square) String() string {
 	if !isValidSquare(s) {
 		return "INVALID SQUARE"
@@ -163,6 +166,7 @@ func isValidSquare(s Square) bool {
 	return isValidFile(s.File) && isValidRank(s.Rank)
 }
 
+// ParseSquare parses a two letter string for a square. "-" returns [NoSquare] without an error.
 func ParseSquare(s string) (Square, error) {
 	if s == "-" {
 		return NoSquare, nil
@@ -230,6 +234,7 @@ func squareBelow(s Square) Square {
 	return s
 }
 
+// ChebyshevDistance returns the number of king moves between two squares. Returns [math.MaxUint8] if either square is invalid.
 func ChebyshevDistance(s1 Square, s2 Square) uint8 {
 	if !isValidSquare(s1) || !isValidSquare(s2) {
 		return math.MaxUint8
@@ -249,6 +254,7 @@ func ChebyshevDistance(s1 Square, s2 Square) uint8 {
 	return min(fileDistance, rankDistance)
 }
 
+// ManhattanDistance give the number of non-diagonal king moves to get from s1 to s2. Returns [math.MaxUint8] if either square is not a valid chess square.
 func ManhattanDistance(s1 Square, s2 Square) uint8 {
 	if !isValidSquare(s1) || !isValidSquare(s2) {
 		return math.MaxUint8

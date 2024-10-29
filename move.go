@@ -15,6 +15,7 @@ type Move struct {
 	Promotion  PieceType
 }
 
+// String returns a UCI-compatible string representation of the move. Format is Square1Square2Promotion
 func (m Move) String() string {
 	returnString := m.FromSquare.String() + m.ToSquare.String()
 	if m.Promotion != NoPieceType {
@@ -155,6 +156,7 @@ func ParseUCIMove(s string) (Move, error) {
 	return Move{fromSquare, toSquare, promotion}, nil
 }
 
+// ParseSANMove returns a move given a position and an SAN formatted move. SAN format defined here: http://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
 func ParseSANMove(p *Position, s string) (Move, error) {
 	cleanedString := strings.ReplaceAll(s, "+", "")
 	cleanedString = strings.ReplaceAll(cleanedString, "#", "")

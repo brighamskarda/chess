@@ -8,6 +8,7 @@ const (
 	Black
 )
 
+// String returns one of NO-COLOR, WHITE, BLACK, or INVALID COLOR
 func (c Color) String() string {
 	switch c {
 	case NoColor:

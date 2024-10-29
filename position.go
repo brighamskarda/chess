@@ -25,6 +25,7 @@ type Position struct {
 	FullMove             uint16
 }
 
+// String returns a representation of the board from white's perspective board flipping is not yet supported. No other information from the position is printed.
 func (p *Position) String() string {
 	str := strings.Builder{}
 	rank := '8'
@@ -186,6 +187,7 @@ func indexToSquare(index int) Square {
 	return square
 }
 
+// ParseFen take only fully formed valid FEN strings. All parts of the FEN must be present, though the position need not necessarily be valid.
 func ParseFen(fen string) (*Position, error) {
 	words := strings.Split(fen, " ")
 	if len(words) != 6 {
