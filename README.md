@@ -14,7 +14,7 @@ All functionality has been thoroughly tested (including parsing and writing over
 
 ## Usage
 
-I recommend taking at look at the docs at [https://pkg.go.dev/] as all non-obvious functions should be documented there.
+I recommend taking at look at the docs at <https://pkg.go.dev/> as all non-obvious functions should be documented there.
 
 If you are looking to create a chess application I recommend using the Game struct as it keeps track of move history and always ensures that the game is in a valid state.
 
