@@ -24,7 +24,7 @@ const defaultBoardStr string = `8rnbqkbnr
 1RNBQKBNR
  ABCDEFGH`
 
-func TestBoardString(t *testing.T) {
+func TestPositionString(t *testing.T) {
 	pos := &Position{}
 	if pos.String() != emptyBoardStr {
 		t.Errorf("Default board string incorrect:\nActual:\n%s\nExpected:\n%s", pos.String(), emptyBoardStr)
@@ -32,6 +32,43 @@ func TestBoardString(t *testing.T) {
 	pos = getDefaultPosition()
 	if pos.String() != defaultBoardStr {
 		t.Errorf("Default board string incorrect:\nActual:\n%s\nExpected:\n%s", pos.String(), defaultBoardStr)
+	}
+}
+
+const emptyBoardStrFlipped string = `1        
+2        
+3        
+4        
+5        
+6        
+7        
+8        
+ HGFEDCBA`
+
+const defaultBoardStrFlipped string = `1RNBKQBNR
+2PPPPPPPP
+3        
+4        
+5        
+6        
+7pppppppp
+8rnbkqbnr
+ HGFEDCBA`
+
+func TestPositionFormatSTring(t *testing.T) {
+	pos := &Position{}
+	if pos.FormatString(false) != emptyBoardStr {
+		t.Errorf("Default board string incorrect:\nActual:\n%s\nExpected:\n%s", pos.FormatString(false), emptyBoardStr)
+	}
+	if pos.FormatString(true) != emptyBoardStrFlipped {
+		t.Errorf("Default board string incorrect:\nActual:\n%s\nExpected:\n%s", pos.FormatString(true), emptyBoardStrFlipped)
+	}
+	pos = getDefaultPosition()
+	if pos.FormatString(false) != defaultBoardStr {
+		t.Errorf("Default board string incorrect:\nActual:\n%s\nExpected:\n%s", pos.FormatString(false), defaultBoardStr)
+	}
+	if pos.FormatString(true) != defaultBoardStrFlipped {
+		t.Errorf("Default board string incorrect:\nActual:\n%s\nExpected:\n%s", pos.FormatString(true), defaultBoardStrFlipped)
 	}
 }
 

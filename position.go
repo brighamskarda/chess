@@ -25,22 +25,46 @@ type Position struct {
 	FullMove             uint16
 }
 
-// String returns a representation of the board from white's perspective board flipping is not yet supported. No other information from the position is printed.
+// String returns a representation of the board from white's perspective. No other information from the position is printed. It is recommended to use [Position.FormatString] to print from black's perspective.
 func (p *Position) String() string {
-	str := strings.Builder{}
-	rank := '8'
-	for index, piece := range p.Board {
-		if index%8 == 0 {
-			str.WriteRune(rank)
-			rank -= 1
+	return p.FormatString(false)
+}
+
+// FormatString returns a representation of the board. No other information from the position is printed.
+// blacksPerspective should be true if you which to print the board as if you were on black's side.
+func (p *Position) FormatString(blacksPerspective bool) string {
+	if blacksPerspective {
+		str := strings.Builder{}
+		rank := '1'
+		for index := len(p.Board) - 1; index >= 0; index-- {
+			piece := p.Board[index]
+			if index%8 == 7 {
+				str.WriteRune(rank)
+				rank += 1
+			}
+			str.WriteString(piece.String())
+			if index%8 == 0 {
+				str.WriteRune('\n')
+			}
 		}
-		str.WriteString(piece.String())
-		if index%8 == 7 {
-			str.WriteRune('\n')
+		str.WriteString(" HGFEDCBA")
+		return str.String()
+	} else {
+		str := strings.Builder{}
+		rank := '8'
+		for index, piece := range p.Board {
+			if index%8 == 0 {
+				str.WriteRune(rank)
+				rank -= 1
+			}
+			str.WriteString(piece.String())
+			if index%8 == 7 {
+				str.WriteRune('\n')
+			}
 		}
+		str.WriteString(" ABCDEFGH")
+		return str.String()
 	}
-	str.WriteString(" ABCDEFGH")
-	return str.String()
 }
 
 func (p *Position) PieceAt(s Square) Piece {

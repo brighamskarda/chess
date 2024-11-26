@@ -26,7 +26,6 @@ There is no guarantee as to when more functionality will be added but some thing
 
 - Bitboard support
 - UTF-8 chess symbol printing and parsing support
-- Flipped board printing (printing from black's perspective)
 - More advanced PGN parsing and exporting
 
 ## Contact info
