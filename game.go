@@ -278,6 +278,15 @@ func (g *Game) HasThreeFoldRepetition() bool {
 	return false
 }
 
+// PrintPosition prints the current position from the point of view for the current player to move.
+func (g *Game) PrintPosition() {
+	if g.Turn() == Black {
+		fmt.Println(g.position.FormatString(true))
+	} else {
+		fmt.Println(g.position.FormatString(false))
+	}
+}
+
 func generateAllGamePositions(g *Game) []Position {
 	pos, _ := ParseFen(DefaultFen)
 	if fen, err := g.GetTag("FEN"); err == nil {
