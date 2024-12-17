@@ -176,14 +176,18 @@ func (g *Game) EnPassant() Square {
 	return g.position.EnPassant
 }
 
+// IsCheckMate returns true is the side to move is in check and has no legal moves.
 func (g *Game) IsCheckMate() bool {
 	return IsCheckMate(g.position)
 }
 
+// IsStaleMate does not check the fifty move rule. It only checks if a player is not able to move, and is not in check.
 func (g *Game) IsStaleMate() bool {
 	return IsStaleMate(g.position)
 }
 
+// GetResult gets the current result tag for the game. This result should be valid, but there are no calculations being
+// performed in this function.
 func (g *Game) GetResult() Result {
 	return parseResult(g.tags["Result"])
 }
