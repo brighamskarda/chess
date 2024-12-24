@@ -308,7 +308,7 @@ func TestWritePgn(t *testing.T) {
 
 1. e4 c5 2. Nf3 Nc6 3. Bc4 Nf6 4. c3 Nxe4 5. O-O Nd6 6. d4 Nxc4 7. dxc5 g6 8. Qxd7+ Qxd7 9. Rd1 Qxd1+ 10. Ne1 Qxe1# 0-1`
 	actual := &strings.Builder{}
-	WritePgn(game, actual)
+	game.WritePgn(actual)
 	if actual.String() != expected && actual.String() != altExptected {
 		t.Errorf("did not get expected value: %s", cmp.Diff(expected, actual.String()))
 	}
@@ -352,9 +352,9 @@ func TestReadPgn(t *testing.T) {
 		}}
 
 	expectedPgn := strings.Builder{}
-	WritePgn(expected, &expectedPgn)
+	expected.WritePgn(&expectedPgn)
 	gamePgn := strings.Builder{}
-	WritePgn(game, &gamePgn)
+	game.WritePgn(&gamePgn)
 
 	if gamePgn.String() != expectedPgn.String() {
 		t.Errorf("did not get expected value: %v", cmp.Diff(expectedPgn.String(), gamePgn.String()))
@@ -410,7 +410,7 @@ func TestReadWritePgn(t *testing.T) {
 
 		gameString := strings.Builder{}
 
-		err = WritePgn(game, &gameString)
+		err = game.WritePgn(&gameString)
 		if err != nil {
 			t.Errorf("failed to write pgn: %s: %v", fileName, err)
 		}

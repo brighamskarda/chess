@@ -322,7 +322,7 @@ func (g *Game) CanClaimDraw() bool {
 }
 
 // WritePgn writes a pgn representation of g to w.
-func WritePgn(g *Game, w io.Writer) error {
+func (g *Game) WritePgn(w io.Writer) error {
 	sevenTags := []string{"Event", "Site", "Date", "Round", "White", "Black", "Result"}
 	for _, tag := range sevenTags {
 		_, err := fmt.Fprintf(w, "[%s \"%s\"]\n", tag, g.tags[tag])
