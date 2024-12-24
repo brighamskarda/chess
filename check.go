@@ -1,7 +1,7 @@
 package chess
 
 // IsCheck returns true if the side to move is currently in check.
-func IsCheck(p *Position) bool {
+func (p *Position) IsCheck() bool {
 	if !isValidColor(p.Turn) || p.Turn == NoColor {
 		return false
 	}
@@ -244,10 +244,10 @@ func isCheckKing(p *Position, kingSquare Square) bool {
 
 // IsCheckMate returns true is the side to move is in check and has no legal moves.
 func IsCheckMate(p *Position) bool {
-	return IsCheck(p) && len(GenerateLegalMoves(p)) == 0
+	return p.IsCheck() && len(GenerateLegalMoves(p)) == 0
 }
 
 // IsStaleMate does not check the fifty move rule. It only checks if a player is not able to move, and is not in check.
 func IsStaleMate(p *Position) bool {
-	return !IsCheck(p) && len(GenerateLegalMoves(p)) == 0
+	return !p.IsCheck() && len(GenerateLegalMoves(p)) == 0
 }

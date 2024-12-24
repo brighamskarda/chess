@@ -50,7 +50,7 @@ func (m Move) SanString(p *Position) string {
 		return sanString
 	}
 
-	if IsCheck(&newPosition) {
+	if newPosition.IsCheck() {
 		sanString += "+"
 		return sanString
 	}
@@ -82,7 +82,7 @@ func sanStringPawn(m Move, p *Position) string {
 		return sanString
 	}
 
-	if IsCheck(&newPosition) {
+	if newPosition.IsCheck() {
 		sanString += "+"
 		return sanString
 	}

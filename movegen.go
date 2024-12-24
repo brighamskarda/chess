@@ -350,14 +350,14 @@ func generateBlackCastleMoves(p *Position) []Move {
 // performance since move generation is a vital part to engine development.
 func GenerateLegalMoves(p *Position) []Move {
 	pseudoLegalMoves := GeneratePseudoLegalMoves(p)
-	isCurrentPositionCheck := IsCheck(p)
+	isCurrentPositionCheck := p.IsCheck()
 	legalMoves := []Move{}
 	for _, move := range pseudoLegalMoves {
 		var tempPosition Position = *p
 		tempPosition.Move(move)
 		tempPosition.Turn = p.Turn
 		castleMove := isCastleMove(p, move)
-		if !IsCheck(&tempPosition) && ((castleMove && !isCurrentPositionCheck) || !castleMove) {
+		if !tempPosition.IsCheck() && ((castleMove && !isCurrentPositionCheck) || !castleMove) {
 			legalMoves = append(legalMoves, move)
 		}
 	}
