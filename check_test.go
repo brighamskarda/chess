@@ -252,19 +252,19 @@ func BenchmarkIsCheckMate(b *testing.B) {
 func TestIsStaleMate(t *testing.T) {
 	fen := "k1K5/ppp5/1bP5/8/8/8/8/3r4 w - - 0 1"
 	pos, _ := ParseFen(fen)
-	if IsStaleMate(pos) {
+	if pos.IsStaleMate() {
 		t.Errorf("incorrect result: fen = %s: expected false, got true", fen)
 	}
 
 	fen = "5bnr/4p1pq/4Qpkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR b KQ - 2 10"
 	pos, _ = ParseFen(fen)
-	if !IsStaleMate(pos) {
+	if !pos.IsStaleMate() {
 		t.Errorf("incorrect result: fen = %s: expected true, got false", fen)
 	}
 
 	fen = "2b5/pp3kp1/3p3p/3P4/5b2/6R1/6PK/r7 w - - 0 32"
 	pos, _ = ParseFen(fen)
-	if !IsStaleMate(pos) {
+	if !pos.IsStaleMate() {
 		t.Errorf("incorrect result: fen = %s: expected true, got false", fen)
 	}
 }
@@ -273,6 +273,6 @@ func BenchmarkIsStaleMate(b *testing.B) {
 	pos := getDefaultPosition()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		IsStaleMate(pos)
+		pos.IsStaleMate()
 	}
 }

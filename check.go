@@ -248,6 +248,6 @@ func (p *Position) IsCheckMate() bool {
 }
 
 // IsStaleMate does not check the fifty move rule. It only checks if a player is not able to move, and is not in check.
-func IsStaleMate(p *Position) bool {
+func (p *Position) IsStaleMate() bool {
 	return !p.IsCheck() && len(GenerateLegalMoves(p)) == 0
 }

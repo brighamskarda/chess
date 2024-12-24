@@ -105,7 +105,7 @@ func (g *Game) Move(m Move) error {
 		if g.position.Turn == White {
 			g.SetResult(BlackWins)
 		}
-	} else if IsStaleMate(g.position) {
+	} else if g.position.IsStaleMate() {
 		g.SetResult(Draw)
 	} else {
 		g.SetResult(NoResult)
@@ -183,7 +183,7 @@ func (g *Game) IsCheckMate() bool {
 
 // IsStaleMate does not check the fifty move rule. It only checks if a player is not able to move, and is not in check.
 func (g *Game) IsStaleMate() bool {
-	return IsStaleMate(g.position)
+	return g.position.IsStaleMate()
 }
 
 // GetResult gets the current result tag for the game. This result should be valid, but there are no calculations being
@@ -251,7 +251,7 @@ func (g *Game) SetPosition(p *Position) error {
 		} else {
 			g.SetResult(WhiteWins)
 		}
-	} else if IsStaleMate(p) {
+	} else if p.IsStaleMate() {
 		g.SetResult(Draw)
 	} else {
 		g.SetResult(NoResult)
