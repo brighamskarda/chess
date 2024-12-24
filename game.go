@@ -238,7 +238,7 @@ func (g *Game) GetAllTags() map[string]string {
 // position. The result tag is updated to match if the game is in mate, or could still be going.
 // Move history is cleared, and the pgn tags "SetUp" and "FEN" are set accordingly.
 func (g *Game) SetPosition(p *Position) error {
-	if !IsValidPosition(p) {
+	if !p.IsValid() {
 		return errors.New("invalid position: game can only set valid chess positions")
 	}
 	*g.position = *p

@@ -208,12 +208,12 @@ func BenchmarkGenerateFen(b *testing.B) {
 
 func TestIsValidPosition(t *testing.T) {
 	pos := &Position{}
-	if IsValidPosition(pos) {
+	if pos.IsValid() {
 		t.Error("Zeroed position should not be valid.")
 	}
 
 	pos = getDefaultPosition()
-	if !IsValidPosition(pos) {
+	if !pos.IsValid() {
 		t.Error("Default position should be valid")
 	}
 }
@@ -221,7 +221,7 @@ func TestIsValidPosition(t *testing.T) {
 func TestIsValidPositionCastleRights(t *testing.T) {
 	pos := getDefaultPosition()
 	pos.Board[63] = BlackRook
-	if IsValidPosition(pos) {
+	if pos.IsValid() {
 		t.Error("Castle rights not checked properly")
 	}
 }
@@ -230,7 +230,7 @@ func TestIsValidPositionKings(t *testing.T) {
 	pos := getDefaultPosition()
 	pos.WhiteKingSideCastle = false
 	pos.Board[4] = NoPiece
-	if IsValidPosition(pos) {
+	if pos.IsValid() {
 		t.Error("Kings not checked properly")
 	}
 }
@@ -239,14 +239,14 @@ func TestIsValidPositionPawns(t *testing.T) {
 	pos := getDefaultPosition()
 	pos.Board[0] = WhitePawn
 	pos.BlackQueenSideCastle = false
-	if IsValidPosition(pos) {
+	if pos.IsValid() {
 		t.Error("Pawns not checked properly")
 	}
 
 	pos = getDefaultPosition()
 	pos.Board[63] = BlackPawn
 	pos.WhiteKingSideCastle = false
-	if IsValidPosition(pos) {
+	if pos.IsValid() {
 		t.Error("Pawns not checked properly")
 	}
 }
@@ -256,32 +256,32 @@ func TestIsValidPositionEnPassant(t *testing.T) {
 	pos.SetPieceAt(E4, WhitePawn)
 	pos.EnPassant = E3
 	pos.Turn = Black
-	if !IsValidPosition(pos) {
+	if !pos.IsValid() {
 		t.Error("En Passant was logical")
 	}
 
 	pos.EnPassant = E4
-	if IsValidPosition(pos) {
+	if pos.IsValid() {
 		t.Error("En Passant was not logical")
 	}
 
 	pos.EnPassant = E6
-	if IsValidPosition(pos) {
+	if pos.IsValid() {
 		t.Error("En Passant was not logical")
 	}
 
 	pos.SetPieceAt(E5, WhitePawn)
-	if IsValidPosition(pos) {
+	if pos.IsValid() {
 		t.Error("En Passant was not logical")
 	}
 
 	pos.SetPieceAt(E5, BlackPawn)
-	if IsValidPosition(pos) {
+	if pos.IsValid() {
 		t.Error("En Passant was not logical")
 	}
 
 	pos.Turn = White
-	if !IsValidPosition(pos) {
+	if !pos.IsValid() {
 		t.Error("En Passant was logical")
 	}
 }
@@ -293,7 +293,7 @@ func TestIsValidPositionEnPassantPawnOnSquare(t *testing.T) {
 	pos.SetPieceAt(E3, WhitePawn)
 	pos.EnPassant = E3
 	pos.Turn = Black
-	if IsValidPosition(pos) {
+	if pos.IsValid() {
 		t.Error("incorrect result for pawns on e4 and e3: expected false, got true")
 	}
 }
@@ -301,7 +301,7 @@ func TestIsValidPositionEnPassantPawnOnSquare(t *testing.T) {
 func TestIsValidPositionTurn(t *testing.T) {
 	pos := getDefaultPosition()
 	pos.Turn = NoColor
-	if IsValidPosition(pos) {
+	if pos.IsValid() {
 		t.Error("Turn was not set, position not valid")
 	}
 }
@@ -309,13 +309,13 @@ func TestIsValidPositionTurn(t *testing.T) {
 func TestIsValidPositionInvalidPieces(t *testing.T) {
 	pos := getDefaultPosition()
 	pos.Board[9].Color = NoColor
-	if IsValidPosition(pos) {
+	if pos.IsValid() {
 		t.Error("Invalid Piece on board, position not valid")
 	}
 
 	pos.Board[9].Color = Black
 	pos.Board[9].Type = NoPieceType
-	if IsValidPosition(pos) {
+	if pos.IsValid() {
 		t.Error("Invalid Piece on board, position not valid")
 	}
 }
@@ -324,7 +324,7 @@ func BenchmarkIsValidPosition(b *testing.B) {
 	pos := getDefaultPosition()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		IsValidPosition(pos)
+		pos.IsValid()
 	}
 }
 
