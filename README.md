@@ -22,11 +22,8 @@ For engine development I recommend using the Position struct as it allows for qu
 
 ## Future Development
 
-There is no guarantee as to when more functionality will be added but some things I would like to add in the future are:
-
-- Bitboard support
-- UTF-8 chess symbol printing and parsing support
-- More advanced PGN parsing and exporting
+I am currently working on version 2.0 of this library. It will feature a fully bitboard based position representation.
+The hope is that this will speed up the move generating portions of the library.
 
 ## Contact info
 
