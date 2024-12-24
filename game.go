@@ -244,7 +244,7 @@ func (g *Game) SetPosition(p *Position) error {
 	*g.position = *p
 	g.moveHistory = []Move{}
 	g.tags["SetUp"] = "1"
-	g.tags["FEN"] = GenerateFen(p)
+	g.tags["FEN"] = p.GenerateFen()
 	if IsCheckMate(p) {
 		if p.Turn == White {
 			g.SetResult(BlackWins)

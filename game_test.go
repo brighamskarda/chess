@@ -387,7 +387,7 @@ func TestReadWritePgn(t *testing.T) {
 	}
 	for i, dirEntry := range files {
 		if i%1000 == 0 && i > 0 {
-			fmt.Printf("Evaluating %v/%v\n", i, len(files))
+			t.Logf("Evaluating %v/%v\n", i, len(files))
 		}
 
 		fileName := "testPGNs/" + dirEntry.Name()

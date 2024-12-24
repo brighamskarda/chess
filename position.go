@@ -315,7 +315,7 @@ func parseCastleRights(castleRights string) ([4]bool, error) {
 	return rights, nil
 }
 
-func GenerateFen(p *Position) string {
+func (p *Position) GenerateFen() string {
 	fen := strings.Builder{}
 	fen.WriteString(generateFenPos(p))
 	fen.WriteString(" " + generateFenTurn(p))
