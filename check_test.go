@@ -206,37 +206,37 @@ func BenchmarkIsCheck(b *testing.B) {
 func TestIsCheckMate(t *testing.T) {
 	fen := "rnbq2nr/ppp1bRkN/4p1B1/3PP1Qp/2P5/6P1/PP4PP/R5K1 b - - 7 26"
 	pos, _ := ParseFen(fen)
-	if !IsCheckMate(pos) {
+	if !pos.IsCheckMate() {
 		t.Errorf("incorrect result: fen = %s: expected true, got false", fen)
 	}
 
 	fen = "2B5/1p4k1/2p2pp1/2n1p1Kp/2P1P2N/4R1P1/p2r2P1/7r w - - 0 46"
 	pos, _ = ParseFen(fen)
-	if !IsCheckMate(pos) {
+	if !pos.IsCheckMate() {
 		t.Errorf("incorrect result: fen = %s: expected true, got false", fen)
 	}
 
 	fen = "k3b3/8/7p/5Pp1/7K/r7/8/6r1 w - g6 0 1"
 	pos, _ = ParseFen(fen)
-	if IsCheckMate(pos) {
+	if pos.IsCheckMate() {
 		t.Errorf("incorrect result: fen = %s: expected false, got true", fen)
 	}
 
 	fen = "k3b3/8/7p/5Pp1/8/r7/8/6r1 w - g6 0 1"
 	pos, _ = ParseFen(fen)
-	if IsCheckMate(pos) {
+	if pos.IsCheckMate() {
 		t.Errorf("incorrect result: fen = %s: expected false, got true", fen)
 	}
 
 	fen = "k7/8/1R5p/R4Pp1/8/8/8/6r1 b - - 0 1"
 	pos, _ = ParseFen(fen)
-	if !IsCheckMate(pos) {
+	if !pos.IsCheckMate() {
 		t.Errorf("incorrect result: fen = %s: expected true, got false", fen)
 	}
 
 	fen = "k1K5/ppp5/1bP5/8/8/8/8/3r4 w - - 0 1"
 	pos, _ = ParseFen(fen)
-	if IsCheckMate(pos) {
+	if pos.IsCheckMate() {
 		t.Errorf("incorrect result: fen = %s: expected false, got true", fen)
 	}
 }
@@ -245,7 +245,7 @@ func BenchmarkIsCheckMate(b *testing.B) {
 	pos, _ := ParseFen("3rkbnr/1p1bp3/1q1p3p/p5pQ/3n4/PPR5/5PPP/6K1 b - - 2 2")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		IsCheckMate(pos)
+		pos.IsCheckMate()
 	}
 }
 

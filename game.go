@@ -98,7 +98,7 @@ func (g *Game) Move(m Move) error {
 	}
 	g.position.Move(m)
 	g.moveHistory = append(g.moveHistory, m)
-	if IsCheckMate(g.position) {
+	if g.position.IsCheckMate() {
 		if g.position.Turn == Black {
 			g.SetResult(WhiteWins)
 		}
@@ -178,7 +178,7 @@ func (g *Game) EnPassant() Square {
 
 // IsCheckMate returns true is the side to move is in check and has no legal moves.
 func (g *Game) IsCheckMate() bool {
-	return IsCheckMate(g.position)
+	return g.position.IsCheckMate()
 }
 
 // IsStaleMate does not check the fifty move rule. It only checks if a player is not able to move, and is not in check.
@@ -245,7 +245,7 @@ func (g *Game) SetPosition(p *Position) error {
 	g.moveHistory = []Move{}
 	g.tags["SetUp"] = "1"
 	g.tags["FEN"] = p.GenerateFen()
-	if IsCheckMate(p) {
+	if p.IsCheckMate() {
 		if p.Turn == White {
 			g.SetResult(BlackWins)
 		} else {

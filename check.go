@@ -242,8 +242,8 @@ func isCheckKing(p *Position, kingSquare Square) bool {
 	return false
 }
 
-// IsCheckMate returns true is the side to move is in check and has no legal moves.
-func IsCheckMate(p *Position) bool {
+// IsCheckMate returns true if the side to move is in check and has no legal moves.
+func (p *Position) IsCheckMate() bool {
 	return p.IsCheck() && len(GenerateLegalMoves(p)) == 0
 }
 

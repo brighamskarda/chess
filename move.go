@@ -45,7 +45,7 @@ func (m Move) SanString(p *Position) string {
 	newPosition := *p
 	newPosition.Move(m)
 
-	if IsCheckMate(&newPosition) {
+	if newPosition.IsCheckMate() {
 		sanString += "#"
 		return sanString
 	}
@@ -77,7 +77,7 @@ func sanStringPawn(m Move, p *Position) string {
 	newPosition := *p
 	newPosition.Move(m)
 
-	if IsCheckMate(&newPosition) {
+	if newPosition.IsCheckMate() {
 		sanString += "#"
 		return sanString
 	}
