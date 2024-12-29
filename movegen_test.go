@@ -60,7 +60,7 @@ func TestGeneratePseudoLegalMoves(t *testing.T) {
 	}
 
 	pos := getDefaultPosition()
-	moves := GeneratePseudoLegalMoves(pos)
+	moves := pos.GeneratePseudoLegalMoves()
 	if !moveSetsEqual(defaultMoveSet, moves) {
 		t.Error("incorrect result for default board: ", cmp.Diff(defaultMoveSet, moves))
 	}
@@ -118,7 +118,7 @@ func TestGeneratePseudoLegalMoves(t *testing.T) {
 		{H1, G1, NoPieceType},
 		{H1, F1, NoPieceType},
 	}
-	moves = GeneratePseudoLegalMoves(pos)
+	moves = pos.GeneratePseudoLegalMoves()
 	slices.SortFunc(expectedMoves, moveSortFunc)
 	slices.SortFunc(moves, moveSortFunc)
 	if !moveSetsEqual(expectedMoves, moves) {
@@ -168,7 +168,7 @@ func TestGeneratePseudoLegalMoves(t *testing.T) {
 		{A5, E1, NoPieceType},
 		{E4, E3, NoPieceType},
 	}
-	moves = GeneratePseudoLegalMoves(pos)
+	moves = pos.GeneratePseudoLegalMoves()
 	slices.SortFunc(expectedMoves, moveSortFunc)
 	slices.SortFunc(moves, moveSortFunc)
 	if !moveSetsEqual(expectedMoves, moves) {
@@ -201,7 +201,7 @@ func TestGenerateLegalMoves(t *testing.T) {
 	}
 
 	pos := getDefaultPosition()
-	moves := GenerateLegalMoves(pos)
+	moves := pos.GenerateLegalMoves()
 	if !moveSetsEqual(defaultMoveSet, moves) {
 		t.Error("incorrect result for default board: ", cmp.Diff(defaultMoveSet, moves))
 	}
@@ -218,7 +218,7 @@ func TestGenerateLegalMoves(t *testing.T) {
 		{E1, E2, NoPieceType},
 		{E1, F1, NoPieceType},
 	}
-	moves = GenerateLegalMoves(pos)
+	moves = pos.GenerateLegalMoves()
 	slices.SortFunc(expectedMoves, moveSortFunc)
 	slices.SortFunc(moves, moveSortFunc)
 	if !moveSetsEqual(expectedMoves, moves) {
@@ -267,7 +267,7 @@ func TestGenerateLegalMoves(t *testing.T) {
 		{A5, E1, NoPieceType},
 		{E4, E3, NoPieceType},
 	}
-	moves = GenerateLegalMoves(pos)
+	moves = pos.GenerateLegalMoves()
 	slices.SortFunc(expectedMoves, moveSortFunc)
 	slices.SortFunc(moves, moveSortFunc)
 	if !moveSetsEqual(expectedMoves, moves) {
@@ -284,7 +284,7 @@ func TestGenerateWhitePawnMovesForward(t *testing.T) {
 		{E2, E4, NoPieceType},
 	}
 	pos.SetPieceAt(E2, WhitePawn)
-	moves := generateWhitePawnMoves(pos, E2)
+	moves := pos.generateWhitePawnMoves(E2)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result: expected %v, got %v", expectedMoves, moves)
 	}
@@ -294,7 +294,7 @@ func TestGenerateWhitePawnMovesForward(t *testing.T) {
 	}
 	pos.SetPieceAt(E3, WhitePawn)
 	pos.SetPieceAt(E2, NoPiece)
-	moves = generateWhitePawnMoves(pos, E3)
+	moves = pos.generateWhitePawnMoves(E3)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result when not on starting square: expected %v, got %v", expectedMoves, moves)
 	}
@@ -307,7 +307,7 @@ func TestGenerateWhitePawnMovesForward(t *testing.T) {
 	}
 	pos.SetPieceAt(E3, NoPiece)
 	pos.SetPieceAt(E7, WhitePawn)
-	moves = generateWhitePawnMoves(pos, E7)
+	moves = pos.generateWhitePawnMoves(E7)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result when promoting: expected %v, got %v", expectedMoves, moves)
 	}
@@ -322,14 +322,14 @@ func TestGenerateWhitePawnTakes(t *testing.T) {
 	expectedMoves := []Move{
 		{E6, D7, NoPieceType},
 	}
-	moves := generateWhitePawnMoves(pos, E6)
+	moves := pos.generateWhitePawnMoves(E6)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result: expected %v, got %v", expectedMoves, moves)
 	}
 
 	pos.SetPieceAt(F7, BlackPawn)
 	expectedMoves = append(expectedMoves, Move{E6, F7, NoPieceType})
-	moves = generateWhitePawnMoves(pos, E6)
+	moves = pos.generateWhitePawnMoves(E6)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result: expected %v, got %v", expectedMoves, moves)
 	}
@@ -346,7 +346,7 @@ func TestGenerateWhitePawnTakes(t *testing.T) {
 		{E5, D6, NoPieceType},
 		{E5, E6, NoPieceType},
 	}
-	moves = generateWhitePawnMoves(pos, E5)
+	moves = pos.generateWhitePawnMoves(E5)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result for EnPassant: expected %v, got %v", expectedMoves, moves)
 	}
@@ -363,7 +363,7 @@ func TestGenerateWhitePawnTakes(t *testing.T) {
 		{H7, G8, Bishop},
 		{H7, G8, Queen},
 	}
-	moves = generateWhitePawnMoves(pos, H7)
+	moves = pos.generateWhitePawnMoves(H7)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result for promotion: expected %v, got %v", expectedMoves, moves)
 	}
@@ -386,7 +386,7 @@ func TestGenerateRookMovesWhite(t *testing.T) {
 		{E4, E2, NoPieceType},
 		{E4, E1, NoPieceType},
 	}
-	moves := generateRookMoves(pos, E4)
+	moves := pos.generateRookMoves(E4)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result: expected %v, got %v", expectedMoves, moves)
 	}
@@ -405,7 +405,7 @@ func TestGenerateKnightMoves(t *testing.T) {
 		{G4, E3, NoPieceType},
 		{G4, E5, NoPieceType},
 	}
-	moves := generateKnightMoves(pos, G4)
+	moves := pos.generateKnightMoves(G4)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result: expected %v, got %v", expectedMoves, moves)
 	}
@@ -425,7 +425,7 @@ func TestGenerateBishopMoves(t *testing.T) {
 		{F3, H1, NoPieceType},
 		{F3, E2, NoPieceType},
 	}
-	moves := generateBishopMoves(pos, F3)
+	moves := pos.generateBishopMoves(F3)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result: expected %v, got %v", expectedMoves, moves)
 	}
@@ -454,7 +454,7 @@ func TestGenerateQueenMoves(t *testing.T) {
 		{F3, F1, NoPieceType},
 		{F3, E2, NoPieceType},
 	}
-	moves := generateQueenMoves(pos, F3)
+	moves := pos.generateQueenMoves(F3)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result: expected %v, got %v", expectedMoves, moves)
 	}
@@ -472,7 +472,7 @@ func TestGenerateKingMoves(t *testing.T) {
 		{A3, B3, NoPieceType},
 		{A3, A2, NoPieceType},
 	}
-	moves := generateKingMoves(pos, A3)
+	moves := pos.generateKingMoves(A3)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result: expected %v, got %v", expectedMoves, moves)
 	}
@@ -492,66 +492,61 @@ func TestGenerateCastleMovesWhite(t *testing.T) {
 	expectedMoves := []Move{
 		{E1, C1, NoPieceType},
 	}
-	moves := generateCastleMoves(pos, E1)
+	moves := pos.generateCastleMoves(E1)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result for white queen-side castle: expected %v, got %v", expectedMoves, moves)
 	}
 
 	pos.WhiteQueenSideCastle = false
 	expectedMoves = []Move{}
-	moves = generateCastleMoves(pos, E1)
+	moves = pos.generateCastleMoves(E1)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result for white queen-side castle: expected %v, got %v", expectedMoves, moves)
 	}
 
-	// pos.WhiteQueenSideCastle = true
-	// pos.SetPieceAt(A2, BlackPawn)
-	// expectedMoves = []Move{
-	// 	{E1, C1, NoPieceType},
-	// }
-	// moves = generateCastleMoves(pos, E1)
-	// if !moveSetsEqual(expectedMoves, moves) {
-	// 	t.Errorf("incorrect result for white queen-side castle: black pawn on A2: expected %v, got %v", expectedMoves, moves)
-	// }
+	pos.WhiteQueenSideCastle = true
+	pos.SetPieceAt(A2, BlackPawn)
+	expectedMoves = []Move{
+		{E1, C1, NoPieceType},
+	}
+	moves = pos.generateCastleMoves(E1)
+	if !moveSetsEqual(expectedMoves, moves) {
+		t.Errorf("incorrect result for white queen-side castle: black pawn on A2: expected %v, got %v", expectedMoves, moves)
+	}
 
-	// pos.SetPieceAt(B2, BlackPawn)
-	// expectedMoves = []Move{}
-	// moves = generateCastleMoves(pos, E1)
-	// if !moveSetsEqual(expectedMoves, moves) {
-	// 	t.Errorf("incorrect result for white queen-side castle: black pawn on B2: expected %v, got %v", expectedMoves, moves)
-	// }
+	pos.SetPieceAt(B2, BlackPawn)
+	moves = pos.generateCastleMoves(E1)
+	if !moveSetsEqual(expectedMoves, moves) {
+		t.Errorf("incorrect result for white queen-side castle: black pawn on B2: expected %v, got %v", expectedMoves, moves)
+	}
 
-	// pos.SetPieceAt(B2, NoPiece)
-	// pos.SetPieceAt(E2, BlackPawn)
-	// expectedMoves = []Move{}
-	// moves = generateCastleMoves(pos, E1)
-	// if !moveSetsEqual(expectedMoves, moves) {
-	// 	t.Errorf("incorrect result for white queen-side castle: black pawn on E2: expected %v, got %v", expectedMoves, moves)
-	// }
+	pos.SetPieceAt(E2, BlackPawn)
+	moves = pos.generateCastleMoves(E1)
+	if !moveSetsEqual(expectedMoves, moves) {
+		t.Errorf("incorrect result for white queen-side castle: black pawn on E2: expected %v, got %v", expectedMoves, moves)
+	}
 
-	// pos.SetPieceAt(E2, NoPiece)
-	// pos.SetPieceAt(F2, BlackPawn)
-	// expectedMoves = []Move{}
-	// moves = generateCastleMoves(pos, E1)
-	// if !moveSetsEqual(expectedMoves, moves) {
-	// 	t.Errorf("incorrect result for white queen-side castle: black pawn on F2: expected %v, got %v", expectedMoves, moves)
-	// }
+	pos.SetPieceAt(E2, NoPiece)
+	pos.SetPieceAt(F2, BlackPawn)
+	moves = pos.generateCastleMoves(E1)
+	if !moveSetsEqual(expectedMoves, moves) {
+		t.Errorf("incorrect result for white queen-side castle: black pawn on F2: expected %v, got %v", expectedMoves, moves)
+	}
 
-	// pos.SetPieceAt(F2, NoPiece)
-	// pos.SetPieceAt(C8, BlackRook)
-	// expectedMoves = []Move{}
-	// moves = generateCastleMoves(pos, E1)
-	// if !moveSetsEqual(expectedMoves, moves) {
-	// 	t.Errorf("incorrect result for white queen-side castle: black rook on C8: expected %v, got %v", expectedMoves, moves)
-	// }
+	pos.SetPieceAt(F2, NoPiece)
+	pos.SetPieceAt(C8, BlackRook)
+	moves = pos.generateCastleMoves(E1)
+	if !moveSetsEqual(expectedMoves, moves) {
+		t.Errorf("incorrect result for white queen-side castle: black rook on C8: expected %v, got %v", expectedMoves, moves)
+	}
 
-	// pos.SetPieceAt(C8, NoPiece)
-	// pos.SetPieceAt(B1, WhiteKnight)
-	// expectedMoves = []Move{}
-	// moves = generateCastleMoves(pos, E1)
-	// if !moveSetsEqual(expectedMoves, moves) {
-	// 	t.Errorf("incorrect result for white queen-side castle: white knight on B1: expected %v, got %v", expectedMoves, moves)
-	// }
+	pos.SetPieceAt(C8, NoPiece)
+	pos.SetPieceAt(B1, WhiteKnight)
+	expectedMoves = []Move{}
+	moves = pos.generateCastleMoves(E1)
+	if !moveSetsEqual(expectedMoves, moves) {
+		t.Errorf("incorrect result for white queen-side castle: white knight on B1: expected %v, got %v", expectedMoves, moves)
+	}
 }
 
 func TestGenerateBlackPawnMovesForward(t *testing.T) {
@@ -562,14 +557,14 @@ func TestGenerateBlackPawnMovesForward(t *testing.T) {
 		{E7, E5, NoPieceType},
 	}
 	pos.SetPieceAt(E7, BlackPawn)
-	moves := generateBlackPawnMoves(pos, E7)
+	moves := pos.generateBlackPawnMoves(E7)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result: expected %v, got %v", expectedMoves, moves)
 	}
 
 	expectedMoves = []Move{}
 	pos.SetPieceAt(E6, WhitePawn)
-	moves = generateBlackPawnMoves(pos, E7)
+	moves = pos.generateBlackPawnMoves(E7)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result when blocked: expected empty list, got %v", moves)
 	}
@@ -579,7 +574,7 @@ func TestGenerateBlackPawnMovesForward(t *testing.T) {
 	}
 	pos.SetPieceAt(E6, BlackPawn)
 	pos.SetPieceAt(E7, NoPiece)
-	moves = generateBlackPawnMoves(pos, E6)
+	moves = pos.generateBlackPawnMoves(E6)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result when not on starting square: expected %v, got %v", expectedMoves, moves)
 	}
@@ -592,7 +587,7 @@ func TestGenerateBlackPawnMovesForward(t *testing.T) {
 	}
 	pos.SetPieceAt(E6, NoPiece)
 	pos.SetPieceAt(E2, BlackPawn)
-	moves = generateBlackPawnMoves(pos, E2)
+	moves = pos.generateBlackPawnMoves(E2)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result when promoting: expected %v, got %v", expectedMoves, moves)
 	}
@@ -607,14 +602,14 @@ func TestGenerateBlackPawnTakes(t *testing.T) {
 	expectedMoves := []Move{
 		{E4, D3, NoPieceType},
 	}
-	moves := generateBlackPawnMoves(pos, E4)
+	moves := pos.generateBlackPawnMoves(E4)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result: expected %v, got %v", expectedMoves, moves)
 	}
 
 	pos.SetPieceAt(F3, WhitePawn)
 	expectedMoves = append(expectedMoves, Move{E4, F3, NoPieceType})
-	moves = generateBlackPawnMoves(pos, E4)
+	moves = pos.generateBlackPawnMoves(E4)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result: expected %v, got %v", expectedMoves, moves)
 	}
@@ -627,7 +622,7 @@ func TestGenerateBlackPawnTakes(t *testing.T) {
 	expectedMoves = []Move{
 		{E4, F3, NoPieceType},
 	}
-	moves = generateBlackPawnMoves(pos, E4)
+	moves = pos.generateBlackPawnMoves(E4)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result for EnPassant: expected %v, got %v", expectedMoves, moves)
 	}
@@ -644,7 +639,7 @@ func TestGenerateBlackPawnTakes(t *testing.T) {
 		{H2, G1, Bishop},
 		{H2, G1, Queen},
 	}
-	moves = generateBlackPawnMoves(pos, H2)
+	moves = pos.generateBlackPawnMoves(H2)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result for promotion: expected %v, got %v", expectedMoves, moves)
 	}
@@ -667,7 +662,7 @@ func TestGenerateRookMovesBlack(t *testing.T) {
 		{E4, E2, NoPieceType},
 		{E4, E1, NoPieceType},
 	}
-	moves := generateRookMoves(pos, E4)
+	moves := pos.generateRookMoves(E4)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result: expected %v, got %v", expectedMoves, moves)
 	}
@@ -687,7 +682,7 @@ func TestGenerateCastleMovesBlack(t *testing.T) {
 	expectedMoves := []Move{
 		{E8, G8, NoPieceType},
 	}
-	moves := generateCastleMoves(pos, E8)
+	moves := pos.generateCastleMoves(E8)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result for black king-side castle: expected %v, got %v", expectedMoves, moves)
 	}
@@ -696,25 +691,140 @@ func TestGenerateCastleMovesBlack(t *testing.T) {
 	expectedMoves = []Move{
 		{E8, G8, NoPieceType},
 	}
-	moves = generateCastleMoves(pos, E8)
+	moves = pos.generateCastleMoves(E8)
 	if !moveSetsEqual(expectedMoves, moves) {
 		t.Errorf("incorrect result for black king-side castle: white knight on F7: expected %v, got %v", expectedMoves, moves)
 	}
 
-	// pos.SetPieceAt(F7, NoPiece)
-	// pos.SetPieceAt(E6, WhiteBishop)
-	// expectedMoves = []Move{}
-	// moves = generateCastleMoves(pos, E8)
-	// if !moveSetsEqual(expectedMoves, moves) {
-	// 	t.Errorf("incorrect result for black king-side castle: white bishop on E6: expected %v, got %v", expectedMoves, moves)
-	// }
+	pos.SetPieceAt(F7, NoPiece)
+	pos.SetPieceAt(E6, WhiteBishop)
+	moves = pos.generateCastleMoves(E8)
+	if !moveSetsEqual(expectedMoves, moves) {
+		t.Errorf("incorrect result for black king-side castle: white bishop on E6: expected %v, got %v", expectedMoves, moves)
+	}
+}
+
+func TestCastleThroughCheckWhiteKingSide(t *testing.T) {
+	pos, _ := ParseFen("1k3r2/8/8/8/8/8/8/4K2R w K - 0 1")
+	expectedMoves := []Move{
+		{H1, H2, NoPieceType},
+		{H1, H3, NoPieceType},
+		{H1, H4, NoPieceType},
+		{H1, H5, NoPieceType},
+		{H1, H6, NoPieceType},
+		{H1, H7, NoPieceType},
+		{H1, H8, NoPieceType},
+		{H1, G1, NoPieceType},
+		{H1, F1, NoPieceType},
+		{E1, E2, NoPieceType},
+		{E1, D1, NoPieceType},
+		{E1, D2, NoPieceType},
+	}
+	if actualMoves := pos.GenerateLegalMoves(); !moveSetsEqual(actualMoves, expectedMoves) {
+		t.Errorf("GenerateLegalMoves produced illegal white side king castle: expected %v, got %v", expectedMoves, actualMoves)
+	}
+
+	expectedMoves = append(expectedMoves, Move{E1, F1, NoPieceType}, Move{E1, F2, NoPieceType}, Move{E1, G1, NoPieceType})
+	if actualMoves := pos.GeneratePseudoLegalMoves(); !moveSetsEqual(actualMoves, expectedMoves) {
+		t.Errorf("GeneratePseudoLegalMoves produced illegal white side king castle: expected %v, got %v", expectedMoves, actualMoves)
+	}
+}
+
+func TestCastleThroughCheckBlackKingSide(t *testing.T) {
+	pos, _ := ParseFen("4k2r/8/8/8/8/8/8/K4R2 b k - 0 1")
+	expectedMoves := []Move{
+		{H8, H2, NoPieceType},
+		{H8, H3, NoPieceType},
+		{H8, H4, NoPieceType},
+		{H8, H5, NoPieceType},
+		{H8, H6, NoPieceType},
+		{H8, H7, NoPieceType},
+		{H8, H1, NoPieceType},
+		{H8, G8, NoPieceType},
+		{H8, F8, NoPieceType},
+		{E8, E7, NoPieceType},
+		{E8, D8, NoPieceType},
+		{E8, D7, NoPieceType},
+	}
+	if actualMoves := pos.GenerateLegalMoves(); !moveSetsEqual(actualMoves, expectedMoves) {
+		t.Errorf("GenerateLegalMoves produced illegal black side king castle: expected %v, got %v", expectedMoves, actualMoves)
+	}
+
+	expectedMoves = append(expectedMoves, Move{E8, F8, NoPieceType}, Move{E8, F7, NoPieceType}, Move{E8, G8, NoPieceType})
+	if actualMoves := pos.GeneratePseudoLegalMoves(); !moveSetsEqual(actualMoves, expectedMoves) {
+		t.Errorf("GeneratePseudoLegalMoves produced illegal black side king castle: expected %v, got %v", expectedMoves, actualMoves)
+	}
+}
+
+func TestCastleThroughCheckWhiteQueenSide(t *testing.T) {
+	pos, _ := ParseFen("3rk3/8/8/8/8/8/8/R3K3 w Q - 0 1")
+	expectedMoves := []Move{
+		{A1, A2, NoPieceType},
+		{A1, A3, NoPieceType},
+		{A1, A4, NoPieceType},
+		{A1, A5, NoPieceType},
+		{A1, A6, NoPieceType},
+		{A1, A7, NoPieceType},
+		{A1, A8, NoPieceType},
+		{A1, B1, NoPieceType},
+		{A1, C1, NoPieceType},
+		{A1, D1, NoPieceType},
+		{E1, E2, NoPieceType},
+		{E1, F1, NoPieceType},
+		{E1, F2, NoPieceType},
+	}
+	if actualMoves := pos.GenerateLegalMoves(); !moveSetsEqual(actualMoves, expectedMoves) {
+		t.Errorf("GenerateLegalMoves produced illegal white side queen castle: expected %v, got %v", expectedMoves, actualMoves)
+	}
+
+	expectedMoves = append(expectedMoves, Move{E1, D1, NoPieceType}, Move{E1, D2, NoPieceType}, Move{E1, C1, NoPieceType})
+	if actualMoves := pos.GeneratePseudoLegalMoves(); !moveSetsEqual(actualMoves, expectedMoves) {
+		t.Errorf("GeneratePseudoLegalMoves produced illegal white side queen castle: expected %v, got %v", expectedMoves, actualMoves)
+	}
+
+	pos, _ = ParseFen("1r2k3/8/8/8/8/8/8/R3K3 w Q - 0 1")
+	if actualMoves := pos.GenerateLegalMoves(); !moveSetsEqual(actualMoves, expectedMoves) {
+		t.Errorf("GenerateLegalMoves did not produce white side queen castle: expected %v, got %v", expectedMoves, actualMoves)
+	}
+}
+
+func TestCastleThroughCheckBlackQueenSide(t *testing.T) {
+	pos, _ := ParseFen("r3k3/8/8/8/8/8/8/3RK3 b q - 0 1")
+	expectedMoves := []Move{
+		{A8, A2, NoPieceType},
+		{A8, A3, NoPieceType},
+		{A8, A4, NoPieceType},
+		{A8, A5, NoPieceType},
+		{A8, A6, NoPieceType},
+		{A8, A7, NoPieceType},
+		{A8, A1, NoPieceType},
+		{A8, B8, NoPieceType},
+		{A8, C8, NoPieceType},
+		{A8, D8, NoPieceType},
+		{E8, E7, NoPieceType},
+		{E8, F8, NoPieceType},
+		{E8, F7, NoPieceType},
+	}
+	if actualMoves := pos.GenerateLegalMoves(); !moveSetsEqual(actualMoves, expectedMoves) {
+		t.Errorf("GenerateLegalMoves produced illegal black side queen castle: expected %v, got %v", expectedMoves, actualMoves)
+	}
+
+	expectedMoves = append(expectedMoves, Move{E8, D8, NoPieceType}, Move{E8, D7, NoPieceType}, Move{E8, C8, NoPieceType})
+	if actualMoves := pos.GeneratePseudoLegalMoves(); !moveSetsEqual(actualMoves, expectedMoves) {
+		t.Errorf("GeneratePseudoLegalMoves produced illegal black side queen castle: expected %v, got %v", expectedMoves, actualMoves)
+	}
+
+	pos, _ = ParseFen("r3k3/8/8/8/8/8/8/1R2K3 b q - 0 1")
+	if actualMoves := pos.GenerateLegalMoves(); !moveSetsEqual(actualMoves, expectedMoves) {
+		t.Errorf("GenerateLegalMoves did not produce black side queen castle: expected %v, got %v", expectedMoves, actualMoves)
+	}
 }
 
 func BenchmarkGeneratePseudoLegalMoves(b *testing.B) {
 	pos, _ := ParseFen("r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R w KQkq - 2 14")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		GeneratePseudoLegalMoves(pos)
+		pos.GeneratePseudoLegalMoves()
 	}
 }
 
@@ -722,6 +832,6 @@ func BenchmarkGenerateLegalMoves(b *testing.B) {
 	pos, _ := ParseFen("r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R w KQkq - 2 14")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		GenerateLegalMoves(pos)
+		pos.GenerateLegalMoves()
 	}
 }

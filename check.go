@@ -32,10 +32,7 @@ func isCheckWhitePawn(p *Position, kingSquare Square) bool {
 		return true
 	}
 	squareToCheck.File += 2
-	if p.PieceAt(squareToCheck) == WhitePawn {
-		return true
-	}
-	return false
+	return p.PieceAt(squareToCheck) == WhitePawn
 }
 
 func isCheckBlackPawn(p *Position, kingSquare Square) bool {
@@ -46,10 +43,7 @@ func isCheckBlackPawn(p *Position, kingSquare Square) bool {
 		return true
 	}
 	squareToCheck.File += 2
-	if p.PieceAt(squareToCheck) == BlackPawn {
-		return true
-	}
-	return false
+	return p.PieceAt(squareToCheck) == BlackPawn
 }
 
 func isCheckRookQueen(p *Position, kingSquare Square) bool {
@@ -244,10 +238,10 @@ func isCheckKing(p *Position, kingSquare Square) bool {
 
 // IsCheckMate returns true if the side to move is in check and has no legal moves.
 func (p *Position) IsCheckMate() bool {
-	return p.IsCheck() && len(GenerateLegalMoves(p)) == 0
+	return p.IsCheck() && len(p.GenerateLegalMoves()) == 0
 }
 
 // IsStaleMate does not check the fifty move rule. It only checks if a player is not able to move, and is not in check.
 func (p *Position) IsStaleMate() bool {
-	return !p.IsCheck() && len(GenerateLegalMoves(p)) == 0
+	return !p.IsCheck() && len(p.GenerateLegalMoves()) == 0
 }

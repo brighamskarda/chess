@@ -102,7 +102,7 @@ func sanStringCastleMove(m Move) string {
 
 func resolveSanStringAmbiguity(m Move, p *Position) string {
 	piece := p.PieceAt(m.FromSquare)
-	validMoves := GenerateLegalMoves(p)
+	validMoves := p.GenerateLegalMoves()
 	disambiguator := ""
 	hasFile := false
 	hasRank := false
@@ -409,7 +409,7 @@ func parseSANRookMove(p *Position, toSquare Square) (Move, error) {
 		}
 	}
 	if isAmbiguous {
-		legalMoves := GenerateLegalMoves(p)
+		legalMoves := p.GenerateLegalMoves()
 		moveIWant := Move{}
 		for _, move := range legalMoves {
 			if moveIWant.FromSquare == NoSquare && slices.Contains(ambiguousMoves, move) {
@@ -500,7 +500,7 @@ func parseSANKnightMove(p *Position, toSquare Square) (Move, error) {
 		fromSquare = currentSquare
 	}
 	if isAmbiguous {
-		legalMoves := GenerateLegalMoves(p)
+		legalMoves := p.GenerateLegalMoves()
 		moveIWant := Move{}
 		for _, move := range legalMoves {
 			if moveIWant.FromSquare == NoSquare && slices.Contains(ambiguousMoves, move) {
@@ -576,7 +576,7 @@ func parseSANBishopMove(p *Position, toSquare Square) (Move, error) {
 		}
 	}
 	if isAmbiguous {
-		legalMoves := GenerateLegalMoves(p)
+		legalMoves := p.GenerateLegalMoves()
 		moveIWant := Move{}
 		for _, move := range legalMoves {
 			if moveIWant.FromSquare == NoSquare && slices.Contains(ambiguousMoves, move) {
@@ -708,7 +708,7 @@ func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
 		}
 	}
 	if isAmbiguous {
-		legalMoves := GenerateLegalMoves(p)
+		legalMoves := p.GenerateLegalMoves()
 		moveIWant := Move{}
 		for _, move := range legalMoves {
 			if moveIWant.FromSquare == NoSquare && slices.Contains(ambiguousMoves, move) {
@@ -804,7 +804,7 @@ func parseSANKingMove(p *Position, toSquare Square) (Move, error) {
 func parseSANAmbiguousPieceMove(p *Position, s string) (Move, error) {
 
 	if len(s) == 5 {
-		move, err := parseSANAmbiguousPieceMoveFirstSquareKnown(p, s)
+		move, err := parseSANAmbiguousPieceMoveFirstSquareKnown(s)
 		piece := p.PieceAt(move.ToSquare)
 		if err != nil {
 			return Move{}, err
@@ -841,7 +841,7 @@ func parseSANAmbiguousPieceMove(p *Position, s string) (Move, error) {
 	return Move{}, fmt.Errorf("could not parse SAN move: failed to disambiguate rank or file: input %s", s)
 }
 
-func parseSANAmbiguousPieceMoveFirstSquareKnown(p *Position, s string) (Move, error) {
+func parseSANAmbiguousPieceMoveFirstSquareKnown(s string) (Move, error) {
 	fromSquare, err := ParseSquare(s[1:3])
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move: input, %s: %w", s, err)
@@ -1601,7 +1601,7 @@ func parseSANPieceCapture(p *Position, s string) (Move, error) {
 	s = strings.Replace(s, "x", "", 1)
 
 	if len(s) == 5 {
-		move, err := parseSANAmbiguousPieceMoveFirstSquareKnown(p, s)
+		move, err := parseSANAmbiguousPieceMoveFirstSquareKnown(s)
 		piece := p.PieceAt(move.ToSquare)
 		if err != nil {
 			return Move{}, err

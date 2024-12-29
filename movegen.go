@@ -1,66 +1,68 @@
 package chess
 
 // GeneratePseudoLegalMoves expects a valid position. Behavior is undefined for invalid positions. This is to improve
-// performance since move generation is a vital part to engine development.
-func GeneratePseudoLegalMoves(p *Position) []Move {
+// performance since move generation is a vital part to engine development. Pseudo-legal moves are moves that would be
+// legal if one's own king were not in check. Castling moves that are directly blocked by a piece are not included,
+// but castling moves that would be stopped because the kings path is in check are included.
+func (p *Position) GeneratePseudoLegalMoves() []Move {
 	pseudoLegalMoves := []Move{}
 	for index, piece := range p.Board {
 		if piece.Color == p.Turn {
 			switch piece.Type {
 			case Pawn:
-				pseudoLegalMoves = append(pseudoLegalMoves, generatePawnMoves(p, indexToSquare(index))...)
+				pseudoLegalMoves = append(pseudoLegalMoves, p.generatePawnMoves(indexToSquare(index))...)
 			case Rook:
-				pseudoLegalMoves = append(pseudoLegalMoves, generateRookMoves(p, indexToSquare(index))...)
+				pseudoLegalMoves = append(pseudoLegalMoves, p.generateRookMoves(indexToSquare(index))...)
 			case Knight:
-				pseudoLegalMoves = append(pseudoLegalMoves, generateKnightMoves(p, indexToSquare(index))...)
+				pseudoLegalMoves = append(pseudoLegalMoves, p.generateKnightMoves(indexToSquare(index))...)
 			case Bishop:
-				pseudoLegalMoves = append(pseudoLegalMoves, generateBishopMoves(p, indexToSquare(index))...)
+				pseudoLegalMoves = append(pseudoLegalMoves, p.generateBishopMoves(indexToSquare(index))...)
 			case Queen:
-				pseudoLegalMoves = append(pseudoLegalMoves, generateQueenMoves(p, indexToSquare(index))...)
+				pseudoLegalMoves = append(pseudoLegalMoves, p.generateQueenMoves(indexToSquare(index))...)
 			case King:
-				pseudoLegalMoves = append(pseudoLegalMoves, generateKingMoves(p, indexToSquare(index))...)
-				pseudoLegalMoves = append(pseudoLegalMoves, generateCastleMoves(p, indexToSquare(index))...)
+				pseudoLegalMoves = append(pseudoLegalMoves, p.generateKingMoves(indexToSquare(index))...)
+				pseudoLegalMoves = append(pseudoLegalMoves, p.generateCastleMoves(indexToSquare(index))...)
 			}
 		}
 	}
 	return pseudoLegalMoves
 }
 
-func generatePawnMoves(p *Position, s Square) []Move {
+func (p *Position) generatePawnMoves(s Square) []Move {
 	if p.Turn == White {
-		return generateWhitePawnMoves(p, s)
+		return p.generateWhitePawnMoves(s)
 	} else if p.Turn == Black {
-		return generateBlackPawnMoves(p, s)
+		return p.generateBlackPawnMoves(s)
 	} else {
 		return []Move{}
 	}
 }
 
-func generateWhitePawnMoves(p *Position, s Square) []Move {
+func (p *Position) generateWhitePawnMoves(s Square) []Move {
 	pawnMoves := []Move{}
-	pawnMoves = append(pawnMoves, generateWhitePawnSingleMoveForward(p, s)...)
-	pawnMoves = append(pawnMoves, generateWhitePawnDoubleMoveForward(p, s)...)
-	pawnMoves = append(pawnMoves, generateWhitePawnTakesPiece(p, s)...)
-	pawnMoves = append(pawnMoves, generateWhitePawnTakesEnPassant(p, s)...)
-	pawnMoves = append(pawnMoves, generateWhitePawnPromotion(p, s)...)
+	pawnMoves = append(pawnMoves, p.generateWhitePawnSingleMoveForward(s)...)
+	pawnMoves = append(pawnMoves, p.generateWhitePawnDoubleMoveForward(s)...)
+	pawnMoves = append(pawnMoves, p.generateWhitePawnTakesPiece(s)...)
+	pawnMoves = append(pawnMoves, p.generateWhitePawnTakesEnPassant(s)...)
+	pawnMoves = append(pawnMoves, p.generateWhitePawnPromotion(s)...)
 	return pawnMoves
 }
 
-func generateWhitePawnSingleMoveForward(p *Position, s Square) []Move {
+func (p *Position) generateWhitePawnSingleMoveForward(s Square) []Move {
 	if s.Rank < Rank7 && p.PieceAt(Square{s.File, s.Rank + 1}) == NoPiece {
 		return []Move{{FromSquare: s, ToSquare: Square{s.File, s.Rank + 1}, Promotion: NoPieceType}}
 	}
 	return []Move{}
 }
 
-func generateWhitePawnDoubleMoveForward(p *Position, s Square) []Move {
+func (p *Position) generateWhitePawnDoubleMoveForward(s Square) []Move {
 	if s.Rank == Rank2 && p.PieceAt(Square{s.File, s.Rank + 1}) == NoPiece && p.PieceAt(Square{s.File, s.Rank + 2}) == NoPiece {
 		return []Move{{FromSquare: s, ToSquare: Square{s.File, s.Rank + 2}, Promotion: NoPieceType}}
 	}
 	return []Move{}
 }
 
-func generateWhitePawnTakesPiece(p *Position, s Square) []Move {
+func (p *Position) generateWhitePawnTakesPiece(s Square) []Move {
 	moves := []Move{}
 	pieceUpLeft := p.PieceAt(Square{s.File - 1, s.Rank + 1})
 	if s.Rank < Rank7 && pieceUpLeft.Color != NoColor && pieceUpLeft.Color != p.Turn {
@@ -73,7 +75,7 @@ func generateWhitePawnTakesPiece(p *Position, s Square) []Move {
 	return moves
 }
 
-func generateWhitePawnTakesEnPassant(p *Position, s Square) []Move {
+func (p *Position) generateWhitePawnTakesEnPassant(s Square) []Move {
 	if p.EnPassant == (Square{s.File - 1, s.Rank + 1}) {
 		return []Move{{FromSquare: s, ToSquare: Square{s.File - 1, s.Rank + 1}, Promotion: NoPieceType}}
 	}
@@ -83,7 +85,7 @@ func generateWhitePawnTakesEnPassant(p *Position, s Square) []Move {
 	return []Move{}
 }
 
-func generateWhitePawnPromotion(p *Position, s Square) []Move {
+func (p *Position) generateWhitePawnPromotion(s Square) []Move {
 	movesBeforePromotion := []Move{}
 	if s.Rank == Rank7 && p.PieceAt(Square{s.File, s.Rank + 1}) == NoPiece {
 		movesBeforePromotion = append(movesBeforePromotion, Move{FromSquare: s, ToSquare: Square{s.File, s.Rank + 1}, Promotion: NoPieceType})
@@ -106,31 +108,31 @@ func generateWhitePawnPromotion(p *Position, s Square) []Move {
 	return movesWithPromotion
 }
 
-func generateBlackPawnMoves(p *Position, s Square) []Move {
+func (p *Position) generateBlackPawnMoves(s Square) []Move {
 	pawnMoves := []Move{}
-	pawnMoves = append(pawnMoves, generateBlackPawnSingleMoveForward(p, s)...)
-	pawnMoves = append(pawnMoves, generateBlackPawnDoubleMoveForward(p, s)...)
-	pawnMoves = append(pawnMoves, generateBlackPawnTakesPiece(p, s)...)
-	pawnMoves = append(pawnMoves, generateBlackPawnTakesEnPassant(p, s)...)
-	pawnMoves = append(pawnMoves, generateBlackPawnPromotion(p, s)...)
+	pawnMoves = append(pawnMoves, p.generateBlackPawnSingleMoveForward(s)...)
+	pawnMoves = append(pawnMoves, p.generateBlackPawnDoubleMoveForward(s)...)
+	pawnMoves = append(pawnMoves, p.generateBlackPawnTakesPiece(s)...)
+	pawnMoves = append(pawnMoves, p.generateBlackPawnTakesEnPassant(s)...)
+	pawnMoves = append(pawnMoves, p.generateBlackPawnPromotion(s)...)
 	return pawnMoves
 }
 
-func generateBlackPawnSingleMoveForward(p *Position, s Square) []Move {
+func (p *Position) generateBlackPawnSingleMoveForward(s Square) []Move {
 	if s.Rank > Rank2 && p.PieceAt(Square{s.File, s.Rank - 1}) == NoPiece {
 		return []Move{{FromSquare: s, ToSquare: Square{s.File, s.Rank - 1}, Promotion: NoPieceType}}
 	}
 	return []Move{}
 }
 
-func generateBlackPawnDoubleMoveForward(p *Position, s Square) []Move {
+func (p *Position) generateBlackPawnDoubleMoveForward(s Square) []Move {
 	if s.Rank == Rank7 && p.PieceAt(Square{s.File, s.Rank - 1}) == NoPiece && p.PieceAt(Square{s.File, s.Rank - 2}) == NoPiece {
 		return []Move{{FromSquare: s, ToSquare: Square{s.File, s.Rank - 2}, Promotion: NoPieceType}}
 	}
 	return []Move{}
 }
 
-func generateBlackPawnTakesPiece(p *Position, s Square) []Move {
+func (p *Position) generateBlackPawnTakesPiece(s Square) []Move {
 	moves := []Move{}
 	pieceUpLeft := p.PieceAt(Square{s.File - 1, s.Rank - 1})
 	if s.Rank > Rank2 && pieceUpLeft.Color != NoColor && pieceUpLeft.Color != p.Turn {
@@ -143,7 +145,7 @@ func generateBlackPawnTakesPiece(p *Position, s Square) []Move {
 	return moves
 }
 
-func generateBlackPawnTakesEnPassant(p *Position, s Square) []Move {
+func (p *Position) generateBlackPawnTakesEnPassant(s Square) []Move {
 	if p.EnPassant == (Square{s.File - 1, s.Rank - 1}) {
 		return []Move{{FromSquare: s, ToSquare: Square{s.File - 1, s.Rank - 1}, Promotion: NoPieceType}}
 	}
@@ -153,7 +155,7 @@ func generateBlackPawnTakesEnPassant(p *Position, s Square) []Move {
 	return []Move{}
 }
 
-func generateBlackPawnPromotion(p *Position, s Square) []Move {
+func (p *Position) generateBlackPawnPromotion(s Square) []Move {
 	movesBeforePromotion := []Move{}
 	if s.Rank == Rank2 && p.PieceAt(Square{s.File, s.Rank - 1}) == NoPiece {
 		movesBeforePromotion = append(movesBeforePromotion, Move{FromSquare: s, ToSquare: Square{s.File, s.Rank - 1}, Promotion: NoPieceType})
@@ -176,7 +178,7 @@ func generateBlackPawnPromotion(p *Position, s Square) []Move {
 	return movesWithPromotion
 }
 
-func generateRookMoves(p *Position, s Square) []Move {
+func (p *Position) generateRookMoves(s Square) []Move {
 	moves := []Move{}
 	moveFunctions := [4]func(Square) Square{squareToLeft, squareToRight, squareAbove, squareBelow}
 	for _, moveFunc := range moveFunctions {
@@ -194,7 +196,7 @@ func generateRookMoves(p *Position, s Square) []Move {
 	return moves
 }
 
-func generateKnightMoves(p *Position, s Square) []Move {
+func (p *Position) generateKnightMoves(s Square) []Move {
 	moves := []Move{}
 	toSquare := squareAbove(squareAbove(squareToRight(s)))
 	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
@@ -231,7 +233,7 @@ func generateKnightMoves(p *Position, s Square) []Move {
 	return moves
 }
 
-func generateBishopMoves(p *Position, s Square) []Move {
+func (p *Position) generateBishopMoves(s Square) []Move {
 	moves := []Move{}
 	verticalFunctions := [2]func(Square) Square{squareAbove, squareBelow}
 	horizontalFunctions := [2]func(Square) Square{squareToLeft, squareToRight}
@@ -252,14 +254,14 @@ func generateBishopMoves(p *Position, s Square) []Move {
 	return moves
 }
 
-func generateQueenMoves(p *Position, s Square) []Move {
+func (p *Position) generateQueenMoves(s Square) []Move {
 	moves := []Move{}
-	moves = append(moves, generateRookMoves(p, s)...)
-	moves = append(moves, generateBishopMoves(p, s)...)
+	moves = append(moves, p.generateRookMoves(s)...)
+	moves = append(moves, p.generateBishopMoves(s)...)
 	return moves
 }
 
-func generateKingMoves(p *Position, s Square) []Move {
+func (p *Position) generateKingMoves(s Square) []Move {
 	moves := []Move{}
 	toSquare := squareAbove(s)
 	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
@@ -296,17 +298,17 @@ func generateKingMoves(p *Position, s Square) []Move {
 	return moves
 }
 
-func generateCastleMoves(p *Position, s Square) []Move {
+func (p *Position) generateCastleMoves(s Square) []Move {
 	if p.Turn == White && s == E1 {
-		return generateWhiteCastleMoves(p)
+		return p.generateWhiteCastleMoves()
 	}
 	if p.Turn == Black && s == E8 {
-		return generateBlackCastleMoves(p)
+		return p.generateBlackCastleMoves()
 	}
 	return []Move{}
 }
 
-func generateWhiteCastleMoves(p *Position) []Move {
+func (p *Position) generateWhiteCastleMoves() []Move {
 	moves := []Move{}
 	if p.WhiteKingSideCastle &&
 		p.PieceAt(E1) == WhiteKing &&
@@ -326,7 +328,7 @@ func generateWhiteCastleMoves(p *Position) []Move {
 	return moves
 }
 
-func generateBlackCastleMoves(p *Position) []Move {
+func (p *Position) generateBlackCastleMoves() []Move {
 	moves := []Move{}
 	if p.BlackKingSideCastle &&
 		p.PieceAt(E8) == BlackKing &&
@@ -348,8 +350,8 @@ func generateBlackCastleMoves(p *Position) []Move {
 
 // GenerateLegalMoves expects a valid position. Behavior is undefined for invalid positions. This is to improve
 // performance since move generation is a vital part to engine development.
-func GenerateLegalMoves(p *Position) []Move {
-	pseudoLegalMoves := GeneratePseudoLegalMoves(p)
+func (p *Position) GenerateLegalMoves() []Move {
+	pseudoLegalMoves := p.GeneratePseudoLegalMoves()
 	isCurrentPositionCheck := p.IsCheck()
 	legalMoves := []Move{}
 	for _, move := range pseudoLegalMoves {
