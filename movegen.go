@@ -359,9 +359,39 @@ func (p *Position) GenerateLegalMoves() []Move {
 		tempPosition.Move(move)
 		tempPosition.Turn = p.Turn
 		castleMove := isCastleMove(p, move)
-		if !tempPosition.IsCheck() && ((castleMove && !isCurrentPositionCheck) || !castleMove) {
+		if !tempPosition.IsCheck() && ((castleMove && !isCurrentPositionCheck && !castleMovesThroughCheck(*p, move)) || !castleMove) {
 			legalMoves = append(legalMoves, move)
 		}
 	}
 	return legalMoves
+}
+
+func castleMovesThroughCheck(p Position, m Move) bool {
+	switch m {
+	case Move{E1, G1, NoPieceType}:
+		p.SetPieceAt(E1, NoPiece)
+		p.SetPieceAt(F1, WhiteKing)
+		if p.IsCheck() {
+			return true
+		}
+	case Move{E1, C1, NoPieceType}:
+		p.SetPieceAt(E1, NoPiece)
+		p.SetPieceAt(D1, WhiteKing)
+		if p.IsCheck() {
+			return true
+		}
+	case Move{E8, G8, NoPieceType}:
+		p.SetPieceAt(E8, NoPiece)
+		p.SetPieceAt(F8, BlackKing)
+		if p.IsCheck() {
+			return true
+		}
+	case Move{E8, C8, NoPieceType}:
+		p.SetPieceAt(E8, NoPiece)
+		p.SetPieceAt(D8, BlackKing)
+		if p.IsCheck() {
+			return true
+		}
+	}
+	return false
 }
