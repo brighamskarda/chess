@@ -1,46 +1,43 @@
+// Copyright (C) 2025 Brigham Skarda
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package chess
 
 import (
 	"testing"
 )
 
-func TestNoPieceToString(t *testing.T) {
-	pieceToTest := Piece{
-		Color: NoColor,
-		Type:  NoPieceType,
-	}
-	if pieceToTest.String() != " " {
-		t.Error("No Piece does not equal \" \"")
+func TestPieceString(t *testing.T) {
+	expected := "P"
+	actual := WhitePawn.String()
+
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 
-	pieceToTest.Color = White
-	if pieceToTest.String() != "INVALID PIECE" {
-		t.Error("No Piece does not equal \"INVALID PIECE\" when piece.Color == White")
+	expected = "k"
+	actual = BlackKing.String()
+
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 
-	pieceToTest.Color = NoColor
-	pieceToTest.Type = Pawn
-	if pieceToTest.String() != "INVALID PIECE" {
-		t.Error("No Piece does not equal \"INVALID PIECE\" when piece.Type == Pawn")
-	}
-}
+	expected = "-"
+	actual = NoPiece.String()
 
-func TestPieceToString(t *testing.T) {
-	pieceToTest := Piece{
-		Color: White,
-		Type:  Pawn,
-	}
-	if pieceToTest.String() != "P" {
-		t.Error("White pawn does not equal \"P\"")
-	}
-
-	pieceToTest.Color = Black
-	if pieceToTest.String() != "p" {
-		t.Error("Black pawn does not equal \"p\"")
-	}
-
-	pieceToTest.Type = Bishop
-	if pieceToTest.String() != "b" {
-		t.Error("Black bishop does not equal \"b\"")
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 }

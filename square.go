@@ -1,12 +1,21 @@
+// Copyright (C) 2025 Brigham Skarda
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package chess
 
-import (
-	"errors"
-	"fmt"
-	"math"
-	"unicode"
-)
-
+// File is a chess file as seen on a board. The zero value is no file, and the files A-H can be represented.
 type File uint8
 
 const (
@@ -21,21 +30,33 @@ const (
 	FileH
 )
 
-// String returns a single uppercase letter representing the file.
+// String returns a single lowercase letter if valid, else "-".
 func (f File) String() string {
-	if !isValidFile(f) {
-		return "INVALID FILE"
+	switch f {
+	case NoFile:
+		return "-"
+	case FileA:
+		return "a"
+	case FileB:
+		return "b"
+	case FileC:
+		return "c"
+	case FileD:
+		return "d"
+	case FileE:
+		return "e"
+	case FileF:
+		return "f"
+	case FileG:
+		return "g"
+	case FileH:
+		return "h"
+	default:
+		return "-"
 	}
-	if f == NoFile {
-		return "NO FILE"
-	}
-	return string('@' + rune(f))
 }
 
-func isValidFile(f File) bool {
-	return f <= FileH
-}
-
+// File is a chess rank as seen on a board. The zero value is no rank, and the ranks 1-8 can be represented.
 type Rank uint8
 
 const (
@@ -50,237 +71,126 @@ const (
 	Rank8
 )
 
-// String returns either a single number, INVALID RANK, or NO RANK.
+// String returns a single number if valid, else "-".
 func (r Rank) String() string {
-	if !isValidRank(r) {
-		return "INVALID RANK"
+	switch r {
+	case NoRank:
+		return "-"
+	case Rank1:
+		return "1"
+	case Rank2:
+		return "2"
+	case Rank3:
+		return "3"
+	case Rank4:
+		return "4"
+	case Rank5:
+		return "5"
+	case Rank6:
+		return "6"
+	case Rank7:
+		return "7"
+	case Rank8:
+		return "8"
+	default:
+		return "-"
 	}
-	if r == NoRank {
-		return "NO RANK"
-	}
-	return string('0' + rune(r))
 }
 
-func isValidRank(r Rank) bool {
-	return r <= Rank8
-}
-
+// Square represents one of 64 squares on a chess board. The zero value represents no square.
 type Square struct {
 	File File
 	Rank Rank
 }
 
-var (
-	NoSquare = Square{}
-
-	A8 = Square{FileA, Rank8}
-	B8 = Square{FileB, Rank8}
-	C8 = Square{FileC, Rank8}
-	D8 = Square{FileD, Rank8}
-	E8 = Square{FileE, Rank8}
-	F8 = Square{FileF, Rank8}
-	G8 = Square{FileG, Rank8}
-	H8 = Square{FileH, Rank8}
-
-	A7 = Square{FileA, Rank7}
-	B7 = Square{FileB, Rank7}
-	C7 = Square{FileC, Rank7}
-	D7 = Square{FileD, Rank7}
-	E7 = Square{FileE, Rank7}
-	F7 = Square{FileF, Rank7}
-	G7 = Square{FileG, Rank7}
-	H7 = Square{FileH, Rank7}
-
-	A6 = Square{FileA, Rank6}
-	B6 = Square{FileB, Rank6}
-	C6 = Square{FileC, Rank6}
-	D6 = Square{FileD, Rank6}
-	E6 = Square{FileE, Rank6}
-	F6 = Square{FileF, Rank6}
-	G6 = Square{FileG, Rank6}
-	H6 = Square{FileH, Rank6}
-
-	A5 = Square{FileA, Rank5}
-	B5 = Square{FileB, Rank5}
-	C5 = Square{FileC, Rank5}
-	D5 = Square{FileD, Rank5}
-	E5 = Square{FileE, Rank5}
-	F5 = Square{FileF, Rank5}
-	G5 = Square{FileG, Rank5}
-	H5 = Square{FileH, Rank5}
-
-	A4 = Square{FileA, Rank4}
-	B4 = Square{FileB, Rank4}
-	C4 = Square{FileC, Rank4}
-	D4 = Square{FileD, Rank4}
-	E4 = Square{FileE, Rank4}
-	F4 = Square{FileF, Rank4}
-	G4 = Square{FileG, Rank4}
-	H4 = Square{FileH, Rank4}
-
-	A3 = Square{FileA, Rank3}
-	B3 = Square{FileB, Rank3}
-	C3 = Square{FileC, Rank3}
-	D3 = Square{FileD, Rank3}
-	E3 = Square{FileE, Rank3}
-	F3 = Square{FileF, Rank3}
-	G3 = Square{FileG, Rank3}
-	H3 = Square{FileH, Rank3}
-
-	A2 = Square{FileA, Rank2}
-	B2 = Square{FileB, Rank2}
-	C2 = Square{FileC, Rank2}
-	D2 = Square{FileD, Rank2}
-	E2 = Square{FileE, Rank2}
-	F2 = Square{FileF, Rank2}
-	G2 = Square{FileG, Rank2}
-	H2 = Square{FileH, Rank2}
-
-	A1 = Square{FileA, Rank1}
-	B1 = Square{FileB, Rank1}
-	C1 = Square{FileC, Rank1}
-	D1 = Square{FileD, Rank1}
-	E1 = Square{FileE, Rank1}
-	F1 = Square{FileF, Rank1}
-	G1 = Square{FileG, Rank1}
-	H1 = Square{FileH, Rank1}
-
-	AllSquares = [64]Square{
-		A8, B8, C8, D8, E8, F8, G8, H8,
-		A7, B7, C7, D7, E7, F7, G7, H7,
-		A6, B6, C6, D6, E6, F6, G6, H6,
-		A5, B5, C5, D5, E5, F5, G5, H5,
-		A4, B4, C4, D4, E4, F4, G4, H4,
-		A3, B3, C3, D3, E3, F3, G3, H3,
-		A2, B2, C2, D2, E2, F2, G2, H2,
-		A1, B1, C1, D1, E1, F1, G1, H1,
-	}
-)
-
-// String returns a two letter uppercase representation of a square. "-" will be returned for [NoSquare] and INVALID SQUARE will be returned for all other squares that can't be found on a chess board.
+// String returns pgn compatible square strings (e.g a8)
 func (s Square) String() string {
-	if !isValidSquare(s) {
-		return "INVALID SQUARE"
-	}
-	if s == NoSquare {
-		return "-"
-	}
 	return s.File.String() + s.Rank.String()
 }
 
-func isValidSquare(s Square) bool {
-	if s.File == NoFile || s.Rank == NoRank {
-		if s.File != NoFile || s.Rank != NoRank {
-			return false
-		}
-	}
-	return isValidFile(s.File) && isValidRank(s.Rank)
-}
+var (
+	NoSquare = Square{File: NoFile, Rank: NoRank}
 
-// ParseSquare parses a two letter string for a square. "-" returns [NoSquare] without an error.
-func ParseSquare(s string) (Square, error) {
-	if s == "-" {
-		return NoSquare, nil
-	}
-	runes := []rune(s)
-	if len(runes) != 2 {
-		return NoSquare, errors.New("invalid square - string is not two characters long")
-	}
-	file, err := parseFile(runes[0])
-	if err != nil {
-		return NoSquare, fmt.Errorf("invalid square: %w", err)
-	}
-	rank, err := parseRank(runes[1])
-	if err != nil {
-		return NoSquare, fmt.Errorf("invalid square: %w", err)
-	}
-	return Square{file, rank}, nil
-}
+	A1 = Square{File: FileA, Rank: Rank1}
+	A2 = Square{File: FileA, Rank: Rank2}
+	A3 = Square{File: FileA, Rank: Rank3}
+	A4 = Square{File: FileA, Rank: Rank4}
+	A5 = Square{File: FileA, Rank: Rank5}
+	A6 = Square{File: FileA, Rank: Rank6}
+	A7 = Square{File: FileA, Rank: Rank7}
+	A8 = Square{File: FileA, Rank: Rank8}
 
-func parseFile(r rune) (File, error) {
-	var f File = File(unicode.ToUpper(r) - '@')
-	if !isValidFile(f) || f == NoFile {
-		return 0, errors.New("invalid file")
-	}
-	return f, nil
-}
+	B1 = Square{File: FileB, Rank: Rank1}
+	B2 = Square{File: FileB, Rank: Rank2}
+	B3 = Square{File: FileB, Rank: Rank3}
+	B4 = Square{File: FileB, Rank: Rank4}
+	B5 = Square{File: FileB, Rank: Rank5}
+	B6 = Square{File: FileB, Rank: Rank6}
+	B7 = Square{File: FileB, Rank: Rank7}
+	B8 = Square{File: FileB, Rank: Rank8}
 
-func parseRank(r rune) (Rank, error) {
-	var rank Rank = Rank(r - '0')
-	if !isValidRank(rank) || rank == NoRank {
-		return 0, errors.New("invalid rank")
-	}
-	return rank, nil
-}
+	C1 = Square{File: FileC, Rank: Rank1}
+	C2 = Square{File: FileC, Rank: Rank2}
+	C3 = Square{File: FileC, Rank: Rank3}
+	C4 = Square{File: FileC, Rank: Rank4}
+	C5 = Square{File: FileC, Rank: Rank5}
+	C6 = Square{File: FileC, Rank: Rank6}
+	C7 = Square{File: FileC, Rank: Rank7}
+	C8 = Square{File: FileC, Rank: Rank8}
 
-func squareToLeft(s Square) Square {
-	s.File--
-	if !isValidSquare(s) {
-		return NoSquare
-	}
-	return s
-}
+	D1 = Square{File: FileD, Rank: Rank1}
+	D2 = Square{File: FileD, Rank: Rank2}
+	D3 = Square{File: FileD, Rank: Rank3}
+	D4 = Square{File: FileD, Rank: Rank4}
+	D5 = Square{File: FileD, Rank: Rank5}
+	D6 = Square{File: FileD, Rank: Rank6}
+	D7 = Square{File: FileD, Rank: Rank7}
+	D8 = Square{File: FileD, Rank: Rank8}
 
-func squareToRight(s Square) Square {
-	s.File++
-	if !isValidSquare(s) {
-		return NoSquare
-	}
-	return s
-}
+	E1 = Square{File: FileE, Rank: Rank1}
+	E2 = Square{File: FileE, Rank: Rank2}
+	E3 = Square{File: FileE, Rank: Rank3}
+	E4 = Square{File: FileE, Rank: Rank4}
+	E5 = Square{File: FileE, Rank: Rank5}
+	E6 = Square{File: FileE, Rank: Rank6}
+	E7 = Square{File: FileE, Rank: Rank7}
+	E8 = Square{File: FileE, Rank: Rank8}
 
-func squareAbove(s Square) Square {
-	s.Rank++
-	if !isValidSquare(s) {
-		return NoSquare
-	}
-	return s
-}
+	F1 = Square{File: FileF, Rank: Rank1}
+	F2 = Square{File: FileF, Rank: Rank2}
+	F3 = Square{File: FileF, Rank: Rank3}
+	F4 = Square{File: FileF, Rank: Rank4}
+	F5 = Square{File: FileF, Rank: Rank5}
+	F6 = Square{File: FileF, Rank: Rank6}
+	F7 = Square{File: FileF, Rank: Rank7}
+	F8 = Square{File: FileF, Rank: Rank8}
 
-func squareBelow(s Square) Square {
-	s.Rank--
-	if !isValidSquare(s) {
-		return NoSquare
-	}
-	return s
-}
+	G1 = Square{File: FileG, Rank: Rank1}
+	G2 = Square{File: FileG, Rank: Rank2}
+	G3 = Square{File: FileG, Rank: Rank3}
+	G4 = Square{File: FileG, Rank: Rank4}
+	G5 = Square{File: FileG, Rank: Rank5}
+	G6 = Square{File: FileG, Rank: Rank6}
+	G7 = Square{File: FileG, Rank: Rank7}
+	G8 = Square{File: FileG, Rank: Rank8}
 
-// ChebyshevDistance returns the number of king moves between two squares. Returns [math.MaxUint8] if either square is invalid.
-func ChebyshevDistance(s1 Square, s2 Square) uint8 {
-	if !isValidSquare(s1) || !isValidSquare(s2) {
-		return math.MaxUint8
-	}
-	var fileDistance uint8
-	if s1.File-s2.File < 9 {
-		fileDistance = uint8(s1.File) - uint8(s2.File)
-	} else {
-		fileDistance = uint8(s2.File) - uint8(s1.File)
-	}
-	var rankDistance uint8
-	if s1.Rank-s2.Rank < 9 {
-		rankDistance = uint8(s1.Rank) - uint8(s2.Rank)
-	} else {
-		rankDistance = uint8(s2.Rank) - uint8(s1.Rank)
-	}
-	return min(fileDistance, rankDistance)
-}
+	H1 = Square{File: FileH, Rank: Rank1}
+	H2 = Square{File: FileH, Rank: Rank2}
+	H3 = Square{File: FileH, Rank: Rank3}
+	H4 = Square{File: FileH, Rank: Rank4}
+	H5 = Square{File: FileH, Rank: Rank5}
+	H6 = Square{File: FileH, Rank: Rank6}
+	H7 = Square{File: FileH, Rank: Rank7}
+	H8 = Square{File: FileH, Rank: Rank8}
+)
 
-// ManhattanDistance give the number of non-diagonal king moves to get from s1 to s2. Returns [math.MaxUint8] if either square is not a valid chess square.
-func ManhattanDistance(s1 Square, s2 Square) uint8 {
-	if !isValidSquare(s1) || !isValidSquare(s2) {
-		return math.MaxUint8
-	}
-	var fileDistance uint8
-	if s1.File-s2.File < 9 {
-		fileDistance = uint8(s1.File) - uint8(s2.File)
-	} else {
-		fileDistance = uint8(s2.File) - uint8(s1.File)
-	}
-	var rankDistance uint8
-	if s1.Rank-s2.Rank < 9 {
-		rankDistance = uint8(s1.Rank) - uint8(s2.Rank)
-	} else {
-		rankDistance = uint8(s2.Rank) - uint8(s1.Rank)
-	}
-	return fileDistance + rankDistance
+var AllSquares = [64]Square{
+	A1, A2, A3, A4, A5, A6, A7, A8,
+	B1, B2, B3, B4, B5, B6, B7, B8,
+	C1, C2, C3, C4, C5, C6, C7, C8,
+	D1, D2, D3, D4, D5, D6, D7, D8,
+	E1, E2, E3, E4, E5, E6, E7, E8,
+	F1, F2, F3, F4, F5, F6, F7, F8,
+	G1, G2, G3, G4, G5, G6, G7, G8,
+	H1, H2, H3, H4, H5, H6, H7, H8,
 }

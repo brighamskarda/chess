@@ -1,5 +1,21 @@
+// Copyright (C) 2025 Brigham Skarda
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package chess
 
+// Color can be no color, white, or black.
 type Color uint8
 
 const (
@@ -7,21 +23,3 @@ const (
 	White
 	Black
 )
-
-// String returns one of NO-COLOR, WHITE, BLACK, or INVALID COLOR
-func (c Color) String() string {
-	switch c {
-	case NoColor:
-		return "NO-COLOR"
-	case White:
-		return "WHITE"
-	case Black:
-		return "BLACK"
-	default:
-		return "INVALID COLOR"
-	}
-}
-
-func isValidColor(c Color) bool {
-	return c <= 2
-}

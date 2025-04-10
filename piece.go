@@ -1,11 +1,23 @@
+// Copyright (C) 2025 Brigham Skarda
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package chess
 
-import (
-	"errors"
-	"strings"
-	"unicode"
-)
+import "strings"
 
+// PieceType represents the type of a piece like a rook or a queen. See also [Piece]
 type PieceType uint8
 
 const (
@@ -18,113 +30,61 @@ const (
 	King
 )
 
-// String returns the uppercase ascii letter representation of the piece. NO-PIECE-TYPE, or INVALID PIECE TYPE otherwise.
+// String returns a single lowercase letter representation of the piece type if valid, else "-".
 func (pt PieceType) String() string {
 	switch pt {
 	case NoPieceType:
-		return "NO-PIECE-TYPE"
+		return "-"
 	case Pawn:
-		return "P"
+		return "p"
 	case Rook:
-		return "R"
+		return "r"
 	case Knight:
-		return "N"
+		return "n"
 	case Bishop:
-		return "B"
+		return "b"
 	case Queen:
-		return "Q"
+		return "q"
 	case King:
-		return "K"
+		return "k"
 	default:
-		return "INVALID PIECE TYPE"
+		return "-"
 	}
 }
 
-func isValidPieceType(pt PieceType) bool {
-	return pt <= 6
-}
-
-func parsePieceType(r rune) (PieceType, error) {
-	r = unicode.ToLower(r)
-	switch r {
-	case 'p':
-		return Pawn, nil
-	case 'r':
-		return Rook, nil
-	case 'n':
-		return Knight, nil
-	case 'b':
-		return Bishop, nil
-	case 'q':
-		return Queen, nil
-	case 'k':
-		return King, nil
-	default:
-		return NoPieceType, errors.New("can't parse piece type")
-	}
-}
-
+// Piece represents a chess piece with type and color. The zero value is no piece.
 type Piece struct {
-	Color Color
 	Type  PieceType
+	Color Color
 }
 
 var (
-	NoPiece Piece = Piece{NoColor, NoPieceType}
+	NoPiece = Piece{Type: NoPieceType, Color: NoColor}
 
-	WhitePawn   Piece = Piece{White, Pawn}
-	WhiteRook   Piece = Piece{White, Rook}
-	WhiteKnight Piece = Piece{White, Knight}
-	WhiteBishop Piece = Piece{White, Bishop}
-	WhiteQueen  Piece = Piece{White, Queen}
-	WhiteKing   Piece = Piece{White, King}
+	WhitePawn   = Piece{Type: Pawn, Color: White}
+	WhiteRook   = Piece{Type: Rook, Color: White}
+	WhiteKnight = Piece{Type: Knight, Color: White}
+	WhiteBishop = Piece{Type: Bishop, Color: White}
+	WhiteQueen  = Piece{Type: Queen, Color: White}
+	WhiteKing   = Piece{Type: King, Color: White}
 
-	BlackPawn   Piece = Piece{Black, Pawn}
-	BlackRook   Piece = Piece{Black, Rook}
-	BlackKnight Piece = Piece{Black, Knight}
-	BlackBishop Piece = Piece{Black, Bishop}
-	BlackQueen  Piece = Piece{Black, Queen}
-	BlackKing   Piece = Piece{Black, King}
+	BlackPawn   = Piece{Type: Pawn, Color: Black}
+	BlackRook   = Piece{Type: Rook, Color: Black}
+	BlackKnight = Piece{Type: Knight, Color: Black}
+	BlackBishop = Piece{Type: Bishop, Color: Black}
+	BlackQueen  = Piece{Type: Queen, Color: Black}
+	BlackKing   = Piece{Type: King, Color: Black}
 )
 
-// String gives a one letter ascii character representing the piece. " " for no piece. INVALID PIECE otherwise.
+// String returns a single letter representation of the piece type if valid, else "-".
+//
+// White pieces are uppercase and black pieces are lowercase.
 func (p Piece) String() string {
-	if !isValidPiece(p) {
-		return "INVALID PIECE"
-	}
-	if p.Color == NoColor || p.Type == NoPieceType {
-		return " "
-	}
-	pieceStr := p.Type.String()
-	if p.Color == Black {
-		return strings.ToLower(pieceStr)
-	}
-	return pieceStr
-}
-
-func isValidPiece(p Piece) bool {
-	if !isValidPieceType(p.Type) || !isValidColor(p.Color) {
-		return false
-	}
-	if p.Type == NoPieceType || p.Color == NoColor {
-		if p.Type != NoPieceType || p.Color != NoColor {
-			return false
-		}
-	}
-	return true
-}
-
-// ParsePiece attempts to parse a piece from a given rune. Currently only supports ascii characters (no piece symbols). Uppercase is white, lowercase is black.
-func ParsePiece(r rune) (Piece, error) {
-	pieceType, err := parsePieceType(r)
-	if err != nil {
-		return NoPiece, errors.New("can't parse piece type")
-	}
-	var color Color
-	if unicode.IsUpper(r) {
-		color = White
+	if p.Color == White {
+		return strings.ToUpper(p.Type.String())
+	} else if p.Color == Black {
+		return p.Type.String()
 	} else {
-		color = Black
+		return "-"
 	}
-	return Piece{color, pieceType}, nil
 }
