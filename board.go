@@ -24,8 +24,9 @@ const DefaultFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 type Board struct {
 }
 
-func ParseFEN(fen string) *Board {
-	return &Board{}
+// ParseFEN returns an error if it could not parse an FEN. It was likely malformed or missing important pieces.
+func ParseFEN(fen string) (*Board, error) {
+	return &Board{}, nil
 }
 
 // String generates an FEN string for the current board. See [PrettyString] for getting a board like representation.

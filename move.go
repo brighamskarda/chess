@@ -15,10 +15,43 @@
 
 package chess
 
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
+
+// Move represents a UCI chess move.
 type Move struct {
 	FromSquare Square
 	ToSquare   Square
 	Promotion  PieceType
 }
 
-// Todo implement String and maybe other functions for Move. (Parse UCI)
+// ParseUCI parses a move string of the form <FromSquare><ToSquare><OptionalPromotion>. (e.g. a2c3 or H2H1q. Returns an error if it could not parse.
+func ParseUCIMove(uci string) (Move, error) {
+	uci = strings.ToLower(uci)
+	if len(uci) < 4 || len(uci) > 5 {
+		return Move{}, errors.New("uci string not 4 or 5 characters long")
+	}
+	fromSquare := parseSquare(uci[0:2])
+	toSquare := parseSquare(uci[2:4])
+	promotion := NoPieceType
+	if len(uci) == 5 {
+		promotion = parsePieceType(uci[4:5])
+	}
+	if fromSquare == NoSquare || toSquare == NoSquare {
+		return Move{}, fmt.Errorf("could not parse move square, %q", uci)
+	}
+
+	return Move{fromSquare, toSquare, promotion}, nil
+}
+
+// String provides a UCI compatible string of the move in the form <FromSquare><ToSquare><OptionalPromotion>
+func (m Move) String() string {
+	promotion := m.Promotion.String()
+	if promotion == "-" {
+		promotion = ""
+	}
+	return m.FromSquare.String() + m.ToSquare.String() + promotion
+}

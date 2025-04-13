@@ -52,6 +52,25 @@ func (pt PieceType) String() string {
 	}
 }
 
+func parsePieceType(s string) PieceType {
+	switch s {
+	case "p":
+		return Pawn
+	case "n":
+		return Knight
+	case "b":
+		return Bishop
+	case "r":
+		return Rook
+	case "q":
+		return Queen
+	case "k":
+		return King
+	default:
+		return NoPieceType
+	}
+}
+
 // Piece represents a chess piece with type and color. The zero value is no piece.
 type Piece struct {
 	Type  PieceType

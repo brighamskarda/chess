@@ -194,3 +194,57 @@ var AllSquares = [64]Square{
 	G1, G2, G3, G4, G5, G6, G7, G8,
 	H1, H2, H3, H4, H5, H6, H7, H8,
 }
+
+func parseSquare(s string) Square {
+	square := Square{parseFile(s[0:1]), parseRank(s[1:2])}
+	if square.File == NoFile || square.Rank == NoRank {
+		return NoSquare
+	}
+	return square
+}
+
+func parseFile(f string) File {
+	switch f {
+	case "a":
+		return FileA
+	case "b":
+		return FileB
+	case "c":
+		return FileC
+	case "d":
+		return FileD
+	case "e":
+		return FileE
+	case "f":
+		return FileF
+	case "g":
+		return FileG
+	case "h":
+		return FileH
+	default:
+		return NoFile
+	}
+}
+
+func parseRank(r string) Rank {
+	switch r {
+	case "1":
+		return Rank1
+	case "2":
+		return Rank2
+	case "3":
+		return Rank3
+	case "4":
+		return Rank4
+	case "5":
+		return Rank5
+	case "6":
+		return Rank6
+	case "7":
+		return Rank7
+	case "8":
+		return Rank8
+	default:
+		return NoRank
+	}
+}
