@@ -493,6 +493,57 @@ func (b *Board) ClearPiece(s Square) {
 	b.blackKings = b.blackKings.ClearSquare(s)
 }
 
+// Bitboard returns a bitboard for the given piece. See also [Board.OccupiedBitboard] and [Board.ColorBitboard].
+func (b *Board) Bitboard(p Piece) Bitboard {
+	switch p {
+	case WhitePawn:
+		return b.whitePawns
+	case WhiteKnight:
+		return b.whiteKnights
+	case WhiteBishop:
+		return b.whiteBishops
+	case WhiteRook:
+		return b.whiteRooks
+	case WhiteQueen:
+		return b.whiteQueens
+	case WhiteKing:
+		return b.whiteKings
+
+	case BlackPawn:
+		return b.blackPawns
+	case BlackKnight:
+		return b.blackKnights
+	case BlackBishop:
+		return b.blackBishops
+	case BlackRook:
+		return b.blackRooks
+	case BlackQueen:
+		return b.blackQueens
+	case BlackKing:
+		return b.blackKings
+
+	default:
+		return 0
+	}
+}
+
+// OccupiedBitboard returns a bitboard indicating all the squares with a piece on them.
+func (b *Board) OccupiedBitboard() Bitboard {
+	return b.whitePawns | b.whiteKnights | b.whiteBishops | b.whiteRooks | b.whiteQueens | b.whiteKings |
+		b.blackPawns | b.blackKnights | b.blackBishops | b.blackRooks | b.blackQueens | b.blackKings
+}
+
+// ColorBitboard returns a bitboard indicating all the squares occupied by pieces of a certain color.
+func (b *Board) ColorBitboard(c Color) Bitboard {
+	if c == White {
+		return b.whitePawns | b.whiteKnights | b.whiteBishops | b.whiteRooks | b.whiteQueens | b.whiteKings
+	} else if c == Black {
+		return b.blackPawns | b.blackKnights | b.blackBishops | b.blackRooks | b.blackQueens | b.blackKings
+	} else {
+		return 0
+	}
+}
+
 // IsCheck returns true if the side to move has a king under attack from an enemy piece.
 func (b *Board) IsCheck() bool {
 	return true
