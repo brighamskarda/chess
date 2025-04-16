@@ -15,6 +15,10 @@
 
 package chess
 
+import (
+	"strings"
+)
+
 // Color can be no color, white, or black.
 type Color uint8
 
@@ -23,3 +27,14 @@ const (
 	White
 	Black
 )
+
+func parseColor(s string) Color {
+	switch strings.ToLower(s) {
+	case "w":
+		return White
+	case "b":
+		return Black
+	default:
+		return NoColor
+	}
+}

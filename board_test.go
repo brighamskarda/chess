@@ -1,0 +1,179 @@
+// Copyright (C) 2025 Brigham Skarda
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package chess
+
+import "testing"
+
+func TestParseFEN_BoardString(t *testing.T) {
+	board, err := ParseFEN(DefaultFEN)
+	fen := board.String()
+	if fen != DefaultFEN {
+		t.Errorf("incorrect result: expected %q, got %q", DefaultFEN, fen)
+	}
+	if err != nil {
+		t.Errorf("incorrect result for default fen: expected error to be nil.")
+	}
+
+	input := "1k1r3r/ppq2Rp1/2p1p1p1/4N1b1/Q2P4/2P4P/PP6/R3K3 b Q - 0 23"
+	board, err = ParseFEN(input)
+	fen = board.String()
+	if fen != input {
+		t.Errorf("incorrect result: expected %q, got %q", input, fen)
+	}
+	if err != nil {
+		t.Errorf("incorrect result for random fen: expected error to be nil.")
+	}
+}
+
+func TestParseFENError(t *testing.T) {
+	input := "1k1r3r/pq2Rp1/2p1p1p1/4N1b1/Q2P4/2P4P/PP6/R3K3 b Q - 0 23"
+	_, err := ParseFEN(input)
+	if err == nil {
+		t.Errorf("incorrect result for missing piece: expected error")
+	}
+
+	input = "1k1r3r/ppq2Rp1/2p1p1p1/3N1b1/Q2P4/2P4P/PP6/R3K3 b Q - 0 23"
+	_, err = ParseFEN(input)
+	if err == nil {
+		t.Errorf("incorrect result for wrong number in FEN: expected error")
+	}
+
+	input = "1k1r3r/ppq2Rp1/2p1p1p1/4N1b1/Q2P4/2P4P/PP6/R3K3 b Q - 0 "
+	_, err = ParseFEN(input)
+	if err == nil {
+		t.Errorf("incorrect result: expected error due to missing field")
+	}
+}
+
+func TestParseFEN_EmptyFields(t *testing.T) {
+	input := "rn1qk2r/pbppppbp/1p3np1/8/4P3/3P1NP1/PPP2PBP/RNBQ1RK1 b - - 24 6"
+	board, err := ParseFEN(input)
+	fen := board.String()
+	if err != nil {
+		t.Errorf("incorrect result: expected error to be nil")
+	}
+	if fen != input {
+		t.Errorf("incorrect result: expected %q, got %q", input, fen)
+	}
+}
+
+func TestBoardPrettyString_Default(t *testing.T) {
+	board, _ := ParseFEN(DefaultFEN)
+	expected := `8rnbqkbnr
+7pppppppp
+6--------
+5--------
+4--------
+3--------
+2PPPPPPPP
+1RNBQKBNR
+ ABCDEFGH
+
+Side To Move: White
+Castle Rights: KQkq
+En Passant Square: -
+Half Move: 0
+Full Move: 1`
+	actual := board.PrettyString(true, true)
+
+	if actual != expected {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected, actual)
+	}
+
+	actual = board.PrettyString(false, true)
+	expected = `1RNBKQBNR
+2PPPPPPPP
+3--------
+4--------
+5--------
+6--------
+7pppppppp
+8rnbkqbnr
+ HGFEDCBA
+
+Side To Move: White
+Castle Rights: KQkq
+En Passant Square: -
+Half Move: 0
+Full Move: 1`
+
+	if actual != expected {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected, actual)
+	}
+
+	actual = board.PrettyString(false, false)
+	expected = `1RNBKQBNR
+2PPPPPPPP
+3--------
+4--------
+5--------
+6--------
+7pppppppp
+8rnbkqbnr
+ HGFEDCBA`
+
+	if actual != expected {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected, actual)
+	}
+}
+
+func TestBoardPrettyString_NotDefault(t *testing.T) {
+	board, _ := ParseFEN("rn1qk2r/pbppppbp/1p3np1/8/4P3/3P1NP1/PPP2PBP/RNBQ1RK1 b kq e3 0 6")
+	expected := `8rn-qk--r
+7pbppppbp
+6-p---np-
+5--------
+4----P---
+3---P-NP-
+2PPP--PBP
+1RNBQ-RK-
+ ABCDEFGH
+
+Side To Move: Black
+Castle Rights: kq
+En Passant Square: E3
+Half Move: 0
+Full Move: 6`
+	actual := board.PrettyString(true, true)
+
+	if actual != expected {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected, actual)
+	}
+}
+
+func TestBoardPrettyString_NotDefault_EmptyFields(t *testing.T) {
+	board, _ := ParseFEN("rn1qk2r/pbppppbp/1p3np1/8/4P3/3P1NP1/PPP2PBP/RNBQ1RK1 b - - 24 6")
+	expected := `1-KR-QBNR
+2PBP--PPP
+3-PN-P---
+4---P----
+5--------
+6-pn---p-
+7pbppppbp
+8r--kq-nr
+ HGFEDCBA
+
+Side To Move: Black
+Castle Rights: -
+En Passant Square: -
+Half Move: 24
+Full Move: 6`
+	actual := board.PrettyString(false, true)
+
+	if actual != expected {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected, actual)
+	}
+}

@@ -27,7 +27,7 @@ func TestSquareString(t *testing.T) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 
-	expected = "--"
+	expected = "-"
 	actual = Square{NoFile, NoRank}.String()
 
 	if expected != actual {

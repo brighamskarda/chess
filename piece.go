@@ -15,7 +15,10 @@
 
 package chess
 
-import "strings"
+import (
+	"strings"
+	"unicode"
+)
 
 // PieceType represents the type of a piece like a rook or a queen. See also [Piece]
 type PieceType uint8
@@ -53,7 +56,7 @@ func (pt PieceType) String() string {
 }
 
 func parsePieceType(s string) PieceType {
-	switch s {
+	switch strings.ToLower(s) {
 	case "p":
 		return Pawn
 	case "n":
@@ -106,4 +109,18 @@ func (p Piece) String() string {
 	} else {
 		return "-"
 	}
+}
+
+func parsePiece(s string) Piece {
+	pt := parsePieceType(s)
+	if pt == NoPieceType {
+		return NoPiece
+	}
+	var color Color
+	if unicode.IsUpper(rune(s[0])) {
+		color = White
+	} else {
+		color = Black
+	}
+	return Piece{pt, color}
 }

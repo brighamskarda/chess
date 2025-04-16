@@ -103,8 +103,11 @@ type Square struct {
 	Rank Rank
 }
 
-// String returns pgn compatible square strings (e.g a8)
+// String returns pgn compatible square strings (e.g a8). Gives "-" if NoSquare.
 func (s Square) String() string {
+	if s == NoSquare {
+		return "-"
+	}
 	return s.File.String() + s.Rank.String()
 }
 

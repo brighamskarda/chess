@@ -15,12 +15,20 @@
 
 package chess
 
+import (
+	"fmt"
+	"strconv"
+	"strings"
+	"unicode"
+)
+
 const DefaultFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 // Board represents all parts of a chess board as specified by FEN notation.
 //
 // The zero value is usable, though not very useful. You likely will want to use the following instead:
-// 		chess.ParseFEN(DefaultFEN)
+//
+//	chess.ParseFEN(DefaultFEN)
 type Board struct {
 	whitePawns   Bitboard
 	whiteRooks   Bitboard
@@ -51,19 +59,276 @@ type Board struct {
 
 // ParseFEN returns an error if it could not parse an FEN. It was likely malformed or missing important pieces.
 func ParseFEN(fen string) (*Board, error) {
-	return &Board{}, nil
+	words := strings.Fields(fen)
+	if len(words) != 6 {
+		return nil, fmt.Errorf("fen %q could not be parsed: fen should contain 6 distinct sections", fen)
+	}
+	board := &Board{}
+	err := board.parseFenBody(words[0])
+	if err != nil {
+		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+	}
+	err = board.parseSideToMove(words[1])
+	if err != nil {
+		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+	}
+	err = board.parseCastleRights(words[2])
+	if err != nil {
+		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+	}
+	err = board.parseEnPassant(words[3])
+	if err != nil {
+		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+	}
+	err = board.parseHalfMove(words[4])
+	if err != nil {
+		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+	}
+	err = board.parseFullMove(words[5])
+	if err != nil {
+		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+	}
+	return board, nil
+}
+
+func (b *Board) parseFenBody(body string) error {
+	currentFile := FileA
+	currentRank := Rank8
+	for _, r := range body {
+		if unicode.IsLetter(r) {
+			p := parsePiece(string(r))
+			if p == NoPiece {
+				return fmt.Errorf("could not parse piece %q", r)
+			}
+			b.SetPiece(p, Square{currentFile, currentRank})
+		} else if unicode.IsNumber(r) {
+			currentFile += File(r - '1') // Note this is 1 because file is automatically incremented in loop.
+		} else if r == '/' {
+			if currentFile != FileH+1 {
+				return fmt.Errorf("invalid number of squares on rank %d, found %d", currentRank, currentFile-1)
+			}
+			currentRank -= 1
+			currentFile = NoFile
+		} else {
+			return fmt.Errorf("encountered unexpected character %q", r)
+		}
+		currentFile += 1
+	}
+	if currentRank != Rank1 {
+		return fmt.Errorf("invalid number of ranks, ended on rank %d, should be rank 1", currentRank)
+	}
+	return nil
+}
+
+func (b *Board) parseSideToMove(sideToMove string) error {
+	color := parseColor(sideToMove)
+	if color == NoColor {
+		return fmt.Errorf("could not parse color %q", sideToMove)
+	}
+	b.SetSideToMove(color)
+	return nil
+}
+
+func (b *Board) parseCastleRights(castleRights string) error {
+	if castleRights == "-" {
+		return nil
+	}
+	for _, r := range castleRights {
+		switch r {
+		case 'K':
+			if b.WhiteKingSideCastle() {
+				return fmt.Errorf("white king-side castle set twice")
+			}
+			b.SetWhiteKingSideCastle(true)
+		case 'Q':
+			if b.WhiteQueenSideCastle() {
+				return fmt.Errorf("white queen-side castle set twice")
+			}
+			b.SetWhiteQueenSideCastle(true)
+		case 'k':
+			if b.BlackKingSideCastle() {
+				return fmt.Errorf("black king-side castle set twice")
+			}
+			b.SetBlackKingSideCastle(true)
+		case 'q':
+			if b.BlackQueenSideCastle() {
+				return fmt.Errorf("black queen-side castle set twice")
+			}
+			b.SetBlackQueenSideCastle(true)
+		default:
+			return fmt.Errorf("could not parse castle rights %q", r)
+		}
+	}
+	return nil
+}
+
+func (b *Board) parseEnPassant(enPassant string) error {
+	if enPassant == "-" {
+		return nil
+	}
+	square := parseSquare(enPassant)
+	if square == NoSquare {
+		return fmt.Errorf("could not parse en passant %q", enPassant)
+	}
+	b.SetEnPassant(square)
+	return nil
+}
+
+func (b *Board) parseHalfMove(halfMove string) error {
+	hm, err := strconv.ParseUint(halfMove, 10, 0)
+	if err != nil {
+		return fmt.Errorf("could not parse half move %q", halfMove)
+	}
+	b.SetHalfMove(uint(hm))
+	return nil
+}
+
+func (b *Board) parseFullMove(fullMove string) error {
+	fm, err := strconv.ParseUint(fullMove, 10, 0)
+	if err != nil {
+		return fmt.Errorf("could not parse full move %q", fullMove)
+	}
+	b.SetFullMove(uint(fm))
+	return nil
 }
 
 // String generates an FEN string for the current board. See [PrettyString] for getting a board like representation.
 func (b *Board) String() string {
-	return ""
+	fen := ""
+	fen += b.boardString() + " "
+	fen += b.sideToMoveString() + " "
+	fen += b.castleRightString() + " "
+	fen += b.EnPassant().String() + " "
+	fen += strconv.FormatUint(uint64(b.HalfMove()), 10) + " "
+	fen += strconv.FormatUint(uint64(b.FullMove()), 10)
+	return fen
+}
+
+func (b *Board) boardString() string {
+	boardString := ""
+	numEmptySquares := 0
+	for currentRank := Rank8; currentRank != NoRank; currentRank -= 1 {
+		for currentFile := FileA; currentFile <= FileH; currentFile += 1 {
+			if piece := b.Piece(Square{currentFile, currentRank}); piece == NoPiece {
+				numEmptySquares += 1
+			} else {
+				if numEmptySquares > 0 {
+					boardString += strconv.Itoa(numEmptySquares)
+					numEmptySquares = 0
+				}
+				boardString += piece.String()
+			}
+		}
+		if numEmptySquares > 0 {
+			boardString += strconv.Itoa(numEmptySquares)
+			numEmptySquares = 0
+		}
+		if currentRank != Rank1 {
+			boardString += "/"
+		}
+	}
+	return boardString
+}
+
+func (b *Board) castleRightString() string {
+	castleRights := ""
+	if b.WhiteKingSideCastle() {
+		castleRights += "K"
+	}
+	if b.WhiteQueenSideCastle() {
+		castleRights += "Q"
+	}
+	if b.BlackKingSideCastle() {
+		castleRights += "k"
+	}
+	if b.BlackQueenSideCastle() {
+		castleRights += "q"
+	}
+	if len(castleRights) == 0 {
+		castleRights = "-"
+	}
+	return castleRights
+}
+
+func (b *Board) sideToMoveString() string {
+	if b.SideToMove() == White {
+		return "w"
+	}
+	if b.SideToMove() == Black {
+		return "b"
+	}
+	return "-"
 }
 
 // PrettyString returns a board like representation of the current board. Uppercase letters are white and lowercase letters are black.
 //
 // Set whitesPerspective to true to see the board from white's side. Set extraInfo to false to just see the board. Set extraInfo to true to see all the other information stored in an FEN.
 func (b *Board) PrettyString(whitesPerspective bool, extraInfo bool) string {
-	return ""
+	s := ""
+	if whitesPerspective {
+		s += b.prettyBoardStringWhite()
+	} else {
+		s += b.prettyBoardStringBlack()
+	}
+	if extraInfo {
+		s += "\n\n"
+		s += b.extraInfo()
+	}
+	return s
+}
+
+func (b *Board) prettyBoardStringWhite() string {
+	s := ""
+	for currentRank := Rank8; currentRank > NoRank; currentRank -= 1 {
+		s += currentRank.String()
+		for currentFile := FileA; currentFile <= FileH; currentFile += 1 {
+			piece := b.Piece(Square{currentFile, currentRank})
+			s += piece.String()
+		}
+		s += "\n"
+	}
+	s += " ABCDEFGH"
+	return s
+}
+
+func (b *Board) prettyBoardStringBlack() string {
+	s := ""
+	for currentRank := Rank1; currentRank <= Rank8; currentRank += 1 {
+		s += currentRank.String()
+		for currentFile := FileH; currentFile > NoFile; currentFile -= 1 {
+			piece := b.Piece(Square{currentFile, currentRank})
+			s += piece.String()
+		}
+		s += "\n"
+	}
+	s += " HGFEDCBA"
+	return s
+}
+
+func (b *Board) extraInfo() string {
+	s := ""
+	s += "Side To Move: "
+	if b.SideToMove() == White {
+		s += "White"
+	} else if b.SideToMove() == Black {
+		s += "Black"
+	} else {
+		s += "-"
+	}
+	s += "\n"
+
+	s += "Castle Rights: "
+	s += b.castleRightString()
+	s += "\n"
+	s += "En Passant Square: "
+	s += strings.ToUpper(b.EnPassant().String())
+	s += "\n"
+	s += "Half Move: "
+	s += strconv.FormatUint(uint64(b.HalfMove()), 10)
+	s += "\n"
+	s += "Full Move: "
+	s += strconv.FormatUint(uint64(b.FullMove()), 10)
+	return s
 }
 
 func (b *Board) SideToMove() Color {
