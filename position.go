@@ -91,7 +91,7 @@ func ParseFEN(fen string) (*Position, error) {
 	return pos, nil
 }
 
-func (b *Position) parseFenBody(body string) error {
+func (pos *Position) parseFenBody(body string) error {
 	currentFile := FileA
 	currentRank := Rank8
 	for _, r := range body {
@@ -100,7 +100,7 @@ func (b *Position) parseFenBody(body string) error {
 			if p == NoPiece {
 				return fmt.Errorf("could not parse piece %q", r)
 			}
-			b.SetPiece(p, Square{currentFile, currentRank})
+			pos.SetPiece(p, Square{currentFile, currentRank})
 		} else if unicode.IsNumber(r) {
 			currentFile += File(r - '1') // Note this is 1 because file is automatically incremented in loop.
 		} else if r == '/' {
@@ -120,41 +120,41 @@ func (b *Position) parseFenBody(body string) error {
 	return nil
 }
 
-func (b *Position) parseSideToMove(sideToMove string) error {
+func (pos *Position) parseSideToMove(sideToMove string) error {
 	color := parseColor(sideToMove)
 	if color == NoColor {
 		return fmt.Errorf("could not parse color %q", sideToMove)
 	}
-	b.SetSideToMove(color)
+	pos.SetSideToMove(color)
 	return nil
 }
 
-func (b *Position) parseCastleRights(castleRights string) error {
+func (pos *Position) parseCastleRights(castleRights string) error {
 	if castleRights == "-" {
 		return nil
 	}
 	for _, r := range castleRights {
 		switch r {
 		case 'K':
-			if b.WhiteKingSideCastle() {
+			if pos.WhiteKingSideCastle() {
 				return fmt.Errorf("white king-side castle set twice")
 			}
-			b.SetWhiteKingSideCastle(true)
+			pos.SetWhiteKingSideCastle(true)
 		case 'Q':
-			if b.WhiteQueenSideCastle() {
+			if pos.WhiteQueenSideCastle() {
 				return fmt.Errorf("white queen-side castle set twice")
 			}
-			b.SetWhiteQueenSideCastle(true)
+			pos.SetWhiteQueenSideCastle(true)
 		case 'k':
-			if b.BlackKingSideCastle() {
+			if pos.BlackKingSideCastle() {
 				return fmt.Errorf("black king-side castle set twice")
 			}
-			b.SetBlackKingSideCastle(true)
+			pos.SetBlackKingSideCastle(true)
 		case 'q':
-			if b.BlackQueenSideCastle() {
+			if pos.BlackQueenSideCastle() {
 				return fmt.Errorf("black queen-side castle set twice")
 			}
-			b.SetBlackQueenSideCastle(true)
+			pos.SetBlackQueenSideCastle(true)
 		default:
 			return fmt.Errorf("could not parse castle rights %q", r)
 		}
@@ -162,7 +162,7 @@ func (b *Position) parseCastleRights(castleRights string) error {
 	return nil
 }
 
-func (b *Position) parseEnPassant(enPassant string) error {
+func (pos *Position) parseEnPassant(enPassant string) error {
 	if enPassant == "-" {
 		return nil
 	}
@@ -170,46 +170,46 @@ func (b *Position) parseEnPassant(enPassant string) error {
 	if square == NoSquare {
 		return fmt.Errorf("could not parse en passant %q", enPassant)
 	}
-	b.SetEnPassant(square)
+	pos.SetEnPassant(square)
 	return nil
 }
 
-func (b *Position) parseHalfMove(halfMove string) error {
+func (pos *Position) parseHalfMove(halfMove string) error {
 	hm, err := strconv.ParseUint(halfMove, 10, 0)
 	if err != nil {
 		return fmt.Errorf("could not parse half move %q", halfMove)
 	}
-	b.SetHalfMove(uint(hm))
+	pos.SetHalfMove(uint(hm))
 	return nil
 }
 
-func (b *Position) parseFullMove(fullMove string) error {
+func (pos *Position) parseFullMove(fullMove string) error {
 	fm, err := strconv.ParseUint(fullMove, 10, 0)
 	if err != nil {
 		return fmt.Errorf("could not parse full move %q", fullMove)
 	}
-	b.SetFullMove(uint(fm))
+	pos.SetFullMove(uint(fm))
 	return nil
 }
 
 // String generates an FEN string for the current position. See [PrettyString] for getting a board like representation.
-func (b *Position) String() string {
+func (pos *Position) String() string {
 	fen := ""
-	fen += b.boardString() + " "
-	fen += b.sideToMoveString() + " "
-	fen += b.castleRightString() + " "
-	fen += b.EnPassant().String() + " "
-	fen += strconv.FormatUint(uint64(b.HalfMove()), 10) + " "
-	fen += strconv.FormatUint(uint64(b.FullMove()), 10)
+	fen += pos.boardString() + " "
+	fen += pos.sideToMoveString() + " "
+	fen += pos.castleRightString() + " "
+	fen += pos.EnPassant().String() + " "
+	fen += strconv.FormatUint(uint64(pos.HalfMove()), 10) + " "
+	fen += strconv.FormatUint(uint64(pos.FullMove()), 10)
 	return fen
 }
 
-func (b *Position) boardString() string {
+func (pos *Position) boardString() string {
 	boardString := ""
 	numEmptySquares := 0
 	for currentRank := Rank8; currentRank != NoRank; currentRank -= 1 {
 		for currentFile := FileA; currentFile <= FileH; currentFile += 1 {
-			if piece := b.Piece(Square{currentFile, currentRank}); piece == NoPiece {
+			if piece := pos.Piece(Square{currentFile, currentRank}); piece == NoPiece {
 				numEmptySquares += 1
 			} else {
 				if numEmptySquares > 0 {
@@ -230,18 +230,18 @@ func (b *Position) boardString() string {
 	return boardString
 }
 
-func (b *Position) castleRightString() string {
+func (pos *Position) castleRightString() string {
 	castleRights := ""
-	if b.WhiteKingSideCastle() {
+	if pos.WhiteKingSideCastle() {
 		castleRights += "K"
 	}
-	if b.WhiteQueenSideCastle() {
+	if pos.WhiteQueenSideCastle() {
 		castleRights += "Q"
 	}
-	if b.BlackKingSideCastle() {
+	if pos.BlackKingSideCastle() {
 		castleRights += "k"
 	}
-	if b.BlackQueenSideCastle() {
+	if pos.BlackQueenSideCastle() {
 		castleRights += "q"
 	}
 	if len(castleRights) == 0 {
@@ -250,11 +250,11 @@ func (b *Position) castleRightString() string {
 	return castleRights
 }
 
-func (b *Position) sideToMoveString() string {
-	if b.SideToMove() == White {
+func (pos *Position) sideToMoveString() string {
+	if pos.SideToMove() == White {
 		return "w"
 	}
-	if b.SideToMove() == Black {
+	if pos.SideToMove() == Black {
 		return "b"
 	}
 	return "-"
@@ -263,26 +263,26 @@ func (b *Position) sideToMoveString() string {
 // PrettyString returns a board like representation of the current position. Uppercase letters are white and lowercase letters are black.
 //
 // Set whitesPerspective to true to see the board from white's side. Set extraInfo to false to just see the board. Set extraInfo to true to see all the other information stored in an FEN.
-func (b *Position) PrettyString(whitesPerspective bool, extraInfo bool) string {
+func (pos *Position) PrettyString(whitesPerspective bool, extraInfo bool) string {
 	s := ""
 	if whitesPerspective {
-		s += b.prettyBoardStringWhite()
+		s += pos.prettyBoardStringWhite()
 	} else {
-		s += b.prettyBoardStringBlack()
+		s += pos.prettyBoardStringBlack()
 	}
 	if extraInfo {
 		s += "\n\n"
-		s += b.extraInfo()
+		s += pos.extraInfo()
 	}
 	return s
 }
 
-func (b *Position) prettyBoardStringWhite() string {
+func (pos *Position) prettyBoardStringWhite() string {
 	s := ""
 	for currentRank := Rank8; currentRank > NoRank; currentRank -= 1 {
 		s += currentRank.String()
 		for currentFile := FileA; currentFile <= FileH; currentFile += 1 {
-			piece := b.Piece(Square{currentFile, currentRank})
+			piece := pos.Piece(Square{currentFile, currentRank})
 			s += piece.String()
 		}
 		s += "\n"
@@ -291,12 +291,12 @@ func (b *Position) prettyBoardStringWhite() string {
 	return s
 }
 
-func (b *Position) prettyBoardStringBlack() string {
+func (pos *Position) prettyBoardStringBlack() string {
 	s := ""
 	for currentRank := Rank1; currentRank <= Rank8; currentRank += 1 {
 		s += currentRank.String()
 		for currentFile := FileH; currentFile > NoFile; currentFile -= 1 {
-			piece := b.Piece(Square{currentFile, currentRank})
+			piece := pos.Piece(Square{currentFile, currentRank})
 			s += piece.String()
 		}
 		s += "\n"
@@ -305,12 +305,12 @@ func (b *Position) prettyBoardStringBlack() string {
 	return s
 }
 
-func (b *Position) extraInfo() string {
+func (pos *Position) extraInfo() string {
 	s := ""
 	s += "Side To Move: "
-	if b.SideToMove() == White {
+	if pos.SideToMove() == White {
 		s += "White"
-	} else if b.SideToMove() == Black {
+	} else if pos.SideToMove() == Black {
 		s += "Black"
 	} else {
 		s += "-"
@@ -318,125 +318,125 @@ func (b *Position) extraInfo() string {
 	s += "\n"
 
 	s += "Castle Rights: "
-	s += b.castleRightString()
+	s += pos.castleRightString()
 	s += "\n"
 	s += "En Passant Square: "
-	s += strings.ToUpper(b.EnPassant().String())
+	s += strings.ToUpper(pos.EnPassant().String())
 	s += "\n"
 	s += "Half Move: "
-	s += strconv.FormatUint(uint64(b.HalfMove()), 10)
+	s += strconv.FormatUint(uint64(pos.HalfMove()), 10)
 	s += "\n"
 	s += "Full Move: "
-	s += strconv.FormatUint(uint64(b.FullMove()), 10)
+	s += strconv.FormatUint(uint64(pos.FullMove()), 10)
 	return s
 }
 
-func (b *Position) SideToMove() Color {
-	return b.sideToMove
+func (pos *Position) SideToMove() Color {
+	return pos.sideToMove
 }
 
-func (b *Position) SetSideToMove(c Color) {
-	b.sideToMove = c
+func (pos *Position) SetSideToMove(c Color) {
+	pos.sideToMove = c
 }
 
 // WhiteKingSideCastle returns true if white may still castle kingside. Note that this does not indicate if the move is currently valid. It is really an indication of if the king or rook have moved yet this game.
-func (b *Position) WhiteKingSideCastle() bool {
-	return b.whiteKsCastle
+func (pos *Position) WhiteKingSideCastle() bool {
+	return pos.whiteKsCastle
 }
 
 // WhiteQueenSideCastle returns true if white may still castle queenside. Note that this does not indicate if the move is currently valid. It is really an indication of if the king or rook have moved yet this game.
-func (b *Position) WhiteQueenSideCastle() bool {
-	return b.whiteQsCastle
+func (pos *Position) WhiteQueenSideCastle() bool {
+	return pos.whiteQsCastle
 }
 
 // BlackKingSideCastle returns true if black may still castle kingside. Note that this does not indicate if the move is currently valid. It is really an indication of if the king or rook have moved yet this game.
-func (b *Position) BlackKingSideCastle() bool {
-	return b.blackKsCastle
+func (pos *Position) BlackKingSideCastle() bool {
+	return pos.blackKsCastle
 }
 
 // BlackQueenSideCastle returns true if black may still castle queenside. Note that this does not indicate if the move is currently valid. It is really an indication of if the king or rook have moved yet this game.
-func (b *Position) BlackQueenSideCastle() bool {
-	return b.blackQsCastle
+func (pos *Position) BlackQueenSideCastle() bool {
+	return pos.blackQsCastle
 }
 
-func (b *Position) SetWhiteKingSideCastle(value bool) {
-	b.whiteKsCastle = value
+func (pos *Position) SetWhiteKingSideCastle(value bool) {
+	pos.whiteKsCastle = value
 }
 
-func (b *Position) SetWhiteQueenSideCastle(value bool) {
-	b.whiteQsCastle = value
+func (pos *Position) SetWhiteQueenSideCastle(value bool) {
+	pos.whiteQsCastle = value
 }
 
-func (b *Position) SetBlackKingSideCastle(value bool) {
-	b.blackKsCastle = value
+func (pos *Position) SetBlackKingSideCastle(value bool) {
+	pos.blackKsCastle = value
 }
 
-func (b *Position) SetBlackQueenSideCastle(value bool) {
-	b.blackQsCastle = value
+func (pos *Position) SetBlackQueenSideCastle(value bool) {
+	pos.blackQsCastle = value
 }
 
 // EnPassant returns the square on to which a pawn may move to perform en-passant. This does not indicate if the move is legal. NoSquare is returned if there is no en passant option.
-func (b *Position) EnPassant() Square {
-	return b.enPassant
+func (pos *Position) EnPassant() Square {
+	return pos.enPassant
 }
 
-func (b *Position) SetEnPassant(s Square) {
-	b.enPassant = s
+func (pos *Position) SetEnPassant(s Square) {
+	pos.enPassant = s
 }
 
-func (b *Position) HalfMove() uint {
-	return b.halfMove
+func (pos *Position) HalfMove() uint {
+	return pos.halfMove
 }
 
-func (b *Position) SetHalfMove(i uint) {
-	b.halfMove = i
+func (pos *Position) SetHalfMove(i uint) {
+	pos.halfMove = i
 }
 
-func (b *Position) FullMove() uint {
-	return b.fullMove
+func (pos *Position) FullMove() uint {
+	return pos.fullMove
 }
 
-func (b *Position) SetFullMove(i uint) {
-	b.fullMove = i
+func (pos *Position) SetFullMove(i uint) {
+	pos.fullMove = i
 }
 
 // Piece gets the piece on the given square. NoPiece is returned if no piece is present.
-func (b *Position) Piece(s Square) Piece {
-	if b.whitePawns.Square(s) == 1 {
+func (pos *Position) Piece(s Square) Piece {
+	if pos.whitePawns.Square(s) == 1 {
 		return WhitePawn
 	}
-	if b.whiteRooks.Square(s) == 1 {
+	if pos.whiteRooks.Square(s) == 1 {
 		return WhiteRook
 	}
-	if b.whiteKnights.Square(s) == 1 {
+	if pos.whiteKnights.Square(s) == 1 {
 		return WhiteKnight
 	}
-	if b.whiteBishops.Square(s) == 1 {
+	if pos.whiteBishops.Square(s) == 1 {
 		return WhiteBishop
 	}
-	if b.whiteQueens.Square(s) == 1 {
+	if pos.whiteQueens.Square(s) == 1 {
 		return WhiteQueen
 	}
-	if b.whiteKings.Square(s) == 1 {
+	if pos.whiteKings.Square(s) == 1 {
 		return WhiteKing
 	}
 
-	if b.blackPawns.Square(s) == 1 {
+	if pos.blackPawns.Square(s) == 1 {
 		return BlackPawn
 	}
-	if b.blackRooks.Square(s) == 1 {
+	if pos.blackRooks.Square(s) == 1 {
 		return BlackRook
 	}
-	if b.blackKnights.Square(s) == 1 {
+	if pos.blackKnights.Square(s) == 1 {
 		return BlackKnight
 	}
-	if b.blackBishops.Square(s) == 1 {
+	if pos.blackBishops.Square(s) == 1 {
 		return BlackBishop
 	}
-	if b.blackQueens.Square(s) == 1 {
+	if pos.blackQueens.Square(s) == 1 {
 		return BlackQueen
 	}
-	if b.blackKings.Square(s) == 1 {
+	if pos.blackKings.Square(s) == 1 {
 		return BlackKing
 	}
 
@@ -444,83 +444,83 @@ func (b *Position) Piece(s Square) Piece {
 }
 
 // SetPiece sets the given piece at the given square.
-func (b *Position) SetPiece(p Piece, s Square) {
-	b.ClearPiece(s)
+func (pos *Position) SetPiece(p Piece, s Square) {
+	pos.ClearPiece(s)
 
 	switch p {
 	case WhitePawn:
-		b.whitePawns = b.whitePawns.SetSquare(s)
+		pos.whitePawns = pos.whitePawns.SetSquare(s)
 	case WhiteRook:
-		b.whiteRooks = b.whiteRooks.SetSquare(s)
+		pos.whiteRooks = pos.whiteRooks.SetSquare(s)
 	case WhiteKnight:
-		b.whiteKnights = b.whiteKnights.SetSquare(s)
+		pos.whiteKnights = pos.whiteKnights.SetSquare(s)
 	case WhiteBishop:
-		b.whiteBishops = b.whiteBishops.SetSquare(s)
+		pos.whiteBishops = pos.whiteBishops.SetSquare(s)
 	case WhiteQueen:
-		b.whiteQueens = b.whiteQueens.SetSquare(s)
+		pos.whiteQueens = pos.whiteQueens.SetSquare(s)
 	case WhiteKing:
-		b.whiteKings = b.whiteKings.SetSquare(s)
+		pos.whiteKings = pos.whiteKings.SetSquare(s)
 
 	case BlackPawn:
-		b.blackPawns = b.blackPawns.SetSquare(s)
+		pos.blackPawns = pos.blackPawns.SetSquare(s)
 	case BlackRook:
-		b.blackRooks = b.blackRooks.SetSquare(s)
+		pos.blackRooks = pos.blackRooks.SetSquare(s)
 	case BlackKnight:
-		b.blackKnights = b.blackKnights.SetSquare(s)
+		pos.blackKnights = pos.blackKnights.SetSquare(s)
 	case BlackBishop:
-		b.blackBishops = b.blackBishops.SetSquare(s)
+		pos.blackBishops = pos.blackBishops.SetSquare(s)
 	case BlackQueen:
-		b.blackQueens = b.blackQueens.SetSquare(s)
+		pos.blackQueens = pos.blackQueens.SetSquare(s)
 	case BlackKing:
-		b.blackKings = b.blackKings.SetSquare(s)
+		pos.blackKings = pos.blackKings.SetSquare(s)
 	}
 }
 
 // ClearPiece removes any piece from the given square.
-func (b *Position) ClearPiece(s Square) {
-	b.whitePawns = b.whitePawns.ClearSquare(s)
-	b.whiteRooks = b.whiteRooks.ClearSquare(s)
-	b.whiteKnights = b.whiteKnights.ClearSquare(s)
-	b.whiteBishops = b.whiteBishops.ClearSquare(s)
-	b.whiteQueens = b.whiteQueens.ClearSquare(s)
-	b.whiteKings = b.whiteKings.ClearSquare(s)
+func (pos *Position) ClearPiece(s Square) {
+	pos.whitePawns = pos.whitePawns.ClearSquare(s)
+	pos.whiteRooks = pos.whiteRooks.ClearSquare(s)
+	pos.whiteKnights = pos.whiteKnights.ClearSquare(s)
+	pos.whiteBishops = pos.whiteBishops.ClearSquare(s)
+	pos.whiteQueens = pos.whiteQueens.ClearSquare(s)
+	pos.whiteKings = pos.whiteKings.ClearSquare(s)
 
-	b.blackPawns = b.blackPawns.ClearSquare(s)
-	b.blackRooks = b.blackRooks.ClearSquare(s)
-	b.blackKnights = b.blackKnights.ClearSquare(s)
-	b.blackBishops = b.blackBishops.ClearSquare(s)
-	b.blackQueens = b.blackQueens.ClearSquare(s)
-	b.blackKings = b.blackKings.ClearSquare(s)
+	pos.blackPawns = pos.blackPawns.ClearSquare(s)
+	pos.blackRooks = pos.blackRooks.ClearSquare(s)
+	pos.blackKnights = pos.blackKnights.ClearSquare(s)
+	pos.blackBishops = pos.blackBishops.ClearSquare(s)
+	pos.blackQueens = pos.blackQueens.ClearSquare(s)
+	pos.blackKings = pos.blackKings.ClearSquare(s)
 }
 
 // Bitboard returns a bitboard for the given piece. See also [Position.OccupiedBitboard] and [Position.ColorBitboard].
-func (b *Position) Bitboard(p Piece) Bitboard {
+func (pos *Position) Bitboard(p Piece) Bitboard {
 	switch p {
 	case WhitePawn:
-		return b.whitePawns
+		return pos.whitePawns
 	case WhiteKnight:
-		return b.whiteKnights
+		return pos.whiteKnights
 	case WhiteBishop:
-		return b.whiteBishops
+		return pos.whiteBishops
 	case WhiteRook:
-		return b.whiteRooks
+		return pos.whiteRooks
 	case WhiteQueen:
-		return b.whiteQueens
+		return pos.whiteQueens
 	case WhiteKing:
-		return b.whiteKings
+		return pos.whiteKings
 
 	case BlackPawn:
-		return b.blackPawns
+		return pos.blackPawns
 	case BlackKnight:
-		return b.blackKnights
+		return pos.blackKnights
 	case BlackBishop:
-		return b.blackBishops
+		return pos.blackBishops
 	case BlackRook:
-		return b.blackRooks
+		return pos.blackRooks
 	case BlackQueen:
-		return b.blackQueens
+		return pos.blackQueens
 	case BlackKing:
-		return b.blackKings
+		return pos.blackKings
 
 	default:
 		return 0
@@ -528,53 +528,53 @@ func (b *Position) Bitboard(p Piece) Bitboard {
 }
 
 // OccupiedBitboard returns a bitboard indicating all the squares with a piece on them.
-func (b *Position) OccupiedBitboard() Bitboard {
-	return b.whitePawns | b.whiteKnights | b.whiteBishops | b.whiteRooks | b.whiteQueens | b.whiteKings |
-		b.blackPawns | b.blackKnights | b.blackBishops | b.blackRooks | b.blackQueens | b.blackKings
+func (pos *Position) OccupiedBitboard() Bitboard {
+	return pos.whitePawns | pos.whiteKnights | pos.whiteBishops | pos.whiteRooks | pos.whiteQueens | pos.whiteKings |
+		pos.blackPawns | pos.blackKnights | pos.blackBishops | pos.blackRooks | pos.blackQueens | pos.blackKings
 }
 
 // ColorBitboard returns a bitboard indicating all the squares occupied by pieces of a certain color.
-func (b *Position) ColorBitboard(c Color) Bitboard {
+func (pos *Position) ColorBitboard(c Color) Bitboard {
 	if c == White {
-		return b.whitePawns | b.whiteKnights | b.whiteBishops | b.whiteRooks | b.whiteQueens | b.whiteKings
+		return pos.whitePawns | pos.whiteKnights | pos.whiteBishops | pos.whiteRooks | pos.whiteQueens | pos.whiteKings
 	} else if c == Black {
-		return b.blackPawns | b.blackKnights | b.blackBishops | b.blackRooks | b.blackQueens | b.blackKings
+		return pos.blackPawns | pos.blackKnights | pos.blackBishops | pos.blackRooks | pos.blackQueens | pos.blackKings
 	} else {
 		return 0
 	}
 }
 
 // IsCheck returns true if the side to move has a king under attack from an enemy piece.
-func (b *Position) IsCheck() bool {
+func (pos *Position) IsCheck() bool {
 	var attackingSide Color
-	if b.SideToMove() == White {
+	if pos.SideToMove() == White {
 		attackingSide = Black
-	} else if b.SideToMove() == Black {
+	} else if pos.SideToMove() == Black {
 		attackingSide = White
 	} else {
 		return false
 	}
 
-	attackedSquares := b.getAttackedSquares(attackingSide)
-	kingsInCheck := b.Bitboard(Piece{b.SideToMove(), King}) & attackedSquares
+	attackedSquares := pos.getAttackedSquares(attackingSide)
+	kingsInCheck := pos.Bitboard(Piece{pos.SideToMove(), King}) & attackedSquares
 	return kingsInCheck > 0
 }
 
 // getAttackedSquares returns a bitboard with all the squares the specified color attacks.
-func (b *Position) getAttackedSquares(side Color) Bitboard {
+func (pos *Position) getAttackedSquares(side Color) Bitboard {
 	var attackedSquares Bitboard = 0
 
-	occupied := b.OccupiedBitboard()
+	occupied := pos.OccupiedBitboard()
 	if side == White {
-		attackedSquares |= b.Bitboard(Piece{side, Pawn}).WhitePawnAttacks()
+		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).WhitePawnAttacks()
 	} else if side == Black {
-		attackedSquares |= b.Bitboard(Piece{side, Pawn}).BlackPawnAttacks()
+		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).BlackPawnAttacks()
 	}
-	attackedSquares |= b.Bitboard(Piece{side, Rook}).RookAttacks(occupied)
-	attackedSquares |= b.Bitboard(Piece{side, Knight}).KnightAttacks()
-	attackedSquares |= b.Bitboard(Piece{side, Bishop}).BishopAttacks(occupied)
-	attackedSquares |= b.Bitboard(Piece{side, Queen}).QueenAttacks(occupied)
-	attackedSquares |= b.Bitboard(Piece{side, King}).KingAttacks()
+	attackedSquares |= pos.Bitboard(Piece{side, Rook}).RookAttacks(occupied)
+	attackedSquares |= pos.Bitboard(Piece{side, Knight}).KnightAttacks()
+	attackedSquares |= pos.Bitboard(Piece{side, Bishop}).BishopAttacks(occupied)
+	attackedSquares |= pos.Bitboard(Piece{side, Queen}).QueenAttacks(occupied)
+	attackedSquares |= pos.Bitboard(Piece{side, King}).KingAttacks()
 	return attackedSquares
 }
 
@@ -599,8 +599,173 @@ func (b *Position) getAttackedSquares(side Color) Bitboard {
 // 4. If a king or rook moves from their starting square (in standard chess, 960 is not supported) then the corresponding castle rights are set to false.
 //
 // 5. If one of the four possible castle moves if executed and the castle rights still exist, and there are no pieces in the way, then the appropriate castle move will be applied. (Check will not block a castle move)
-func (b *Position) Move(m Move) {
+func (pos *Position) Move(m Move) {
+	pos.SetHalfMove(pos.HalfMove() + 1)
 
+	if pos.isCastle(m) {
+		pos.SetEnPassant(NoSquare)
+		pos.performCastle(m)
+	} else if pos.isPawnMove(m) {
+		pos.performPawnMove(m)
+	} else {
+		pos.SetEnPassant(NoSquare)
+		if pos.Piece(m.ToSquare) != NoPiece {
+			pos.SetHalfMove(0)
+		}
+		pos.updateCastleRights(m)
+		pos.SetPiece(pos.Piece(m.FromSquare), m.ToSquare)
+		pos.ClearPiece(m.FromSquare)
+	}
+
+	pos.promotePiece(m.ToSquare, m.Promotion)
+	pos.flipSide_incrementFullMove(m)
 }
 
-// TODO implement Move
+func (pos *Position) updateCastleRights(m Move) {
+	if m.FromSquare == E1 || m.FromSquare == A1 {
+		pos.SetWhiteQueenSideCastle(false)
+	}
+	if m.FromSquare == E1 || m.FromSquare == H1 {
+		pos.SetWhiteKingSideCastle(false)
+	}
+	if m.FromSquare == E8 || m.FromSquare == A8 {
+		pos.SetBlackQueenSideCastle(false)
+	}
+	if m.FromSquare == E8 || m.FromSquare == H8 {
+		pos.SetBlackKingSideCastle(false)
+	}
+}
+
+func (pos *Position) promotePiece(s Square, pt PieceType) {
+	if pt != NoPieceType {
+		piece := pos.Piece(s)
+		if piece != NoPiece {
+			piece.Type = pt
+		}
+		pos.SetPiece(piece, s)
+	}
+}
+
+func (pos *Position) isPawnMove(m Move) bool {
+	return pos.Piece(m.FromSquare).Type == Pawn
+}
+
+func (pos *Position) performPawnMove(m Move) {
+	pos.SetHalfMove(0)
+	pos.performPawnMove_takeEnPassant(m)
+	pos.performPawnMove_setEnPassant(m)
+	piece := pos.Piece(m.FromSquare)
+	pos.SetPiece(piece, m.ToSquare)
+	pos.ClearPiece(m.FromSquare)
+}
+
+func (pos *Position) performPawnMove_takeEnPassant(m Move) {
+	if m.ToSquare == pos.EnPassant() {
+		if pos.SideToMove() == White {
+			pos.ClearPiece(Square{m.ToSquare.File, m.ToSquare.Rank - 1})
+		} else if pos.SideToMove() == Black {
+			pos.ClearPiece(Square{m.ToSquare.File, m.ToSquare.Rank + 1})
+		} else {
+			if pos.Piece(m.FromSquare).Color == White {
+				pos.ClearPiece(Square{m.ToSquare.File, m.ToSquare.Rank - 1})
+			} else if pos.Piece(m.FromSquare).Color == Black {
+				pos.ClearPiece(Square{m.ToSquare.File, m.ToSquare.Rank + 1})
+			}
+		}
+	}
+}
+
+func (pos *Position) performPawnMove_setEnPassant(m Move) {
+	pos.SetEnPassant(NoSquare)
+	movingPiece := pos.Piece(m.FromSquare)
+	if m.FromSquare.File == m.ToSquare.File {
+		if m.FromSquare.Rank == 2 && m.ToSquare.Rank == 4 && movingPiece.Color == White {
+			pos.SetEnPassant(Square{m.FromSquare.File, m.FromSquare.Rank + 1})
+		} else if m.FromSquare.Rank == 7 && m.ToSquare.Rank == 5 && movingPiece.Color == Black {
+			pos.SetEnPassant(Square{m.FromSquare.File, m.FromSquare.Rank - 1})
+		}
+	}
+}
+
+func (pos *Position) isCastle(m Move) bool {
+	switch m {
+	case Move{E1, G1, NoPieceType}: // White King-side castle
+		return pos.WhiteKingSideCastle() &&
+			pos.Piece(E1) == WhiteKing &&
+			pos.Piece(H1) == WhiteRook &&
+			pos.Piece(F1) == NoPiece &&
+			pos.Piece(G1) == NoPiece
+	case Move{E1, C1, NoPieceType}: // White Queen-side castle
+		return pos.WhiteQueenSideCastle() &&
+			pos.Piece(E1) == WhiteKing &&
+			pos.Piece(A1) == WhiteRook &&
+			pos.Piece(D1) == NoPiece &&
+			pos.Piece(C1) == NoPiece &&
+			pos.Piece(B1) == NoPiece
+	case Move{E8, G8, NoPieceType}: // Black King-side castle
+		return pos.BlackKingSideCastle() &&
+			pos.Piece(E8) == BlackKing &&
+			pos.Piece(H8) == BlackRook &&
+			pos.Piece(F8) == NoPiece &&
+			pos.Piece(G8) == NoPiece
+	case Move{E8, C8, NoPieceType}: // Black Queen-side castle
+		return pos.BlackQueenSideCastle() &&
+			pos.Piece(E8) == BlackKing &&
+			pos.Piece(A8) == BlackRook &&
+			pos.Piece(D8) == NoPiece &&
+			pos.Piece(C8) == NoPiece &&
+			pos.Piece(B8) == NoPiece
+	default:
+		return false
+	}
+}
+
+func (pos *Position) performCastle(m Move) {
+	switch m {
+	case Move{E1, G1, NoPieceType}:
+		pos.SetPiece(WhiteKing, G1)
+		pos.ClearPiece(E1)
+		pos.SetPiece(WhiteRook, F1)
+		pos.ClearPiece(H1)
+		pos.SetWhiteKingSideCastle(false)
+		pos.SetWhiteQueenSideCastle(false)
+	case Move{E1, C1, NoPieceType}:
+		pos.SetPiece(WhiteKing, C1)
+		pos.ClearPiece(E1)
+		pos.SetPiece(WhiteRook, D1)
+		pos.ClearPiece(A1)
+		pos.SetWhiteKingSideCastle(false)
+		pos.SetWhiteQueenSideCastle(false)
+	case Move{E8, G8, NoPieceType}:
+		pos.SetPiece(BlackKing, G8)
+		pos.ClearPiece(E8)
+		pos.SetPiece(BlackRook, F8)
+		pos.ClearPiece(H8)
+		pos.SetBlackKingSideCastle(false)
+		pos.SetBlackQueenSideCastle(false)
+	case Move{E8, C8, NoPieceType}:
+		pos.SetPiece(BlackKing, C8)
+		pos.ClearPiece(E8)
+		pos.SetPiece(BlackRook, D8)
+		pos.ClearPiece(A8)
+		pos.SetBlackKingSideCastle(false)
+		pos.SetBlackQueenSideCastle(false)
+	}
+}
+
+func (pos *Position) flipSide_incrementFullMove(m Move) {
+	if pos.SideToMove() == Black {
+		pos.fullMove++
+		pos.SetSideToMove(White)
+	} else if pos.SideToMove() == White {
+		pos.SetSideToMove(Black)
+	} else {
+		colorMoved := pos.Piece(m.ToSquare).Color
+		if colorMoved == Black {
+			pos.fullMove++
+			pos.SetSideToMove(White)
+		} else if colorMoved == White {
+			pos.SetSideToMove(Black)
+		}
+	}
+}

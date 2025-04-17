@@ -41,7 +41,7 @@ func (bb Bitboard) SetBit(index uint8) Bitboard {
 
 // ClearBit returns a copy of the bitboard with the specified bit cleared.
 func (bb Bitboard) ClearBit(index uint8) Bitboard {
-	return bb &^ (1 << index)
+	return bb & ^(1 << index)
 }
 
 // Square returns 1 if the bit at the specified square is set, otherwise 0.

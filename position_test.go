@@ -370,3 +370,124 @@ func TestIsCheckKing(t *testing.T) {
 		t.Error("incorrect result for white king two spaces away: expected false, got true")
 	}
 }
+
+func TestRandomMove(t *testing.T) {
+	pos, _ := ParseFEN(DefaultFEN)
+	pos.Move(Move{B1, D5, NoPieceType})
+	expected := "rnbqkbnr/pppppppp/8/3N4/8/8/PPPPPPPP/R1BQKBNR b KQkq - 1 1"
+	actual := pos.String()
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+
+	pos.Move(Move{E8, G8, NoPieceType})
+	expected = "rnbq1bkr/pppppppp/8/3N4/8/8/PPPPPPPP/R1BQKBNR w KQ - 0 2"
+	actual = pos.String()
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+}
+
+func TestWhiteEnPassantMove(t *testing.T) {
+	pos, _ := ParseFEN("rnbqkbnr/ppppp1pp/8/8/5p2/8/PPPPPPPP/RNBQKBNR w KQkq - 53 1")
+	pos.Move(Move{E2, E4, NoPieceType})
+	expected := "rnbqkbnr/ppppp1pp/8/8/4Pp2/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
+	actual := pos.String()
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+
+	pos.Move(Move{F4, E3, NoPieceType})
+	expected = "rnbqkbnr/ppppp1pp/8/8/8/4p3/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
+	actual = pos.String()
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+}
+
+func TestBlackEnPassantMove(t *testing.T) {
+	pos, _ := ParseFEN("rnbqkbnr/pppppppp/8/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 9 1")
+	pos.Move(Move{F7, F5, NoPieceType})
+	expected := "rnbqkbnr/ppppp1pp/8/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 2"
+	actual := pos.String()
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+
+	pos.Move(Move{E5, F6, NoPieceType})
+	expected = "rnbqkbnr/ppppp1pp/5P2/8/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2"
+	actual = pos.String()
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+}
+
+func TestWhiteKSCastle(t *testing.T) {
+	pos, _ := ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQK2R w KQkq - 0 1")
+	pos.Move(Move{E1, G1, NoPieceType})
+	expected := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQ1RK1 b kq - 1 1"
+	actual := pos.String()
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+}
+
+func TestWhiteQSCastle(t *testing.T) {
+	pos, _ := ParseFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3KBNR w KQkq - 0 1")
+	pos.Move(Move{E1, C1, NoPieceType})
+	expected := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/2KR1BNR b kq - 1 1"
+	actual := pos.String()
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+}
+
+func TestBlackKSCastle(t *testing.T) {
+	pos, _ := ParseFEN("rnbqk2r/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1")
+	pos.Move(Move{E8, G8, NoPieceType})
+	expected := "rnbq1rk1/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 1 2"
+	actual := pos.String()
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+}
+
+func TestBlackQSCastle(t *testing.T) {
+	pos, _ := ParseFEN("r3kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1")
+	pos.Move(Move{E8, C8, NoPieceType})
+	expected := "2kr1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 1 2"
+	actual := pos.String()
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+}
+
+func TestPromotion(t *testing.T) {
+	pos, _ := ParseFEN(DefaultFEN)
+	pos.Move(Move{E1, F3, Knight})
+	expected := "rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQ1BNR b kq - 1 1"
+	actual := pos.String()
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+}
+
+func TestCastleRightsRemoved(t *testing.T) {
+	pos, _ := ParseFEN(DefaultFEN)
+	pos.Move(Move{H1, H4, NoPieceType})
+	expected := "rnbqkbnr/pppppppp/8/8/7R/8/PPPPPPPP/RNBQKBN1 b Qkq - 1 1"
+	actual := pos.String()
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+}
+
+func TestEnPassantRemoved(t *testing.T) {
+	pos, _ := ParseFEN("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")
+	pos.Move(Move{F8, B3, NoPieceType})
+	expected := "rnbqk1nr/pppppppp/8/8/4P3/1b6/PPPP1PPP/RNBQKBNR w KQkq - 1 2"
+	actual := pos.String()
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+}
