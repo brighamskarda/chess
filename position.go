@@ -24,12 +24,12 @@ import (
 
 const DefaultFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-// Board represents all parts of a chess board as specified by FEN notation.
+// Position represents all parts of a chess position as specified by FEN notation.
 //
 // The zero value is usable, though not very useful. You likely will want to use the following instead:
 //
 //	chess.ParseFEN(DefaultFEN)
-type Board struct {
+type Position struct {
 	whitePawns   Bitboard
 	whiteRooks   Bitboard
 	whiteKnights Bitboard
@@ -58,40 +58,40 @@ type Board struct {
 }
 
 // ParseFEN returns an error if it could not parse an FEN. It was likely malformed or missing important pieces.
-func ParseFEN(fen string) (*Board, error) {
+func ParseFEN(fen string) (*Position, error) {
 	words := strings.Fields(fen)
 	if len(words) != 6 {
 		return nil, fmt.Errorf("fen %q could not be parsed: fen should contain 6 distinct sections", fen)
 	}
-	board := &Board{}
-	err := board.parseFenBody(words[0])
+	pos := &Position{}
+	err := pos.parseFenBody(words[0])
 	if err != nil {
 		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
-	err = board.parseSideToMove(words[1])
+	err = pos.parseSideToMove(words[1])
 	if err != nil {
 		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
-	err = board.parseCastleRights(words[2])
+	err = pos.parseCastleRights(words[2])
 	if err != nil {
 		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
-	err = board.parseEnPassant(words[3])
+	err = pos.parseEnPassant(words[3])
 	if err != nil {
 		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
-	err = board.parseHalfMove(words[4])
+	err = pos.parseHalfMove(words[4])
 	if err != nil {
 		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
-	err = board.parseFullMove(words[5])
+	err = pos.parseFullMove(words[5])
 	if err != nil {
 		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
-	return board, nil
+	return pos, nil
 }
 
-func (b *Board) parseFenBody(body string) error {
+func (b *Position) parseFenBody(body string) error {
 	currentFile := FileA
 	currentRank := Rank8
 	for _, r := range body {
@@ -120,7 +120,7 @@ func (b *Board) parseFenBody(body string) error {
 	return nil
 }
 
-func (b *Board) parseSideToMove(sideToMove string) error {
+func (b *Position) parseSideToMove(sideToMove string) error {
 	color := parseColor(sideToMove)
 	if color == NoColor {
 		return fmt.Errorf("could not parse color %q", sideToMove)
@@ -129,7 +129,7 @@ func (b *Board) parseSideToMove(sideToMove string) error {
 	return nil
 }
 
-func (b *Board) parseCastleRights(castleRights string) error {
+func (b *Position) parseCastleRights(castleRights string) error {
 	if castleRights == "-" {
 		return nil
 	}
@@ -162,7 +162,7 @@ func (b *Board) parseCastleRights(castleRights string) error {
 	return nil
 }
 
-func (b *Board) parseEnPassant(enPassant string) error {
+func (b *Position) parseEnPassant(enPassant string) error {
 	if enPassant == "-" {
 		return nil
 	}
@@ -174,7 +174,7 @@ func (b *Board) parseEnPassant(enPassant string) error {
 	return nil
 }
 
-func (b *Board) parseHalfMove(halfMove string) error {
+func (b *Position) parseHalfMove(halfMove string) error {
 	hm, err := strconv.ParseUint(halfMove, 10, 0)
 	if err != nil {
 		return fmt.Errorf("could not parse half move %q", halfMove)
@@ -183,7 +183,7 @@ func (b *Board) parseHalfMove(halfMove string) error {
 	return nil
 }
 
-func (b *Board) parseFullMove(fullMove string) error {
+func (b *Position) parseFullMove(fullMove string) error {
 	fm, err := strconv.ParseUint(fullMove, 10, 0)
 	if err != nil {
 		return fmt.Errorf("could not parse full move %q", fullMove)
@@ -192,8 +192,8 @@ func (b *Board) parseFullMove(fullMove string) error {
 	return nil
 }
 
-// String generates an FEN string for the current board. See [PrettyString] for getting a board like representation.
-func (b *Board) String() string {
+// String generates an FEN string for the current position. See [PrettyString] for getting a board like representation.
+func (b *Position) String() string {
 	fen := ""
 	fen += b.boardString() + " "
 	fen += b.sideToMoveString() + " "
@@ -204,7 +204,7 @@ func (b *Board) String() string {
 	return fen
 }
 
-func (b *Board) boardString() string {
+func (b *Position) boardString() string {
 	boardString := ""
 	numEmptySquares := 0
 	for currentRank := Rank8; currentRank != NoRank; currentRank -= 1 {
@@ -230,7 +230,7 @@ func (b *Board) boardString() string {
 	return boardString
 }
 
-func (b *Board) castleRightString() string {
+func (b *Position) castleRightString() string {
 	castleRights := ""
 	if b.WhiteKingSideCastle() {
 		castleRights += "K"
@@ -250,7 +250,7 @@ func (b *Board) castleRightString() string {
 	return castleRights
 }
 
-func (b *Board) sideToMoveString() string {
+func (b *Position) sideToMoveString() string {
 	if b.SideToMove() == White {
 		return "w"
 	}
@@ -260,10 +260,10 @@ func (b *Board) sideToMoveString() string {
 	return "-"
 }
 
-// PrettyString returns a board like representation of the current board. Uppercase letters are white and lowercase letters are black.
+// PrettyString returns a board like representation of the current position. Uppercase letters are white and lowercase letters are black.
 //
 // Set whitesPerspective to true to see the board from white's side. Set extraInfo to false to just see the board. Set extraInfo to true to see all the other information stored in an FEN.
-func (b *Board) PrettyString(whitesPerspective bool, extraInfo bool) string {
+func (b *Position) PrettyString(whitesPerspective bool, extraInfo bool) string {
 	s := ""
 	if whitesPerspective {
 		s += b.prettyBoardStringWhite()
@@ -277,7 +277,7 @@ func (b *Board) PrettyString(whitesPerspective bool, extraInfo bool) string {
 	return s
 }
 
-func (b *Board) prettyBoardStringWhite() string {
+func (b *Position) prettyBoardStringWhite() string {
 	s := ""
 	for currentRank := Rank8; currentRank > NoRank; currentRank -= 1 {
 		s += currentRank.String()
@@ -291,7 +291,7 @@ func (b *Board) prettyBoardStringWhite() string {
 	return s
 }
 
-func (b *Board) prettyBoardStringBlack() string {
+func (b *Position) prettyBoardStringBlack() string {
 	s := ""
 	for currentRank := Rank1; currentRank <= Rank8; currentRank += 1 {
 		s += currentRank.String()
@@ -305,7 +305,7 @@ func (b *Board) prettyBoardStringBlack() string {
 	return s
 }
 
-func (b *Board) extraInfo() string {
+func (b *Position) extraInfo() string {
 	s := ""
 	s += "Side To Move: "
 	if b.SideToMove() == White {
@@ -331,77 +331,77 @@ func (b *Board) extraInfo() string {
 	return s
 }
 
-func (b *Board) SideToMove() Color {
+func (b *Position) SideToMove() Color {
 	return b.sideToMove
 }
 
-func (b *Board) SetSideToMove(c Color) {
+func (b *Position) SetSideToMove(c Color) {
 	b.sideToMove = c
 }
 
 // WhiteKingSideCastle returns true if white may still castle kingside. Note that this does not indicate if the move is currently valid. It is really an indication of if the king or rook have moved yet this game.
-func (b *Board) WhiteKingSideCastle() bool {
+func (b *Position) WhiteKingSideCastle() bool {
 	return b.whiteKsCastle
 }
 
 // WhiteQueenSideCastle returns true if white may still castle queenside. Note that this does not indicate if the move is currently valid. It is really an indication of if the king or rook have moved yet this game.
-func (b *Board) WhiteQueenSideCastle() bool {
+func (b *Position) WhiteQueenSideCastle() bool {
 	return b.whiteQsCastle
 }
 
 // BlackKingSideCastle returns true if black may still castle kingside. Note that this does not indicate if the move is currently valid. It is really an indication of if the king or rook have moved yet this game.
-func (b *Board) BlackKingSideCastle() bool {
+func (b *Position) BlackKingSideCastle() bool {
 	return b.blackKsCastle
 }
 
 // BlackQueenSideCastle returns true if black may still castle queenside. Note that this does not indicate if the move is currently valid. It is really an indication of if the king or rook have moved yet this game.
-func (b *Board) BlackQueenSideCastle() bool {
+func (b *Position) BlackQueenSideCastle() bool {
 	return b.blackQsCastle
 }
 
-func (b *Board) SetWhiteKingSideCastle(value bool) {
+func (b *Position) SetWhiteKingSideCastle(value bool) {
 	b.whiteKsCastle = value
 }
 
-func (b *Board) SetWhiteQueenSideCastle(value bool) {
+func (b *Position) SetWhiteQueenSideCastle(value bool) {
 	b.whiteQsCastle = value
 }
 
-func (b *Board) SetBlackKingSideCastle(value bool) {
+func (b *Position) SetBlackKingSideCastle(value bool) {
 	b.blackKsCastle = value
 }
 
-func (b *Board) SetBlackQueenSideCastle(value bool) {
+func (b *Position) SetBlackQueenSideCastle(value bool) {
 	b.blackQsCastle = value
 }
 
 // EnPassant returns the square on to which a pawn may move to perform en-passant. This does not indicate if the move is legal. NoSquare is returned if there is no en passant option.
-func (b *Board) EnPassant() Square {
+func (b *Position) EnPassant() Square {
 	return b.enPassant
 }
 
-func (b *Board) SetEnPassant(s Square) {
+func (b *Position) SetEnPassant(s Square) {
 	b.enPassant = s
 }
 
-func (b *Board) HalfMove() uint {
+func (b *Position) HalfMove() uint {
 	return b.halfMove
 }
 
-func (b *Board) SetHalfMove(i uint) {
+func (b *Position) SetHalfMove(i uint) {
 	b.halfMove = i
 }
 
-func (b *Board) FullMove() uint {
+func (b *Position) FullMove() uint {
 	return b.fullMove
 }
 
-func (b *Board) SetFullMove(i uint) {
+func (b *Position) SetFullMove(i uint) {
 	b.fullMove = i
 }
 
 // Piece gets the piece on the given square. NoPiece is returned if no piece is present.
-func (b *Board) Piece(s Square) Piece {
+func (b *Position) Piece(s Square) Piece {
 	if b.whitePawns.Square(s) == 1 {
 		return WhitePawn
 	}
@@ -444,7 +444,7 @@ func (b *Board) Piece(s Square) Piece {
 }
 
 // SetPiece sets the given piece at the given square.
-func (b *Board) SetPiece(p Piece, s Square) {
+func (b *Position) SetPiece(p Piece, s Square) {
 	b.ClearPiece(s)
 
 	switch p {
@@ -477,7 +477,7 @@ func (b *Board) SetPiece(p Piece, s Square) {
 }
 
 // ClearPiece removes any piece from the given square.
-func (b *Board) ClearPiece(s Square) {
+func (b *Position) ClearPiece(s Square) {
 	b.whitePawns = b.whitePawns.ClearSquare(s)
 	b.whiteRooks = b.whiteRooks.ClearSquare(s)
 	b.whiteKnights = b.whiteKnights.ClearSquare(s)
@@ -493,8 +493,8 @@ func (b *Board) ClearPiece(s Square) {
 	b.blackKings = b.blackKings.ClearSquare(s)
 }
 
-// Bitboard returns a bitboard for the given piece. See also [Board.OccupiedBitboard] and [Board.ColorBitboard].
-func (b *Board) Bitboard(p Piece) Bitboard {
+// Bitboard returns a bitboard for the given piece. See also [Position.OccupiedBitboard] and [Position.ColorBitboard].
+func (b *Position) Bitboard(p Piece) Bitboard {
 	switch p {
 	case WhitePawn:
 		return b.whitePawns
@@ -528,13 +528,13 @@ func (b *Board) Bitboard(p Piece) Bitboard {
 }
 
 // OccupiedBitboard returns a bitboard indicating all the squares with a piece on them.
-func (b *Board) OccupiedBitboard() Bitboard {
+func (b *Position) OccupiedBitboard() Bitboard {
 	return b.whitePawns | b.whiteKnights | b.whiteBishops | b.whiteRooks | b.whiteQueens | b.whiteKings |
 		b.blackPawns | b.blackKnights | b.blackBishops | b.blackRooks | b.blackQueens | b.blackKings
 }
 
 // ColorBitboard returns a bitboard indicating all the squares occupied by pieces of a certain color.
-func (b *Board) ColorBitboard(c Color) Bitboard {
+func (b *Position) ColorBitboard(c Color) Bitboard {
 	if c == White {
 		return b.whitePawns | b.whiteKnights | b.whiteBishops | b.whiteRooks | b.whiteQueens | b.whiteKings
 	} else if c == Black {
@@ -545,7 +545,7 @@ func (b *Board) ColorBitboard(c Color) Bitboard {
 }
 
 // IsCheck returns true if the side to move has a king under attack from an enemy piece.
-func (b *Board) IsCheck() bool {
+func (b *Position) IsCheck() bool {
 	return true
 }
 
@@ -570,7 +570,7 @@ func (b *Board) IsCheck() bool {
 // 4. If a king or rook moves from their starting square (in standard chess, 960 is not supported) then the corresponding castle rights are set to false.
 //
 // 5. If one of the four possible castle moves if executed and the castle rights still exist, and there are no pieces in the way, then the appropriate castle move will be applied. (Check will not block a castle move)
-func (b *Board) Move(m Move) {
+func (b *Position) Move(m Move) {
 
 }
 

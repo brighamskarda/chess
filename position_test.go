@@ -17,9 +17,9 @@ package chess
 
 import "testing"
 
-func TestParseFEN_BoardString(t *testing.T) {
-	board, err := ParseFEN(DefaultFEN)
-	fen := board.String()
+func TestParseFEN_PositionString(t *testing.T) {
+	pos, err := ParseFEN(DefaultFEN)
+	fen := pos.String()
 	if fen != DefaultFEN {
 		t.Errorf("incorrect result: expected %q, got %q", DefaultFEN, fen)
 	}
@@ -28,8 +28,8 @@ func TestParseFEN_BoardString(t *testing.T) {
 	}
 
 	input := "1k1r3r/ppq2Rp1/2p1p1p1/4N1b1/Q2P4/2P4P/PP6/R3K3 b Q - 0 23"
-	board, err = ParseFEN(input)
-	fen = board.String()
+	pos, err = ParseFEN(input)
+	fen = pos.String()
 	if fen != input {
 		t.Errorf("incorrect result: expected %q, got %q", input, fen)
 	}
@@ -60,8 +60,8 @@ func TestParseFENError(t *testing.T) {
 
 func TestParseFEN_EmptyFields(t *testing.T) {
 	input := "rn1qk2r/pbppppbp/1p3np1/8/4P3/3P1NP1/PPP2PBP/RNBQ1RK1 b - - 24 6"
-	board, err := ParseFEN(input)
-	fen := board.String()
+	pos, err := ParseFEN(input)
+	fen := pos.String()
 	if err != nil {
 		t.Errorf("incorrect result: expected error to be nil")
 	}
@@ -70,8 +70,8 @@ func TestParseFEN_EmptyFields(t *testing.T) {
 	}
 }
 
-func TestBoardPrettyString_Default(t *testing.T) {
-	board, _ := ParseFEN(DefaultFEN)
+func TestPositionPrettyString_Default(t *testing.T) {
+	pos, _ := ParseFEN(DefaultFEN)
 	expected := `8rnbqkbnr
 7pppppppp
 6--------
@@ -87,13 +87,13 @@ Castle Rights: KQkq
 En Passant Square: -
 Half Move: 0
 Full Move: 1`
-	actual := board.PrettyString(true, true)
+	actual := pos.PrettyString(true, true)
 
 	if actual != expected {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected, actual)
 	}
 
-	actual = board.PrettyString(false, true)
+	actual = pos.PrettyString(false, true)
 	expected = `1RNBKQBNR
 2PPPPPPPP
 3--------
@@ -114,7 +114,7 @@ Full Move: 1`
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected, actual)
 	}
 
-	actual = board.PrettyString(false, false)
+	actual = pos.PrettyString(false, false)
 	expected = `1RNBKQBNR
 2PPPPPPPP
 3--------
@@ -130,8 +130,8 @@ Full Move: 1`
 	}
 }
 
-func TestBoardPrettyString_NotDefault(t *testing.T) {
-	board, _ := ParseFEN("rn1qk2r/pbppppbp/1p3np1/8/4P3/3P1NP1/PPP2PBP/RNBQ1RK1 b kq e3 0 6")
+func TestPositionPrettyString_NotDefault(t *testing.T) {
+	pos, _ := ParseFEN("rn1qk2r/pbppppbp/1p3np1/8/4P3/3P1NP1/PPP2PBP/RNBQ1RK1 b kq e3 0 6")
 	expected := `8rn-qk--r
 7pbppppbp
 6-p---np-
@@ -147,15 +147,15 @@ Castle Rights: kq
 En Passant Square: E3
 Half Move: 0
 Full Move: 6`
-	actual := board.PrettyString(true, true)
+	actual := pos.PrettyString(true, true)
 
 	if actual != expected {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected, actual)
 	}
 }
 
-func TestBoardPrettyString_NotDefault_EmptyFields(t *testing.T) {
-	board, _ := ParseFEN("rn1qk2r/pbppppbp/1p3np1/8/4P3/3P1NP1/PPP2PBP/RNBQ1RK1 b - - 24 6")
+func TestPositionPrettyString_NotDefault_EmptyFields(t *testing.T) {
+	pos, _ := ParseFEN("rn1qk2r/pbppppbp/1p3np1/8/4P3/3P1NP1/PPP2PBP/RNBQ1RK1 b - - 24 6")
 	expected := `1-KR-QBNR
 2PBP--PPP
 3-PN-P---
@@ -171,7 +171,7 @@ Castle Rights: -
 En Passant Square: -
 Half Move: 24
 Full Move: 6`
-	actual := board.PrettyString(false, true)
+	actual := pos.PrettyString(false, true)
 
 	if actual != expected {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected, actual)
