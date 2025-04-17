@@ -574,4 +574,4 @@ func (b *Position) Move(m Move) {
 
 }
 
-// TODO implement Move, IsCheck, PrettyString, String, ParseFEN.
+// TODO implement Move, IsCheck

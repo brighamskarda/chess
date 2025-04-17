@@ -115,3 +115,268 @@ func TestBitboardString(t *testing.T) {
 		t.Errorf("incorrect result for square B2: got \n%s", actual)
 	}
 }
+
+func TestRookAttacks_emptyBoard(t *testing.T) {
+	var bb Bitboard
+	var expected Bitboard
+	var actual Bitboard
+
+	bb = 0x1
+	expected = 0x1010101010101fe
+	actual = bb.RookAttacks(0x1)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+
+	bb = 0x8000000000000000
+	expected = 0x7f80808080808080
+	actual = bb.RookAttacks(0x8000000000000000)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+
+	bb = 0x200004000000
+	expected = 0x2424df24fb242424
+	actual = bb.RookAttacks(0x200004000000)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestRookAttacks_rightBlocked(t *testing.T) {
+	var bb Bitboard = 0x4000000
+
+	var expected Bitboard = 0x40404041b040404
+	actual := bb.RookAttacks(0x50000000)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestRookAttacks_leftBlocked(t *testing.T) {
+	var bb Bitboard = 0x4000000
+
+	var expected Bitboard = 0x4040404fa040404
+	actual := bb.RookAttacks(0x2000000)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestRookAttacks_upBlocked(t *testing.T) {
+	var bb Bitboard = 0x4000000
+
+	var expected Bitboard = 0x404fb040404
+	actual := bb.RookAttacks(0x40000000000)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestRookAttacks_downBlocked(t *testing.T) {
+	var bb Bitboard = 0x4000000
+
+	var expected Bitboard = 0x4040404fb040400
+	actual := bb.RookAttacks(0x400)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestRookAttacks_blockedAllWays(t *testing.T) {
+	var bb Bitboard = 0x100000000000
+
+	var expected Bitboard = 0x10681010000000
+	actual := bb.RookAttacks(0x104a0010001000)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestRookAttacks_onSameRankFile(t *testing.T) {
+	var bb Bitboard = 0x100014000000
+
+	var expected Bitboard = 0x1414ff14ff141414
+	actual := bb.RookAttacks(0x100014000000)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestKnightAttacksCorners(t *testing.T) {
+	var bb Bitboard = 0x100000000000000
+	var expected Bitboard = 0x4020000000000
+
+	actual := bb.KnightAttacks()
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+
+	bb = 0x8000000000000000
+	expected = 0x20400000000000
+	actual = bb.KnightAttacks()
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+
+	bb = 0x80
+	expected = 0x402000
+	actual = bb.KnightAttacks()
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+
+	bb = 0x1
+	expected = 0x20400
+	actual = bb.KnightAttacks()
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestKnightAttacksOneFromCorners(t *testing.T) {
+	var bb Bitboard = 0x2000000000000
+	var expected Bitboard = 0x800080500000000
+
+	actual := bb.KnightAttacks()
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+
+	bb = 0x40000000000000
+	expected = 0x100010a000000000
+	actual = bb.KnightAttacks()
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+
+	bb = 0x4000
+	expected = 0xa0100010
+	actual = bb.KnightAttacks()
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+
+	bb = 0x200
+	expected = 0x5080008
+	actual = bb.KnightAttacks()
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestKnightAttacksCenter(t *testing.T) {
+	var bb Bitboard = 0x200000000000
+	var expected Bitboard = 0x5088008850000000
+
+	actual := bb.KnightAttacks()
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestBishopAttacks_emptyBoard(t *testing.T) {
+	var bb Bitboard
+	var expected Bitboard
+
+	bb = 0x81
+	expected = 0x8142241818244200
+	actual := bb.BishopAttacks(0x81)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+
+	bb = 0x8100000000000000
+	expected = 0x42241818244281
+	actual = bb.BishopAttacks(0x8100000000000000)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+
+	bb = 0x24000000000000
+	expected = 0x5a005a9924428100
+	actual = bb.BishopAttacks(0x24000000000000)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestBishopAttacks_NEBlocked(t *testing.T) {
+	var bb Bitboard = 0x200
+	var expected Bitboard = 0x8050005
+
+	actual := bb.BishopAttacks(0x200008000200)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestBishopAttacks_SEBlocked(t *testing.T) {
+	var bb Bitboard = 0x2000000000000
+	var expected Bitboard = 0x500050800000000
+
+	actual := bb.BishopAttacks(0x800200000)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestBishopAttacks_SWBlocked(t *testing.T) {
+	var bb Bitboard = 0x40000000000000
+	var expected Bitboard = 0xa000a01000000000
+
+	actual := bb.BishopAttacks(0x1000040000)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestBishopAttacks_NWBlocked(t *testing.T) {
+	var bb Bitboard = 0x4000
+	var expected Bitboard = 0x10a000a0
+
+	actual := bb.BishopAttacks(0x40010000000)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestBishopAttacks_blockedAllWays(t *testing.T) {
+	var bb Bitboard = 0x10000000
+	var expected Bitboard = 0x402800284400
+
+	actual := bb.BishopAttacks(0x400810004400)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestBishopAttacks_onSameRankFile(t *testing.T) {
+	var bb Bitboard = 0x440010004400
+	var expected Bitboard = 0x11aa44aa11aa44aa
+
+	actual := bb.BishopAttacks(0x440010004400)
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
+
+func TestKingAttacks(t *testing.T) {
+	var bb Bitboard
+	var expected Bitboard
+	var actual Bitboard
+
+	bb = 0x8100000000000081
+	expected = 0x42c300000000c342
+	actual = bb.KingAttacks()
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+
+	bb = 0x800000000
+	expected = 0x1c141c000000
+	actual = bb.KingAttacks()
+	if expected != actual {
+		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
+	}
+}
