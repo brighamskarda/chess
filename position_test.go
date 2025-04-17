@@ -177,3 +177,196 @@ Full Move: 6`
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected, actual)
 	}
 }
+
+func TestIsCheck(t *testing.T) {
+	pos, _ := ParseFEN(DefaultFEN)
+	if pos.IsCheck() {
+		t.Error("incorrect result: default position: expected false, got true")
+	}
+
+	fen := "r2q1n1k/5Qb1/p2pB2p/2pPp1pP/2pr2N1/5PP1/PP6/2KR3R w - - 0 24"
+	pos, _ = ParseFEN(fen)
+	if pos.IsCheck() {
+		t.Errorf("incorrect result: fen = %s: expected false, got true", fen)
+	}
+
+	fen = "r2q1nQk/6b1/p2pB2p/2pPp1pP/2pr2N1/5PP1/PP6/2KR3R b - - 1 24"
+	pos, _ = ParseFEN(fen)
+	if !pos.IsCheck() {
+		t.Errorf("incorrect result: fen = %s: expected true, got false", fen)
+	}
+
+	fen = "rnbq2nr/ppp1b1kN/4p1B1/3PP1Qp/2P5/6P1/PP4PP/R4RK1 w - - 6 26"
+	pos, _ = ParseFEN(fen)
+	if pos.IsCheck() {
+		t.Errorf("incorrect result: fen = %s: expected false, got true", fen)
+	}
+
+	fen = "rnbq2nr/ppp1bRkN/4p1B1/3PP1Qp/2P5/6P1/PP4PP/R5K1 b - - 7 26"
+	pos, _ = ParseFEN(fen)
+	if !pos.IsCheck() {
+		t.Errorf("incorrect result: fen = %s: expected true, got false", fen)
+	}
+}
+func TestIsCheckPawn(t *testing.T) {
+	pos, _ := ParseFEN(DefaultFEN)
+
+	pos.SetPiece(BlackPawn, F2)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for black pawn on f2: expected true, got false")
+	}
+
+	pos.SetPiece(NoPiece, F2)
+	pos.SetPiece(BlackPawn, E2)
+	if pos.IsCheck() {
+		t.Error("incorrect result for black pawn on e2: expected false, got true")
+	}
+
+	pos.SetPiece(NoPiece, E2)
+	pos.SetPiece(BlackPawn, D2)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for black pawn on d2: expected true, got false")
+	}
+
+	pos.SetPiece(NoPiece, D2)
+	pos.SetPiece(WhitePawn, F7)
+	pos.SetSideToMove(Black)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for white pawn on f7: expected true, got false")
+	}
+}
+
+func TestIsCheckRook(t *testing.T) {
+	pos, _ := ParseFEN(DefaultFEN)
+
+	pos.SetPiece(BlackRook, E8)
+	pos.SetPiece(NoPiece, E2)
+	if pos.IsCheck() {
+		t.Error("incorrect result for black rock on e8: blocked by own piece: expected false, got true")
+	}
+
+	pos.SetPiece(WhitePawn, E2)
+	pos.SetPiece(NoPiece, E7)
+	if pos.IsCheck() {
+		t.Error("incorrect result for black rock on e8: blocked by opponent piece: expected false, got true")
+	}
+
+	pos.SetPiece(NoPiece, E2)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for black rook on e8: expected true, got false")
+	}
+
+	pos.SetPiece(BlackKing, E8)
+	pos.SetPiece(BlackRook, D1)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for black rook on d1: expected true, got false")
+	}
+
+	pos.SetPiece(WhiteRook, E1)
+	pos.SetSideToMove(Black)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for white rook on e1: expected true, got false")
+	}
+}
+
+func TestIsCheckKnight(t *testing.T) {
+	pos, _ := ParseFEN(DefaultFEN)
+
+	pos.SetPiece(BlackKnight, D3)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for black knight: expected true, got false")
+	}
+
+	pos.SetPiece(NoPiece, D3)
+	pos.SetPiece(WhiteKnight, D6)
+	if pos.IsCheck() {
+		t.Error("incorrect result for white knight: was still whites turn: expected false, got true")
+	}
+
+	pos.SetSideToMove(Black)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for white knight: expected true, got false")
+	}
+}
+
+func TestIsCheckBishop(t *testing.T) {
+	pos := &Position{}
+	pos.SetSideToMove(Black)
+	pos.SetPiece(BlackKing, A1)
+	pos.SetPiece(WhiteBishop, H8)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for black bishop on H8: expected true, got false")
+	}
+
+	pos.SetPiece(BlackQueen, E5)
+	if pos.IsCheck() {
+		t.Error("incorrect result for black bishop on H8: blocked by own queen: expected false, got true")
+	}
+
+	pos = &Position{}
+	pos.SetSideToMove(White)
+	pos.SetPiece(WhiteKing, A8)
+	pos.SetPiece(BlackBishop, H1)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for white bishop on H1: expected true, got false")
+	}
+}
+
+func TestIsCheckQueen(t *testing.T) {
+	pos := &Position{}
+	pos.SetSideToMove(White)
+	pos.SetPiece(WhiteKing, D4)
+	pos.SetPiece(BlackQueen, B6)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for black queen on diagonal: expected true, got false")
+	}
+
+	pos.SetSideToMove(Black)
+	pos.SetPiece(BlackKing, D4)
+	pos.SetPiece(WhiteQueen, B6)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for white queen on diagonal: expected true, got false")
+	}
+
+	pos = &Position{}
+	pos.SetSideToMove(White)
+	pos.SetPiece(WhiteKing, D4)
+	pos.SetPiece(BlackQueen, D2)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for black queen on vertical: expected true, got false")
+	}
+
+	pos.SetSideToMove(Black)
+	pos.SetPiece(BlackKing, D4)
+	pos.SetPiece(WhiteQueen, D2)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for white queen on vertical: expected true, got false")
+	}
+
+	pos.SetPiece(NoPiece, D2)
+	pos.SetPiece(WhiteQueen, C2)
+	if pos.IsCheck() {
+		t.Error("incorrect result for white queen on horse jump: expected false, got true")
+	}
+}
+
+func TestIsCheckKing(t *testing.T) {
+	pos := &Position{}
+	pos.SetSideToMove(White)
+	pos.SetPiece(WhiteKing, E4)
+	pos.SetPiece(BlackKing, D4)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for black king on d4 horizontal: expected true, got false")
+	}
+
+	pos.SetSideToMove(Black)
+	if !pos.IsCheck() {
+		t.Error("incorrect result for white king on e4 horizontal: expected true, got false")
+	}
+
+	pos.SetPiece(NoPiece, E4)
+	pos.SetPiece(WhiteKing, F4)
+	if pos.IsCheck() {
+		t.Error("incorrect result for white king two spaces away: expected false, got true")
+	}
+}

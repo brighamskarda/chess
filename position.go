@@ -546,7 +546,36 @@ func (b *Position) ColorBitboard(c Color) Bitboard {
 
 // IsCheck returns true if the side to move has a king under attack from an enemy piece.
 func (b *Position) IsCheck() bool {
-	return true
+	var attackingSide Color
+	if b.SideToMove() == White {
+		attackingSide = Black
+	} else if b.SideToMove() == Black {
+		attackingSide = White
+	} else {
+		return false
+	}
+
+	attackedSquares := b.getAttackedSquares(attackingSide)
+	kingsInCheck := b.Bitboard(Piece{King, b.SideToMove()}) & attackedSquares
+	return kingsInCheck > 0
+}
+
+// getAttackedSquares returns a bitboard with all the squares the specified color attacks.
+func (b *Position) getAttackedSquares(side Color) Bitboard {
+	var attackedSquares Bitboard = 0
+
+	occupied := b.OccupiedBitboard()
+	if side == White {
+		attackedSquares |= b.Bitboard(Piece{Pawn, side}).WhitePawnAttacks()
+	} else if side == Black {
+		attackedSquares |= b.Bitboard(Piece{Pawn, side}).BlackPawnAttacks()
+	}
+	attackedSquares |= b.Bitboard(Piece{Rook, side}).RookAttacks(occupied)
+	attackedSquares |= b.Bitboard(Piece{Knight, side}).KnightAttacks()
+	attackedSquares |= b.Bitboard(Piece{Bishop, side}).BishopAttacks(occupied)
+	attackedSquares |= b.Bitboard(Piece{Queen, side}).QueenAttacks(occupied)
+	attackedSquares |= b.Bitboard(Piece{King, side}).KingAttacks()
+	return attackedSquares
 }
 
 // Move performs chess moves in such a way that if all moves are legal, the FEN will always be properly updated. The rules it follows are listed below.
