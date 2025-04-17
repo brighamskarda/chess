@@ -76,8 +76,8 @@ func parsePieceType(s string) PieceType {
 
 // Piece represents a chess piece with type and color. The zero value is no piece.
 type Piece struct {
-	Type  PieceType
 	Color Color
+	Type  PieceType
 }
 
 var (
@@ -122,5 +122,5 @@ func parsePiece(s string) Piece {
 	} else {
 		color = Black
 	}
-	return Piece{pt, color}
+	return Piece{color, pt}
 }

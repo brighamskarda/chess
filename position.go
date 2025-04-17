@@ -556,7 +556,7 @@ func (b *Position) IsCheck() bool {
 	}
 
 	attackedSquares := b.getAttackedSquares(attackingSide)
-	kingsInCheck := b.Bitboard(Piece{King, b.SideToMove()}) & attackedSquares
+	kingsInCheck := b.Bitboard(Piece{b.SideToMove(), King}) & attackedSquares
 	return kingsInCheck > 0
 }
 
@@ -566,15 +566,15 @@ func (b *Position) getAttackedSquares(side Color) Bitboard {
 
 	occupied := b.OccupiedBitboard()
 	if side == White {
-		attackedSquares |= b.Bitboard(Piece{Pawn, side}).WhitePawnAttacks()
+		attackedSquares |= b.Bitboard(Piece{side, Pawn}).WhitePawnAttacks()
 	} else if side == Black {
-		attackedSquares |= b.Bitboard(Piece{Pawn, side}).BlackPawnAttacks()
+		attackedSquares |= b.Bitboard(Piece{side, Pawn}).BlackPawnAttacks()
 	}
-	attackedSquares |= b.Bitboard(Piece{Rook, side}).RookAttacks(occupied)
-	attackedSquares |= b.Bitboard(Piece{Knight, side}).KnightAttacks()
-	attackedSquares |= b.Bitboard(Piece{Bishop, side}).BishopAttacks(occupied)
-	attackedSquares |= b.Bitboard(Piece{Queen, side}).QueenAttacks(occupied)
-	attackedSquares |= b.Bitboard(Piece{King, side}).KingAttacks()
+	attackedSquares |= b.Bitboard(Piece{side, Rook}).RookAttacks(occupied)
+	attackedSquares |= b.Bitboard(Piece{side, Knight}).KnightAttacks()
+	attackedSquares |= b.Bitboard(Piece{side, Bishop}).BishopAttacks(occupied)
+	attackedSquares |= b.Bitboard(Piece{side, Queen}).QueenAttacks(occupied)
+	attackedSquares |= b.Bitboard(Piece{side, King}).KingAttacks()
 	return attackedSquares
 }
 
@@ -603,4 +603,4 @@ func (b *Position) Move(m Move) {
 
 }
 
-// TODO implement Move, IsCheck
+// TODO implement Move
