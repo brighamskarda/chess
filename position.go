@@ -46,11 +46,16 @@ type Position struct {
 
 	SideToMove Color
 
+	// WhiteKsCastle should be true if it is still possible to castle.
 	WhiteKsCastle bool
+	// WhiteQsCastle should be true if it is still possible to castle.
 	WhiteQsCastle bool
+	// BlackKsCastle should be true if it is still possible to castle.
 	BlackKsCastle bool
+	// BlackQsCastle should be true if it is still possible to castle.
 	BlackQsCastle bool
 
+	// EnPassant should be [NoSquare] if no en passant options are available.
 	EnPassant Square
 
 	HalfMove uint
