@@ -230,7 +230,7 @@ func TestIsCheckPawn(t *testing.T) {
 
 	pos.SetPiece(NoPiece, D2)
 	pos.SetPiece(WhitePawn, F7)
-	pos.SetSideToMove(Black)
+	pos.SideToMove = Black
 	if !pos.IsCheck() {
 		t.Error("incorrect result for white pawn on f7: expected true, got false")
 	}
@@ -263,7 +263,7 @@ func TestIsCheckRook(t *testing.T) {
 	}
 
 	pos.SetPiece(WhiteRook, E1)
-	pos.SetSideToMove(Black)
+	pos.SideToMove = Black
 	if !pos.IsCheck() {
 		t.Error("incorrect result for white rook on e1: expected true, got false")
 	}
@@ -283,7 +283,7 @@ func TestIsCheckKnight(t *testing.T) {
 		t.Error("incorrect result for white knight: was still whites turn: expected false, got true")
 	}
 
-	pos.SetSideToMove(Black)
+	pos.SideToMove = Black
 	if !pos.IsCheck() {
 		t.Error("incorrect result for white knight: expected true, got false")
 	}
@@ -291,7 +291,7 @@ func TestIsCheckKnight(t *testing.T) {
 
 func TestIsCheckBishop(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(Black)
+	pos.SideToMove = Black
 	pos.SetPiece(BlackKing, A1)
 	pos.SetPiece(WhiteBishop, H8)
 	if !pos.IsCheck() {
@@ -304,7 +304,7 @@ func TestIsCheckBishop(t *testing.T) {
 	}
 
 	pos = &Position{}
-	pos.SetSideToMove(White)
+	pos.SideToMove = White
 	pos.SetPiece(WhiteKing, A8)
 	pos.SetPiece(BlackBishop, H1)
 	if !pos.IsCheck() {
@@ -314,14 +314,14 @@ func TestIsCheckBishop(t *testing.T) {
 
 func TestIsCheckQueen(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(White)
+	pos.SideToMove = White
 	pos.SetPiece(WhiteKing, D4)
 	pos.SetPiece(BlackQueen, B6)
 	if !pos.IsCheck() {
 		t.Error("incorrect result for black queen on diagonal: expected true, got false")
 	}
 
-	pos.SetSideToMove(Black)
+	pos.SideToMove = Black
 	pos.SetPiece(BlackKing, D4)
 	pos.SetPiece(WhiteQueen, B6)
 	if !pos.IsCheck() {
@@ -329,14 +329,14 @@ func TestIsCheckQueen(t *testing.T) {
 	}
 
 	pos = &Position{}
-	pos.SetSideToMove(White)
+	pos.SideToMove = White
 	pos.SetPiece(WhiteKing, D4)
 	pos.SetPiece(BlackQueen, D2)
 	if !pos.IsCheck() {
 		t.Error("incorrect result for black queen on vertical: expected true, got false")
 	}
 
-	pos.SetSideToMove(Black)
+	pos.SideToMove = Black
 	pos.SetPiece(BlackKing, D4)
 	pos.SetPiece(WhiteQueen, D2)
 	if !pos.IsCheck() {
@@ -352,14 +352,14 @@ func TestIsCheckQueen(t *testing.T) {
 
 func TestIsCheckKing(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(White)
+	pos.SideToMove = White
 	pos.SetPiece(WhiteKing, E4)
 	pos.SetPiece(BlackKing, D4)
 	if !pos.IsCheck() {
 		t.Error("incorrect result for black king on d4 horizontal: expected true, got false")
 	}
 
-	pos.SetSideToMove(Black)
+	pos.SideToMove = Black
 	if !pos.IsCheck() {
 		t.Error("incorrect result for white king on e4 horizontal: expected true, got false")
 	}

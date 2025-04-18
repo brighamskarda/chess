@@ -44,17 +44,17 @@ type Position struct {
 	blackQueens  Bitboard
 	blackKings   Bitboard
 
-	sideToMove Color
+	SideToMove Color
 
-	whiteKsCastle bool
-	whiteQsCastle bool
-	blackKsCastle bool
-	blackQsCastle bool
+	WhiteKsCastle bool
+	WhiteQsCastle bool
+	BlackKsCastle bool
+	BlackQsCastle bool
 
-	enPassant Square
+	EnPassant Square
 
-	halfMove uint
-	fullMove uint
+	HalfMove uint
+	FullMove uint
 }
 
 // Copy creates a copy of the current position.
@@ -77,12 +77,12 @@ func (pos *Position) Equal(other *Position) bool {
 		pos.blackBishops == other.blackBishops &&
 		pos.blackQueens == other.blackQueens &&
 		pos.blackKings == other.blackKings &&
-		pos.sideToMove == other.sideToMove &&
-		pos.whiteKsCastle == other.whiteKsCastle &&
-		pos.whiteQsCastle == other.whiteQsCastle &&
-		pos.blackKsCastle == other.blackKsCastle &&
-		pos.blackQsCastle == other.blackQsCastle &&
-		pos.enPassant == other.enPassant
+		pos.SideToMove == other.SideToMove &&
+		pos.WhiteKsCastle == other.WhiteKsCastle &&
+		pos.WhiteQsCastle == other.WhiteQsCastle &&
+		pos.BlackKsCastle == other.BlackKsCastle &&
+		pos.BlackQsCastle == other.BlackQsCastle &&
+		pos.EnPassant == other.EnPassant
 }
 
 // ParseFEN returns an error if it could not parse an FEN. It was likely malformed or missing important pieces.
@@ -153,7 +153,7 @@ func (pos *Position) parseSideToMove(sideToMove string) error {
 	if color == NoColor {
 		return fmt.Errorf("could not parse color %q", sideToMove)
 	}
-	pos.SetSideToMove(color)
+	pos.SideToMove = color
 	return nil
 }
 
@@ -164,25 +164,25 @@ func (pos *Position) parseCastleRights(castleRights string) error {
 	for _, r := range castleRights {
 		switch r {
 		case 'K':
-			if pos.WhiteKingSideCastle() {
+			if pos.WhiteKsCastle {
 				return fmt.Errorf("white king-side castle set twice")
 			}
-			pos.SetWhiteKingSideCastle(true)
+			pos.WhiteKsCastle = true
 		case 'Q':
-			if pos.WhiteQueenSideCastle() {
+			if pos.WhiteQsCastle {
 				return fmt.Errorf("white queen-side castle set twice")
 			}
-			pos.SetWhiteQueenSideCastle(true)
+			pos.WhiteQsCastle = true
 		case 'k':
-			if pos.BlackKingSideCastle() {
+			if pos.BlackKsCastle {
 				return fmt.Errorf("black king-side castle set twice")
 			}
-			pos.SetBlackKingSideCastle(true)
+			pos.BlackKsCastle = true
 		case 'q':
-			if pos.BlackQueenSideCastle() {
+			if pos.BlackQsCastle {
 				return fmt.Errorf("black queen-side castle set twice")
 			}
-			pos.SetBlackQueenSideCastle(true)
+			pos.BlackQsCastle = true
 		default:
 			return fmt.Errorf("could not parse castle rights %q", r)
 		}
@@ -198,7 +198,7 @@ func (pos *Position) parseEnPassant(enPassant string) error {
 	if square == NoSquare {
 		return fmt.Errorf("could not parse en passant %q", enPassant)
 	}
-	pos.SetEnPassant(square)
+	pos.EnPassant = square
 	return nil
 }
 
@@ -207,7 +207,7 @@ func (pos *Position) parseHalfMove(halfMove string) error {
 	if err != nil {
 		return fmt.Errorf("could not parse half move %q", halfMove)
 	}
-	pos.SetHalfMove(uint(hm))
+	pos.HalfMove = uint(hm)
 	return nil
 }
 
@@ -216,7 +216,7 @@ func (pos *Position) parseFullMove(fullMove string) error {
 	if err != nil {
 		return fmt.Errorf("could not parse full move %q", fullMove)
 	}
-	pos.SetFullMove(uint(fm))
+	pos.FullMove = uint(fm)
 	return nil
 }
 
@@ -226,9 +226,9 @@ func (pos *Position) String() string {
 	fen += pos.boardString() + " "
 	fen += pos.sideToMoveString() + " "
 	fen += pos.castleRightString() + " "
-	fen += pos.EnPassant().String() + " "
-	fen += strconv.FormatUint(uint64(pos.HalfMove()), 10) + " "
-	fen += strconv.FormatUint(uint64(pos.FullMove()), 10)
+	fen += pos.EnPassant.String() + " "
+	fen += strconv.FormatUint(uint64(pos.HalfMove), 10) + " "
+	fen += strconv.FormatUint(uint64(pos.FullMove), 10)
 	return fen
 }
 
@@ -260,16 +260,16 @@ func (pos *Position) boardString() string {
 
 func (pos *Position) castleRightString() string {
 	castleRights := ""
-	if pos.WhiteKingSideCastle() {
+	if pos.WhiteKsCastle {
 		castleRights += "K"
 	}
-	if pos.WhiteQueenSideCastle() {
+	if pos.WhiteQsCastle {
 		castleRights += "Q"
 	}
-	if pos.BlackKingSideCastle() {
+	if pos.BlackKsCastle {
 		castleRights += "k"
 	}
-	if pos.BlackQueenSideCastle() {
+	if pos.BlackQsCastle {
 		castleRights += "q"
 	}
 	if len(castleRights) == 0 {
@@ -279,10 +279,10 @@ func (pos *Position) castleRightString() string {
 }
 
 func (pos *Position) sideToMoveString() string {
-	if pos.SideToMove() == White {
+	if pos.SideToMove == White {
 		return "w"
 	}
-	if pos.SideToMove() == Black {
+	if pos.SideToMove == Black {
 		return "b"
 	}
 	return "-"
@@ -336,9 +336,9 @@ func (pos *Position) prettyBoardStringBlack() string {
 func (pos *Position) extraInfo() string {
 	s := ""
 	s += "Side To Move: "
-	if pos.SideToMove() == White {
+	if pos.SideToMove == White {
 		s += "White"
-	} else if pos.SideToMove() == Black {
+	} else if pos.SideToMove == Black {
 		s += "Black"
 	} else {
 		s += "-"
@@ -349,83 +349,14 @@ func (pos *Position) extraInfo() string {
 	s += pos.castleRightString()
 	s += "\n"
 	s += "En Passant Square: "
-	s += strings.ToUpper(pos.EnPassant().String())
+	s += strings.ToUpper(pos.EnPassant.String())
 	s += "\n"
 	s += "Half Move: "
-	s += strconv.FormatUint(uint64(pos.HalfMove()), 10)
+	s += strconv.FormatUint(uint64(pos.HalfMove), 10)
 	s += "\n"
 	s += "Full Move: "
-	s += strconv.FormatUint(uint64(pos.FullMove()), 10)
+	s += strconv.FormatUint(uint64(pos.FullMove), 10)
 	return s
-}
-
-func (pos *Position) SideToMove() Color {
-	return pos.sideToMove
-}
-
-func (pos *Position) SetSideToMove(c Color) {
-	pos.sideToMove = c
-}
-
-// WhiteKingSideCastle returns true if white may still castle kingside. Note that this does not indicate if the move is currently valid. It is really an indication of if the king or rook have moved yet this game.
-func (pos *Position) WhiteKingSideCastle() bool {
-	return pos.whiteKsCastle
-}
-
-// WhiteQueenSideCastle returns true if white may still castle queenside. Note that this does not indicate if the move is currently valid. It is really an indication of if the king or rook have moved yet this game.
-func (pos *Position) WhiteQueenSideCastle() bool {
-	return pos.whiteQsCastle
-}
-
-// BlackKingSideCastle returns true if black may still castle kingside. Note that this does not indicate if the move is currently valid. It is really an indication of if the king or rook have moved yet this game.
-func (pos *Position) BlackKingSideCastle() bool {
-	return pos.blackKsCastle
-}
-
-// BlackQueenSideCastle returns true if black may still castle queenside. Note that this does not indicate if the move is currently valid. It is really an indication of if the king or rook have moved yet this game.
-func (pos *Position) BlackQueenSideCastle() bool {
-	return pos.blackQsCastle
-}
-
-func (pos *Position) SetWhiteKingSideCastle(value bool) {
-	pos.whiteKsCastle = value
-}
-
-func (pos *Position) SetWhiteQueenSideCastle(value bool) {
-	pos.whiteQsCastle = value
-}
-
-func (pos *Position) SetBlackKingSideCastle(value bool) {
-	pos.blackKsCastle = value
-}
-
-func (pos *Position) SetBlackQueenSideCastle(value bool) {
-	pos.blackQsCastle = value
-}
-
-// EnPassant returns the square on to which a pawn may move to perform en-passant. This does not indicate if the move is legal. NoSquare is returned if there is no en passant option.
-func (pos *Position) EnPassant() Square {
-	return pos.enPassant
-}
-
-func (pos *Position) SetEnPassant(s Square) {
-	pos.enPassant = s
-}
-
-func (pos *Position) HalfMove() uint {
-	return pos.halfMove
-}
-
-func (pos *Position) SetHalfMove(i uint) {
-	pos.halfMove = i
-}
-
-func (pos *Position) FullMove() uint {
-	return pos.fullMove
-}
-
-func (pos *Position) SetFullMove(i uint) {
-	pos.fullMove = i
 }
 
 // Piece gets the piece on the given square. NoPiece is returned if no piece is present.
@@ -575,16 +506,16 @@ func (pos *Position) ColorBitboard(c Color) Bitboard {
 // IsCheck returns true if the side to move has a king under attack from an enemy piece.
 func (pos *Position) IsCheck() bool {
 	var attackingSide Color
-	if pos.SideToMove() == White {
+	if pos.SideToMove == White {
 		attackingSide = Black
-	} else if pos.SideToMove() == Black {
+	} else if pos.SideToMove == Black {
 		attackingSide = White
 	} else {
 		return false
 	}
 
 	attackedSquares := pos.getAttackedSquares(attackingSide)
-	kingsInCheck := pos.Bitboard(Piece{pos.SideToMove(), King}) & attackedSquares
+	kingsInCheck := pos.Bitboard(Piece{pos.SideToMove, King}) & attackedSquares
 	return kingsInCheck > 0
 }
 
@@ -594,15 +525,15 @@ func (pos *Position) getAttackedSquares(side Color) Bitboard {
 
 	occupied := pos.OccupiedBitboard()
 	if side == White {
-		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).WhitePawnAttacks()
+		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).whitePawnAttacks()
 	} else if side == Black {
-		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).BlackPawnAttacks()
+		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).blackPawnAttacks()
 	}
-	attackedSquares |= pos.Bitboard(Piece{side, Rook}).RookAttacks(occupied)
-	attackedSquares |= pos.Bitboard(Piece{side, Knight}).KnightAttacks()
-	attackedSquares |= pos.Bitboard(Piece{side, Bishop}).BishopAttacks(occupied)
-	attackedSquares |= pos.Bitboard(Piece{side, Queen}).QueenAttacks(occupied)
-	attackedSquares |= pos.Bitboard(Piece{side, King}).KingAttacks()
+	attackedSquares |= pos.Bitboard(Piece{side, Rook}).rookAttacks(occupied)
+	attackedSquares |= pos.Bitboard(Piece{side, Knight}).knightAttacks()
+	attackedSquares |= pos.Bitboard(Piece{side, Bishop}).bishopAttacks(occupied)
+	attackedSquares |= pos.Bitboard(Piece{side, Queen}).queenAttacks(occupied)
+	attackedSquares |= pos.Bitboard(Piece{side, King}).kingAttacks()
 	return attackedSquares
 }
 
@@ -628,17 +559,17 @@ func (pos *Position) getAttackedSquares(side Color) Bitboard {
 //
 // 5. If one of the four possible castle moves if executed and the castle rights still exist, and there are no pieces in the way, then the appropriate castle move will be applied. (Check will not block a castle move)
 func (pos *Position) Move(m Move) {
-	pos.SetHalfMove(pos.HalfMove() + 1)
+	pos.HalfMove = pos.HalfMove + 1
 
 	if pos.isCastle(m) {
-		pos.SetEnPassant(NoSquare)
+		pos.EnPassant = NoSquare
 		pos.performCastle(m)
 	} else if pos.isPawnMove(m) {
 		pos.performPawnMove(m)
 	} else {
-		pos.SetEnPassant(NoSquare)
+		pos.EnPassant = NoSquare
 		if pos.Piece(m.ToSquare) != NoPiece {
-			pos.SetHalfMove(0)
+			pos.HalfMove = 0
 		}
 		pos.updateCastleRights(m)
 		pos.SetPiece(pos.Piece(m.FromSquare), m.ToSquare)
@@ -651,16 +582,16 @@ func (pos *Position) Move(m Move) {
 
 func (pos *Position) updateCastleRights(m Move) {
 	if m.FromSquare == E1 || m.FromSquare == A1 {
-		pos.SetWhiteQueenSideCastle(false)
+		pos.WhiteQsCastle = false
 	}
 	if m.FromSquare == E1 || m.FromSquare == H1 {
-		pos.SetWhiteKingSideCastle(false)
+		pos.WhiteKsCastle = false
 	}
 	if m.FromSquare == E8 || m.FromSquare == A8 {
-		pos.SetBlackQueenSideCastle(false)
+		pos.BlackQsCastle = false
 	}
 	if m.FromSquare == E8 || m.FromSquare == H8 {
-		pos.SetBlackKingSideCastle(false)
+		pos.BlackKsCastle = false
 	}
 }
 
@@ -679,7 +610,7 @@ func (pos *Position) isPawnMove(m Move) bool {
 }
 
 func (pos *Position) performPawnMove(m Move) {
-	pos.SetHalfMove(0)
+	pos.HalfMove = 0
 	pos.performPawnMove_takeEnPassant(m)
 	pos.performPawnMove_setEnPassant(m)
 	piece := pos.Piece(m.FromSquare)
@@ -688,10 +619,10 @@ func (pos *Position) performPawnMove(m Move) {
 }
 
 func (pos *Position) performPawnMove_takeEnPassant(m Move) {
-	if m.ToSquare == pos.EnPassant() {
-		if pos.SideToMove() == White {
+	if m.ToSquare == pos.EnPassant {
+		if pos.SideToMove == White {
 			pos.ClearPiece(Square{m.ToSquare.File, m.ToSquare.Rank - 1})
-		} else if pos.SideToMove() == Black {
+		} else if pos.SideToMove == Black {
 			pos.ClearPiece(Square{m.ToSquare.File, m.ToSquare.Rank + 1})
 		} else {
 			if pos.Piece(m.FromSquare).Color == White {
@@ -704,13 +635,13 @@ func (pos *Position) performPawnMove_takeEnPassant(m Move) {
 }
 
 func (pos *Position) performPawnMove_setEnPassant(m Move) {
-	pos.SetEnPassant(NoSquare)
+	pos.EnPassant = NoSquare
 	movingPiece := pos.Piece(m.FromSquare)
 	if m.FromSquare.File == m.ToSquare.File {
 		if m.FromSquare.Rank == 2 && m.ToSquare.Rank == 4 && movingPiece.Color == White {
-			pos.SetEnPassant(Square{m.FromSquare.File, m.FromSquare.Rank + 1})
+			pos.EnPassant = Square{m.FromSquare.File, m.FromSquare.Rank + 1}
 		} else if m.FromSquare.Rank == 7 && m.ToSquare.Rank == 5 && movingPiece.Color == Black {
-			pos.SetEnPassant(Square{m.FromSquare.File, m.FromSquare.Rank - 1})
+			pos.EnPassant = Square{m.FromSquare.File, m.FromSquare.Rank - 1}
 		}
 	}
 }
@@ -718,26 +649,26 @@ func (pos *Position) performPawnMove_setEnPassant(m Move) {
 func (pos *Position) isCastle(m Move) bool {
 	switch m {
 	case Move{E1, G1, NoPieceType}: // White King-side castle
-		return pos.WhiteKingSideCastle() &&
+		return pos.WhiteKsCastle &&
 			pos.Piece(E1) == WhiteKing &&
 			pos.Piece(H1) == WhiteRook &&
 			pos.Piece(F1) == NoPiece &&
 			pos.Piece(G1) == NoPiece
 	case Move{E1, C1, NoPieceType}: // White Queen-side castle
-		return pos.WhiteQueenSideCastle() &&
+		return pos.WhiteQsCastle &&
 			pos.Piece(E1) == WhiteKing &&
 			pos.Piece(A1) == WhiteRook &&
 			pos.Piece(D1) == NoPiece &&
 			pos.Piece(C1) == NoPiece &&
 			pos.Piece(B1) == NoPiece
 	case Move{E8, G8, NoPieceType}: // Black King-side castle
-		return pos.BlackKingSideCastle() &&
+		return pos.BlackKsCastle &&
 			pos.Piece(E8) == BlackKing &&
 			pos.Piece(H8) == BlackRook &&
 			pos.Piece(F8) == NoPiece &&
 			pos.Piece(G8) == NoPiece
 	case Move{E8, C8, NoPieceType}: // Black Queen-side castle
-		return pos.BlackQueenSideCastle() &&
+		return pos.BlackQsCastle &&
 			pos.Piece(E8) == BlackKing &&
 			pos.Piece(A8) == BlackRook &&
 			pos.Piece(D8) == NoPiece &&
@@ -755,45 +686,45 @@ func (pos *Position) performCastle(m Move) {
 		pos.ClearPiece(E1)
 		pos.SetPiece(WhiteRook, F1)
 		pos.ClearPiece(H1)
-		pos.SetWhiteKingSideCastle(false)
-		pos.SetWhiteQueenSideCastle(false)
+		pos.WhiteKsCastle = false
+		pos.WhiteQsCastle = false
 	case Move{E1, C1, NoPieceType}:
 		pos.SetPiece(WhiteKing, C1)
 		pos.ClearPiece(E1)
 		pos.SetPiece(WhiteRook, D1)
 		pos.ClearPiece(A1)
-		pos.SetWhiteKingSideCastle(false)
-		pos.SetWhiteQueenSideCastle(false)
+		pos.WhiteKsCastle = false
+		pos.WhiteQsCastle = false
 	case Move{E8, G8, NoPieceType}:
 		pos.SetPiece(BlackKing, G8)
 		pos.ClearPiece(E8)
 		pos.SetPiece(BlackRook, F8)
 		pos.ClearPiece(H8)
-		pos.SetBlackKingSideCastle(false)
-		pos.SetBlackQueenSideCastle(false)
+		pos.BlackKsCastle = false
+		pos.BlackQsCastle = false
 	case Move{E8, C8, NoPieceType}:
 		pos.SetPiece(BlackKing, C8)
 		pos.ClearPiece(E8)
 		pos.SetPiece(BlackRook, D8)
 		pos.ClearPiece(A8)
-		pos.SetBlackKingSideCastle(false)
-		pos.SetBlackQueenSideCastle(false)
+		pos.BlackKsCastle = false
+		pos.BlackQsCastle = false
 	}
 }
 
 func (pos *Position) flipSide_incrementFullMove(m Move) {
-	if pos.SideToMove() == Black {
-		pos.fullMove++
-		pos.SetSideToMove(White)
-	} else if pos.SideToMove() == White {
-		pos.SetSideToMove(Black)
+	if pos.SideToMove == Black {
+		pos.FullMove++
+		pos.SideToMove = White
+	} else if pos.SideToMove == White {
+		pos.SideToMove = Black
 	} else {
 		colorMoved := pos.Piece(m.ToSquare).Color
 		if colorMoved == Black {
-			pos.fullMove++
-			pos.SetSideToMove(White)
+			pos.FullMove++
+			pos.SideToMove = White
 		} else if colorMoved == White {
-			pos.SetSideToMove(Black)
+			pos.SideToMove = Black
 		}
 	}
 }

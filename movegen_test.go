@@ -139,7 +139,7 @@ func TestGeneratePseudoLegalMoves(t *testing.T) {
 		t.Errorf("incorrect result: fen = r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R w KQkq - 2 14: expected %v, got %v", expectedMoves, moves)
 	}
 
-	pos.SetSideToMove(Black)
+	pos.SideToMove = Black
 	expectedMoves = []Move{
 		{A8, A7, NoPieceType},
 		{A8, B8, NoPieceType},
@@ -235,7 +235,7 @@ func TestGenerateLegalMoves(t *testing.T) {
 		t.Errorf("incorrect result: fen = r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R w KQkq - 2 14: expected %v, got %v", expectedMoves, moves)
 	}
 
-	pos.SetSideToMove(Black)
+	pos.SideToMove = Black
 	expectedMoves = []Move{
 		{A8, A7, NoPieceType},
 		{A8, B8, NoPieceType},
@@ -285,7 +285,7 @@ func TestGenerateLegalMoves(t *testing.T) {
 
 func TestGenerateWhitePawnMovesForward(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(White)
+	pos.SideToMove = White
 
 	expectedMoves := []Move{
 		{E2, E3, NoPieceType},
@@ -323,7 +323,7 @@ func TestGenerateWhitePawnMovesForward(t *testing.T) {
 
 func TestGenerateWhitePawnTakes(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(White)
+	pos.SideToMove = White
 	pos.SetPiece(WhitePawn, E6)
 	pos.SetPiece(BlackPawn, E7)
 	pos.SetPiece(BlackPawn, D7)
@@ -343,11 +343,11 @@ func TestGenerateWhitePawnTakes(t *testing.T) {
 	}
 
 	pos = &Position{}
-	pos.SetSideToMove(White)
+	pos.SideToMove = White
 	pos.SetPiece(WhitePawn, E5)
 	pos.SetPiece(BlackPawn, D5)
 	pos.SetPiece(BlackPawn, F5)
-	pos.SetEnPassant(D6)
+	pos.EnPassant = D6
 	expectedMoves = []Move{
 		{E5, D6, NoPieceType},
 		{E5, E6, NoPieceType},
@@ -358,7 +358,7 @@ func TestGenerateWhitePawnTakes(t *testing.T) {
 	}
 
 	pos = &Position{}
-	pos.SetSideToMove(White)
+	pos.SideToMove = White
 	pos.SetPiece(WhitePawn, H7)
 	pos.SetPiece(BlackQueen, H8)
 	pos.SetPiece(BlackKnight, G8)
@@ -377,7 +377,7 @@ func TestGenerateWhitePawnTakes(t *testing.T) {
 
 func TestGenerateRookMovesWhite(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(White)
+	pos.SideToMove = White
 	pos.SetPiece(WhiteRook, E4)
 	pos.SetPiece(WhitePawn, D4)
 	pos.SetPiece(BlackRook, E7)
@@ -401,7 +401,7 @@ func TestGenerateRookMovesWhite(t *testing.T) {
 
 func TestGenerateKnightMoves(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(White)
+	pos.SideToMove = White
 	pos.SetPiece(WhiteKnight, G4)
 	pos.SetPiece(WhitePawn, F6)
 	pos.SetPiece(BlackKnight, E3)
@@ -421,7 +421,7 @@ func TestGenerateKnightMoves(t *testing.T) {
 
 func TestGenerateBishopMoves(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(White)
+	pos.SideToMove = White
 	pos.SetPiece(WhiteBishop, F3)
 	pos.SetPiece(BlackBishop, E4)
 	pos.SetPiece(WhitePawn, D1)
@@ -442,7 +442,7 @@ func TestGenerateBishopMoves(t *testing.T) {
 
 func TestGenerateQueenMoves(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(Black)
+	pos.SideToMove = Black
 	pos.SetPiece(BlackQueen, F3)
 	pos.SetPiece(WhiteQueen, E3)
 	pos.SetPiece(BlackPawn, C6)
@@ -473,7 +473,7 @@ func TestGenerateQueenMoves(t *testing.T) {
 
 func TestGenerateKingMoves(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(White)
+	pos.SideToMove = White
 	pos.SetPiece(WhiteKing, A3)
 	pos.SetPiece(BlackPawn, A4)
 	pos.SetPiece(WhitePawn, B2)
@@ -492,11 +492,11 @@ func TestGenerateKingMoves(t *testing.T) {
 
 func TestGenerateCastleMovesWhite(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(White)
-	pos.SetWhiteKingSideCastle(true)
-	pos.SetWhiteQueenSideCastle(true)
-	pos.SetBlackKingSideCastle(true)
-	pos.SetBlackQueenSideCastle(true)
+	pos.SideToMove = White
+	pos.WhiteKsCastle = true
+	pos.WhiteQsCastle = true
+	pos.BlackKsCastle = true
+	pos.BlackQsCastle = true
 	pos.SetPiece(WhiteKing, E1)
 	pos.SetPiece(WhiteRook, A1)
 	pos.SetPiece(BlackKing, E8)
@@ -509,14 +509,14 @@ func TestGenerateCastleMovesWhite(t *testing.T) {
 		t.Errorf("incorrect result for white queen-side castle: expected %v, got %v", expectedMoves, moves)
 	}
 
-	pos.SetWhiteQueenSideCastle(false)
+	pos.WhiteQsCastle = false
 	expectedMoves = []Move{}
 	moves = LegalMoves(pos)
 	if slices.Contains(moves, Move{E1, C1, NoPieceType}) {
 		t.Errorf("incorrect result for white queen-side castle: expected %v, got %v", expectedMoves, moves)
 	}
 
-	pos.SetWhiteQueenSideCastle(true)
+	pos.WhiteQsCastle = true
 	pos.SetPiece(BlackPawn, A2)
 	expectedMoves = []Move{
 		{E1, C1, NoPieceType},
@@ -568,7 +568,7 @@ func TestGenerateCastleMovesWhite(t *testing.T) {
 
 func TestGenerateBlackPawnMovesForward(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(Black)
+	pos.SideToMove = Black
 
 	expectedMoves := []Move{
 		{E7, E6, NoPieceType},
@@ -613,7 +613,7 @@ func TestGenerateBlackPawnMovesForward(t *testing.T) {
 
 func TestGenerateBlackPawnTakes(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(Black)
+	pos.SideToMove = Black
 
 	pos.SetPiece(BlackPawn, E4)
 	pos.SetPiece(WhitePawn, E3)
@@ -635,7 +635,7 @@ func TestGenerateBlackPawnTakes(t *testing.T) {
 
 	pos.ClearPiece(F3)
 	pos.ClearPiece(D3)
-	pos.SetEnPassant(F3)
+	pos.EnPassant = F3
 	expectedMoves = []Move{
 		{E4, F3, NoPieceType},
 	}
@@ -662,7 +662,7 @@ func TestGenerateBlackPawnTakes(t *testing.T) {
 
 func TestGenerateRookMovesBlack(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(Black)
+	pos.SideToMove = Black
 
 	pos.SetPiece(BlackRook, E4)
 	pos.SetPiece(BlackPawn, D4)
@@ -687,9 +687,9 @@ func TestGenerateRookMovesBlack(t *testing.T) {
 
 func TestGenerateCastleMovesBlack(t *testing.T) {
 	pos := &Position{}
-	pos.SetSideToMove(Black)
-	pos.SetBlackKingSideCastle(true)
-	pos.SetBlackQueenSideCastle(true)
+	pos.SideToMove = Black
+	pos.BlackKsCastle = true
+	pos.BlackQsCastle = true
 
 	pos.SetPiece(BlackKing, E8)
 	pos.SetPiece(BlackRook, H8)
@@ -701,14 +701,14 @@ func TestGenerateCastleMovesBlack(t *testing.T) {
 		t.Errorf("incorrect result for black king-side castle: expected %v, got %v", expectedMoves, moves)
 	}
 
-	pos.SetBlackKingSideCastle(false)
+	pos.BlackKsCastle = false
 	expectedMoves = []Move{}
 	moves = LegalMoves(pos)
 	if slices.Contains(moves, Move{E8, G8, NoPieceType}) {
 		t.Errorf("incorrect result for black king-side castle: expected %v, got %v", expectedMoves, moves)
 	}
 
-	pos.SetBlackKingSideCastle(true)
+	pos.BlackKsCastle = true
 	pos.SetPiece(WhiteKnight, F7)
 	expectedMoves = []Move{Move{E8, G8, NoPieceType}}
 	moves = LegalMoves(pos)

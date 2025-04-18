@@ -19,7 +19,7 @@ import "math/bits"
 
 // PseudoLegalMoves are moves that are legal except they leave one's king in check.
 func PseudoLegalMoves(pos *Position) []Move {
-	if pos.SideToMove() != White && pos.SideToMove() != Black {
+	if pos.SideToMove != White && pos.SideToMove != Black {
 		return nil
 	}
 	moves := make([]Move, 0)
@@ -33,11 +33,11 @@ func PseudoLegalMoves(pos *Position) []Move {
 }
 
 func pawnMoves(pos *Position) []Move {
-	if pos.SideToMove() == White {
+	if pos.SideToMove == White {
 		return whitePawnMoves(pos)
 	}
 
-	if pos.SideToMove() == Black {
+	if pos.SideToMove == Black {
 		return blackPawnMoves(pos)
 	}
 
@@ -49,7 +49,7 @@ func whitePawnMoves(pos *Position) []Move {
 
 	whitePawns := pos.Bitboard(WhitePawn)
 	occupied := pos.OccupiedBitboard()
-	enemies := pos.ColorBitboard(Black) | (1 << squareToIndex(pos.EnPassant()))
+	enemies := pos.ColorBitboard(Black) | (1 << squareToIndex(pos.EnPassant))
 
 	moves = append(moves, whitePawnsMoveForward(whitePawns, occupied)...)
 	moves = append(moves, whitePawnsMoveForward2(whitePawns, occupied)...)
@@ -134,7 +134,7 @@ func blackPawnMoves(pos *Position) []Move {
 
 	blackPawns := pos.Bitboard(BlackPawn)
 	occupied := pos.OccupiedBitboard()
-	enemies := pos.ColorBitboard(White) | (1 << squareToIndex(pos.EnPassant()))
+	enemies := pos.ColorBitboard(White) | (1 << squareToIndex(pos.EnPassant))
 
 	moves = append(moves, blackPawnsMoveForward(blackPawns, occupied)...)
 	moves = append(moves, blackPawnsMoveForward2(blackPawns, occupied)...)
@@ -219,7 +219,7 @@ func rookMoves(pos *Position) []Move {
 	var rooks Bitboard
 	var occupied Bitboard = pos.OccupiedBitboard()
 	var allies Bitboard
-	switch pos.SideToMove() {
+	switch pos.SideToMove {
 	case White:
 		rooks = pos.Bitboard(WhiteRook)
 		allies = pos.ColorBitboard(White)
@@ -234,7 +234,7 @@ func rookMoves(pos *Position) []Move {
 		singleRookIndex := bits.TrailingZeros64(uint64(rooks))
 		singleRookBitboard := Bitboard(1 << singleRookIndex)
 		rooks ^= singleRookBitboard
-		rookAttacks := singleRookBitboard.RookAttacks(occupied)
+		rookAttacks := singleRookBitboard.rookAttacks(occupied)
 		rookAttacks &^= allies
 		singleRookSquare := indexToSquare(singleRookIndex)
 		for rookAttacks != 0 {
@@ -252,7 +252,7 @@ func knightMoves(pos *Position) []Move {
 	moves := make([]Move, 0)
 	var knights Bitboard
 	var allies Bitboard
-	switch pos.SideToMove() {
+	switch pos.SideToMove {
 	case White:
 		knights = pos.Bitboard(WhiteKnight)
 		allies = pos.ColorBitboard(White)
@@ -267,7 +267,7 @@ func knightMoves(pos *Position) []Move {
 		singleKnightIndex := bits.TrailingZeros64(uint64(knights))
 		singleKnightBitboard := Bitboard(1 << singleKnightIndex)
 		knights ^= singleKnightBitboard
-		knightAttacks := singleKnightBitboard.KnightAttacks()
+		knightAttacks := singleKnightBitboard.knightAttacks()
 		knightAttacks &^= allies
 		singleKnightSquare := indexToSquare(singleKnightIndex)
 		for knightAttacks != 0 {
@@ -286,7 +286,7 @@ func bishopMoves(pos *Position) []Move {
 	var bishops Bitboard
 	var occupied Bitboard = pos.OccupiedBitboard()
 	var allies Bitboard
-	switch pos.SideToMove() {
+	switch pos.SideToMove {
 	case White:
 		bishops = pos.Bitboard(WhiteBishop)
 		allies = pos.ColorBitboard(White)
@@ -301,7 +301,7 @@ func bishopMoves(pos *Position) []Move {
 		singleBishopIndex := bits.TrailingZeros64(uint64(bishops))
 		singleBishopBitboard := Bitboard(1 << singleBishopIndex)
 		bishops ^= singleBishopBitboard
-		bishopAttacks := singleBishopBitboard.BishopAttacks(occupied)
+		bishopAttacks := singleBishopBitboard.bishopAttacks(occupied)
 		bishopAttacks &^= allies
 		singleBishopSquare := indexToSquare(singleBishopIndex)
 		for bishopAttacks != 0 {
@@ -320,7 +320,7 @@ func queenMoves(pos *Position) []Move {
 	var queens Bitboard
 	var occupied Bitboard = pos.OccupiedBitboard()
 	var allies Bitboard
-	switch pos.SideToMove() {
+	switch pos.SideToMove {
 	case White:
 		queens = pos.Bitboard(WhiteQueen)
 		allies = pos.ColorBitboard(White)
@@ -336,7 +336,7 @@ func queenMoves(pos *Position) []Move {
 		singleQueenBitboard := Bitboard(1 << singleQueenIndex)
 		queens ^= singleQueenBitboard
 		// Combine rook and bishop attacks for queen moves
-		queenAttacks := singleQueenBitboard.RookAttacks(occupied) | singleQueenBitboard.BishopAttacks(occupied)
+		queenAttacks := singleQueenBitboard.rookAttacks(occupied) | singleQueenBitboard.bishopAttacks(occupied)
 		queenAttacks &^= allies
 		singleQueenSquare := indexToSquare(singleQueenIndex)
 		for queenAttacks != 0 {
@@ -354,7 +354,7 @@ func kingMoves(pos *Position) []Move {
 	moves := make([]Move, 0)
 	var kings Bitboard
 	var allies Bitboard
-	switch pos.SideToMove() {
+	switch pos.SideToMove {
 	case White:
 		kings = pos.Bitboard(WhiteKing)
 		allies = pos.ColorBitboard(White)
@@ -369,7 +369,7 @@ func kingMoves(pos *Position) []Move {
 		singleKingIndex := bits.TrailingZeros64(uint64(kings))
 		singleKingBitboard := Bitboard(1 << singleKingIndex)
 		kings ^= singleKingBitboard
-		kingAttacks := singleKingBitboard.KingAttacks()
+		kingAttacks := singleKingBitboard.kingAttacks()
 		kingAttacks &^= allies
 		singleKingSquare := indexToSquare(singleKingIndex)
 		for kingAttacks != 0 {
@@ -389,9 +389,9 @@ func castleMoves(pos *Position) []Move {
 	moves := make([]Move, 0)
 	occupied := pos.OccupiedBitboard()
 
-	if pos.SideToMove() == White {
+	if pos.SideToMove == White {
 		attacked := pos.getAttackedSquares(Black)
-		if pos.WhiteKingSideCastle() &&
+		if pos.WhiteKsCastle &&
 			pos.Piece(E1) == WhiteKing &&
 			pos.Piece(H1) == WhiteRook &&
 			occupied.Square(F1) == 0 &&
@@ -401,7 +401,7 @@ func castleMoves(pos *Position) []Move {
 			attacked.Square(G1) == 0 {
 			moves = append(moves, Move{E1, G1, NoPieceType})
 		}
-		if pos.WhiteQueenSideCastle() &&
+		if pos.WhiteQsCastle &&
 			pos.Piece(E1) == WhiteKing &&
 			pos.Piece(A1) == WhiteRook &&
 			occupied.Square(B1) == 0 &&
@@ -412,9 +412,9 @@ func castleMoves(pos *Position) []Move {
 			attacked.Square(C1) == 0 {
 			moves = append(moves, Move{E1, C1, NoPieceType})
 		}
-	} else if pos.SideToMove() == Black {
+	} else if pos.SideToMove == Black {
 		attacked := pos.getAttackedSquares(White)
-		if pos.BlackKingSideCastle() &&
+		if pos.BlackKsCastle &&
 			pos.Piece(E8) == BlackKing &&
 			pos.Piece(H8) == BlackRook &&
 			occupied.Square(F8) == 0 &&
@@ -424,7 +424,7 @@ func castleMoves(pos *Position) []Move {
 			attacked.Square(G8) == 0 {
 			moves = append(moves, Move{E8, G8, NoPieceType})
 		}
-		if pos.BlackQueenSideCastle() &&
+		if pos.BlackQsCastle &&
 			pos.Piece(E8) == BlackKing &&
 			pos.Piece(A8) == BlackRook &&
 			occupied.Square(B8) == 0 &&
@@ -447,7 +447,7 @@ func LegalMoves(pos *Position) []Move {
 	for _, m := range pseudoLegalMoves {
 		tempPos := pos.Copy()
 		tempPos.Move(m)
-		tempPos.SetSideToMove(pos.SideToMove())
+		tempPos.SideToMove = pos.SideToMove
 		if !tempPos.IsCheck() {
 			legalMoves = append(legalMoves, m)
 		}
