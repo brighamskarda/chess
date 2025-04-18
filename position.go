@@ -57,6 +57,34 @@ type Position struct {
 	fullMove uint
 }
 
+// Copy creates a copy of the current position.
+func (pos *Position) Copy() *Position {
+	newPos := *pos
+	return &newPos
+}
+
+// Equal returns true if the positions are exactly the same (excluding move counters).
+func (pos *Position) Equal(other *Position) bool {
+	return pos.whitePawns == other.whitePawns &&
+		pos.whiteRooks == other.whiteRooks &&
+		pos.whiteKnights == other.whiteKnights &&
+		pos.whiteBishops == other.whiteBishops &&
+		pos.whiteQueens == other.whiteQueens &&
+		pos.whiteKings == other.whiteKings &&
+		pos.blackPawns == other.blackPawns &&
+		pos.blackRooks == other.blackRooks &&
+		pos.blackKnights == other.blackKnights &&
+		pos.blackBishops == other.blackBishops &&
+		pos.blackQueens == other.blackQueens &&
+		pos.blackKings == other.blackKings &&
+		pos.sideToMove == other.sideToMove &&
+		pos.whiteKsCastle == other.whiteKsCastle &&
+		pos.whiteQsCastle == other.whiteQsCastle &&
+		pos.blackKsCastle == other.blackKsCastle &&
+		pos.blackQsCastle == other.blackQsCastle &&
+		pos.enPassant == other.enPassant
+}
+
 // ParseFEN returns an error if it could not parse an FEN. It was likely malformed or missing important pieces.
 func ParseFEN(fen string) (*Position, error) {
 	words := strings.Fields(fen)

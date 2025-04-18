@@ -66,6 +66,15 @@ func squareToIndex(s Square) uint8 {
 	return (uint8(s.File) - 1) + (uint8(s.Rank)-1)*8
 }
 
+func indexToSquare(index int) Square {
+	if index >= 64 || index < 0 {
+		return NoSquare
+	}
+	file := File((index % 8) + 1)
+	rank := Rank((index / 8) + 1)
+	return Square{file, rank}
+}
+
 // String gives a string representing the bitboard as if you were looking at a chess board from white's perspective.
 func (bb Bitboard) String() string {
 	s := ""
@@ -244,8 +253,8 @@ func (bb Bitboard) KingAttacks() Bitboard {
 	return ((bb >> 9) & 0x7f7f7f7f7f7f7f7f) |
 		(bb >> 8) |
 		((bb >> 7) & 0xfefefefefefefefe) |
-		((bb >> 1) & 0xfefefefefefefefe) |
-		((bb << 1) & 0x7f7f7f7f7f7f7f7f) |
+		((bb >> 1) & 0x7f7f7f7f7f7f7f7f) |
+		((bb << 1) & 0xfefefefefefefefe) |
 		((bb << 7) & 0x7f7f7f7f7f7f7f7f) |
 		(bb << 8) |
 		((bb << 9) & 0xfefefefefefefefe)
