@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-// Color can be no color, white, or black.
+// Color can be [NoColor], [White], or [Black].
 type Color uint8
 
 const (

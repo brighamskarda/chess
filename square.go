@@ -15,7 +15,7 @@
 
 package chess
 
-// File is a chess file as seen on a board. The zero value is no file, and the files A-H can be represented.
+// File is a vertical column of squares as seen on a chess board. The zero value is [NoFile], and the files A-H can be represented.
 type File uint8
 
 const (
@@ -56,7 +56,7 @@ func (f File) String() string {
 	}
 }
 
-// File is a chess rank as seen on a board. The zero value is no rank, and the ranks 1-8 can be represented.
+// Rank is a horizontal row of squares as seen on a chess board. The zero value is [NoRank], and the ranks 1-8 can be represented.
 type Rank uint8
 
 const (
@@ -97,13 +97,13 @@ func (r Rank) String() string {
 	}
 }
 
-// Square represents one of 64 squares on a chess board. The zero value represents no square.
+// Square represents one of 64 squares on a chess board. The zero value represents [NoSquare].
 type Square struct {
 	File File
 	Rank Rank
 }
 
-// String returns pgn compatible square strings (e.g a8). Gives "-" if NoSquare.
+// String returns pgn compatible square strings (e.g a8). Gives "-" if [NoSquare].
 func (s Square) String() string {
 	if s == NoSquare {
 		return "-"

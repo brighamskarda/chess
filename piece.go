@@ -74,7 +74,7 @@ func parsePieceType(s string) PieceType {
 	}
 }
 
-// Piece represents a chess piece with type and color. The zero value is no piece.
+// Piece represents a chess piece with type and color. The zero value is [NoPiece].
 type Piece struct {
 	Color Color
 	Type  PieceType

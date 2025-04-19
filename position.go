@@ -225,7 +225,7 @@ func (pos *Position) parseFullMove(fullMove string) error {
 	return nil
 }
 
-// String generates an FEN string for the current position. See [PrettyString] for getting a board like representation.
+// String generates an FEN string for the current position. See [Position.PrettyString] for getting a board like representation.
 func (pos *Position) String() string {
 	fen := ""
 	fen += pos.boardString() + " "
@@ -364,7 +364,7 @@ func (pos *Position) extraInfo() string {
 	return s
 }
 
-// Piece gets the piece on the given square. NoPiece is returned if no piece is present.
+// Piece gets the piece on the given square. [NoPiece] is returned if no piece is present.
 func (pos *Position) Piece(s Square) Piece {
 	if pos.whitePawns.Square(s) == 1 {
 		return WhitePawn

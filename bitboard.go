@@ -22,7 +22,7 @@ import (
 
 // Bitboard is a 64 bit representation of a chess board. Each bit corresponds to a square with the the least significant bit (rightmost bit if using bit shifts) is A1, then B1, all the way up to H8.
 //
-// Most commonly there is a bitboard for each type of piece on the board with positive bits indicating squares occupied by that piece type. Bitboard are also used to represent all occupied squares, and squares that are attacked by certain pieces.
+// Most commonly there is a bitboard for each type of piece on the board with positive bits indicating squares occupied by that piece type. Bitboards are also used to represent all occupied squares, and squares that are attacked by certain pieces.
 type Bitboard uint64
 
 // Bit returns 1 if the bit at the specified index is set, otherwise 0.
