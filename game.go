@@ -15,7 +15,14 @@
 
 package chess
 
-import "io"
+import (
+	"errors"
+	"fmt"
+	"io"
+	"maps"
+	"slices"
+	"time"
+)
 
 // Result represents the result of a chess [Game].
 type Result uint8
@@ -32,8 +39,26 @@ type PgnMove struct {
 	Move              Move
 	NumericAnnotation uint8
 	Commentary        string
-	// Variation supports multiple variations. Hence it is a 2d slice.
-	Variation [][]PgnMove
+	// Variations supports multiple variations. Hence it is a 2d slice.
+	Variations [][]PgnMove
+}
+
+// Copy provides a copy of the PgnMove. This is a deep copy so the variations are separate.
+func (m PgnMove) Copy() PgnMove {
+	newPgnMove := PgnMove{
+		Move:              m.Move,
+		NumericAnnotation: m.NumericAnnotation,
+		Commentary:        m.Commentary,
+		Variations:        make([][]PgnMove, 0, len(m.Variations)),
+	}
+	for _, variation := range m.Variations {
+		newVariation := make([]PgnMove, 0, len(variation))
+		for _, move := range variation {
+			newVariation = append(newVariation, move.Copy())
+		}
+		newPgnMove.Variations = append(newPgnMove.Variations, newVariation)
+	}
+	return newPgnMove
 }
 
 // Game represents all parts of the PGN game notation standard found here. https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm.
@@ -46,6 +71,8 @@ type PgnMove struct {
 type Game struct {
 	pos         *Position
 	moveHistory []PgnMove
+	// moves are the current legal moves, nil if they haven't been generated. If it is an empty slice then there are no legal moves.
+	moves []Move
 
 	// Event should be reasonably descriptive. Abbreviations are to be avoided unless absolutely necessary. A consistent event naming should be used to help facilitate database scanning. If the name of the event is unknown, a single question mark should appear as the tag value.
 	Event string
@@ -90,14 +117,50 @@ type Game struct {
 //
 // * Black - ?
 //
-// * Result - Draw
+// * Result - NoResult
 func NewGame() *Game {
-	return nil
+	pos, _ := ParseFEN(DefaultFEN)
+	date := time.Now()
+	return &Game{
+		pos:         pos,
+		moveHistory: []PgnMove{},
+		moves:       nil,
+		Event:       "?",
+		Site:        "https://github.com/brighamskarda/chess",
+		Date:        date.Format("2006.01.02"),
+		Round:       "1",
+		White:       "?",
+		Black:       "?",
+		Result:      NoResult,
+		OtherTags:   map[string]string{},
+		Commentary:  "",
+	}
 }
 
-// NewGameFromFEN starts a game specified from the provided fen string. Returns an error if [ParseFEN] could not parse the FEN.
+// NewGameFromFEN starts a game specified from the provided fen string. Returns an error if [ParseFEN] could not parse the FEN. Values are set the same as [NewGame]. The SetUp and FEN tags are also filled into OtherTags.
 func NewGameFromFEN(fen string) (*Game, error) {
-	return nil, nil
+	pos, err := ParseFEN(fen)
+	if err != nil {
+		return nil, fmt.Errorf("could not make game: %w", err)
+	}
+	date := time.Now()
+	return &Game{
+		pos:         pos,
+		moveHistory: []PgnMove{},
+		moves:       nil,
+		Event:       "?",
+		Site:        "https://github.com/brighamskarda/chess",
+		Date:        date.Format("2006.01.02"),
+		Round:       "1",
+		White:       "?",
+		Black:       "?",
+		Result:      NoResult,
+		OtherTags: map[string]string{
+			"SetUp": "1",
+			"FEN":   fen,
+		},
+		Commentary: "",
+	}, nil
 }
 
 // ParsePGN reads to the end of the provided reader and provides a list of the games parsed from the PGN.
@@ -109,17 +172,49 @@ func ParsePGN(pgn io.Reader) ([]*Game, error) {
 
 // Copy returns a copy of the game.
 func (g *Game) Copy() *Game {
-	return nil
+	return &Game{
+		pos:         g.pos.Copy(),
+		moveHistory: g.MoveHistory(),
+		moves:       slices.Clone(g.moves),
+		Event:       g.Event,
+		Site:        g.Site,
+		Date:        g.Date,
+		Round:       g.Round,
+		White:       g.White,
+		Black:       g.Black,
+		Result:      g.Result,
+		OtherTags:   maps.Clone(g.OtherTags),
+		Commentary:  g.Commentary,
+	}
 }
 
-// IsCheckMate returns true if the side to move is in check and there are no legal moves.
-func (g *Game) IsCheckMate() bool {
+// LegalMoves returns a copy the current legal moves, cached for performance.
+func (g *Game) LegalMoves() []Move {
+	return slices.Clone(g.legalMoves())
+}
+
+// legalMoves returns the struct with the current legal moves. It is not a copy, don't modify it. Cached for performance.
+func (g *Game) legalMoves() []Move {
+	if g.moves == nil {
+		g.moves = LegalMoves(g.pos)
+	}
+	return g.moves
+}
+
+// IsCheckmate returns true if the side to move is in check and there are no legal moves.
+func (g *Game) IsCheckmate() bool {
+	if len(g.legalMoves()) == 0 && g.pos.IsCheck() {
+		return true
+	}
 	return false
 }
 
-// IsStaleMate returns true if the side to move is not in check and has no legal moves.
-func (g *Game) IsStaleMate() bool {
-	return true
+// IsStalemate returns true if the side to move is not in check and has no legal moves.
+func (g *Game) IsStalemate() bool {
+	if len(g.legalMoves()) == 0 && !g.pos.IsCheck() {
+		return true
+	}
+	return false
 }
 
 // CanClaimDraw returns true if the side to move can claim a draw either due to the 50 move rule, or three fold repetition.
@@ -136,14 +231,45 @@ func (g *Game) CanClaimDrawThreeFold() bool {
 //
 // If Result is set then it will be set to [NoResult]. If the game ends (in stalemate or checkmate) then Result will also be set appropriately.
 func (g *Game) Move(m Move) error {
+	if !slices.Contains(g.legalMoves(), m) {
+		return errors.New("illegal move")
+	}
+	g.pos.Move(m)
+	g.moves = nil
+	g.moveHistory = append(g.moveHistory, PgnMove{
+		Move:              m,
+		NumericAnnotation: 0,
+		Commentary:        "",
+		Variations:        [][]PgnMove{},
+	})
+	g.setResult()
 	return nil
+}
+
+// setResult sets the game result, defaults to NoResult.
+func (g *Game) setResult() {
+	if g.IsStalemate() {
+		g.Result = Draw
+	} else if g.IsCheckmate() {
+		if g.pos.SideToMove == White {
+			g.Result = BlackWins
+		} else if g.pos.SideToMove == Black {
+			g.Result = WhiteWins
+		}
+	} else {
+		g.Result = NoResult
+	}
 }
 
 // MoveUCI parses and performs a UCI chess move. https://www.wbec-ridderkerk.nl/html/UCIProtocol.html
 //
 // Errors are returned if m could not be parsed or the move was illegal.
 func (g *Game) MoveUCI(m string) error {
-	return nil
+	move, err := ParseUCIMove(m)
+	if err != nil {
+		return err
+	}
+	return g.Move(move)
 }
 
 // MoveSAN parses and performs a SAN (Standard Algebraic Notation) chess move. https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
@@ -155,7 +281,7 @@ func (g *Game) MoveSAN(m string) error {
 
 // Position returns a copy of the current position.
 func (g *Game) Position() *Position {
-	return nil
+	return g.pos.Copy()
 }
 
 // PositionPly returns a copy of the position at a certain ply (half move). 0 returns the initial game position.
@@ -167,7 +293,11 @@ func (g *Game) PositionPly(ply int) *Position {
 
 // MoveHistory returns a copy of all the moves played this game with their annotations, commentary and variations. Will not return nil.
 func (g *Game) MoveHistory() []PgnMove {
-	return nil
+	moveHistoryCopy := make([]PgnMove, 0, len(g.moveHistory))
+	for _, move := range g.moveHistory {
+		moveHistoryCopy = append(moveHistoryCopy, move.Copy())
+	}
+	return moveHistoryCopy
 }
 
 // AnnotateMove applies a numeric annotation glyph (NAG) to the specified move number. NAG's can be found here: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c10
@@ -210,5 +340,3 @@ func (g *Game) String() string {
 func (g *Game) ReducedString() string {
 	return ""
 }
-
-// TODO Read through all documentation and be sure its clear.

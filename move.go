@@ -32,7 +32,7 @@ type Move struct {
 func ParseUCIMove(uci string) (Move, error) {
 	uci = strings.ToLower(uci)
 	if len(uci) < 4 || len(uci) > 5 {
-		return Move{}, errors.New("uci string not 4 or 5 characters long")
+		return Move{}, errors.New("uci move string not 4 or 5 characters long")
 	}
 	fromSquare := parseSquare(uci[0:2])
 	toSquare := parseSquare(uci[2:4])
