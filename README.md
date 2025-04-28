@@ -22,8 +22,8 @@ For engine development I recommend using the Position struct as it allows for qu
 
 ## Future Development
 
-I am currently working on version 2.0 of this library. It will feature a fully bitboard based position representation.
-The hope is that this will speed up the move generating portions of the library.
+I am currently working on version 2.0 of this library. It features a fully bitboard based position representation.
+Currently moves generationa for version 2 is about twice as fast as the most popular chess library in go. https://github.com/corentings/chess
 
 ## Contact info
 
