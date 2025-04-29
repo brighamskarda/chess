@@ -184,3 +184,205 @@ func TestGameMoveUCI(t *testing.T) {
 		t.Errorf("incorrect result, got %v", g.Result)
 	}
 }
+
+func TestAnnotateMove(t *testing.T) {
+	g := NewGame()
+	if g.Move(Move{E2, E4, NoPieceType}) != nil {
+		t.Fail()
+	}
+	if g.Move(Move{D7, D5, NoPieceType}) != nil {
+		t.Fail()
+	}
+
+	g.AnnotateMove(0, 3)
+	g.AnnotateMove(1, 2)
+	moveHistory := g.MoveHistory()
+	if moveHistory[0].NumericAnnotation != 3 {
+		t.Errorf("for move 0 expected 3, got %d", moveHistory[0].NumericAnnotation)
+	}
+	if moveHistory[1].NumericAnnotation != 2 {
+		t.Errorf("for move 1 expected 23, got %d", moveHistory[1].NumericAnnotation)
+	}
+}
+
+func TestMoveSAN(t *testing.T) {
+	g := NewGame()
+	if g.MoveSAN("e4") != nil {
+		t.Fail()
+	}
+	if g.MoveSAN("Nc6") != nil {
+		t.Fail()
+	}
+
+	if g.Position().String() != "r1bqkbnr/pppppppp/2n5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2" {
+		t.Errorf("MoveSAN did not work correctly, ending position was %q", g.Position().String())
+	}
+}
+
+func TestPositionPly(t *testing.T) {
+	g := NewGame()
+	if g.Move(Move{E2, E4, NoPieceType}) != nil {
+		t.Fail()
+	}
+	if g.Move(Move{D7, D5, NoPieceType}) != nil {
+		t.Fail()
+	}
+
+	ply := 0
+	expected := DefaultFEN
+	actual := g.PositionPly(ply).String()
+	if expected != actual {
+		t.Errorf("incorrect position for ply %d: expected %q, got %q", ply, expected, actual)
+	}
+
+	ply = 1
+	expected = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
+	actual = g.PositionPly(ply).String()
+	if expected != actual {
+		t.Errorf("incorrect position for ply %d: expected %q, got %q", ply, expected, actual)
+	}
+
+	ply = 2
+	expected = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2"
+	actual = g.PositionPly(ply).String()
+	if expected != actual {
+		t.Errorf("incorrect position for ply %d: expected %q, got %q", ply, expected, actual)
+	}
+}
+
+func TestPositionPly_AltStart(t *testing.T) {
+	g, err := NewGameFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBN1 w Qkq - 0 1")
+	if err != nil {
+		t.Fail()
+	}
+	if g.Move(Move{E2, E4, NoPieceType}) != nil {
+		t.Fail()
+	}
+	if g.Move(Move{D7, D5, NoPieceType}) != nil {
+		t.Fail()
+	}
+
+	ply := 0
+	expected := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBN1 w Qkq - 0 1"
+	actual := g.PositionPly(ply).String()
+	if expected != actual {
+		t.Errorf("incorrect position for ply %d: expected %q, got %q", ply, expected, actual)
+	}
+
+	ply = 1
+	expected = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBN1 b Qkq e3 0 1"
+	actual = g.PositionPly(ply).String()
+	if expected != actual {
+		t.Errorf("incorrect position for ply %d: expected %q, got %q", ply, expected, actual)
+	}
+
+	ply = 2
+	expected = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBN1 w Qkq d6 0 2"
+	actual = g.PositionPly(ply).String()
+	if expected != actual {
+		t.Errorf("incorrect position for ply %d: expected %q, got %q", ply, expected, actual)
+	}
+}
+
+func TestCommentMove(t *testing.T) {
+	g := NewGame()
+	if g.Move(Move{E2, E4, NoPieceType}) != nil {
+		t.Fail()
+	}
+	if g.Move(Move{D7, D5, NoPieceType}) != nil {
+		t.Fail()
+	}
+
+	g.CommentMove(0, "comment 1")
+	g.CommentMove(1, "comment 2")
+	moveHistory := g.MoveHistory()
+	if moveHistory[0].Commentary != "comment 1" {
+		t.Errorf("for move 0 got %q", moveHistory[0].Commentary)
+	}
+	if moveHistory[1].Commentary != "comment 2" {
+		t.Errorf("for move 1 got %q", moveHistory[1].Commentary)
+	}
+}
+
+func makeGameWithVariation() *Game {
+	g := NewGame()
+	g.Move(Move{E2, E4, NoPieceType})
+	g.Move(Move{D7, D5, NoPieceType})
+
+	g.MakeVariation(1, []PgnMove{{
+		Move:              Move{B8, C6, NoPieceType},
+		NumericAnnotation: 0,
+		Commentary:        "",
+		Variations:        [][]PgnMove{},
+	}, {
+		Move:              Move{D2, D4, NoPieceType},
+		NumericAnnotation: 0,
+		Commentary:        "",
+		Variations:        [][]PgnMove{},
+	}})
+	return g
+}
+func TestMakeVariation(t *testing.T) {
+	g := makeGameWithVariation()
+	moveHistory := g.MoveHistory()
+	if len(moveHistory[1].Variations) != 1 {
+		t.Errorf("variation not added correctly")
+	}
+	if len(moveHistory[1].Variations[0]) != 2 {
+		t.Errorf("variation not added correctly")
+	}
+}
+
+func TestDeleteVariation(t *testing.T) {
+	g := makeGameWithVariation()
+	g.DeleteVariation(1, 0)
+	moveHistory := g.MoveHistory()
+	if len(moveHistory[1].Variations) != 0 {
+		t.Errorf("variation not deleted correctly")
+	}
+}
+
+func TestGetVariation(t *testing.T) {
+	g := makeGameWithVariation()
+
+	g.MakeVariation(1, []PgnMove{{
+		Move:              Move{G8, F6, NoPieceType},
+		NumericAnnotation: 0,
+		Commentary:        "",
+		Variations:        [][]PgnMove{},
+	}, {
+		Move:              Move{D2, D4, NoPieceType},
+		NumericAnnotation: 0,
+		Commentary:        "",
+		Variations:        [][]PgnMove{},
+	}})
+
+	g.MakeVariation(0, []PgnMove{{
+		Move:              Move{H2, H4, NoPieceType},
+		NumericAnnotation: 0,
+		Commentary:        "",
+		Variations:        [][]PgnMove{},
+	}})
+
+	newG := g.GetVariation(1, 0)
+
+	expectedPosition := "r1bqkbnr/pppppppp/2n5/8/3PP3/8/PPP2PPP/RNBQKBNR b KQkq d3 0 2"
+	actualPosition := newG.Position().String()
+	if expectedPosition != actualPosition {
+		t.Errorf("variation does not match expected position: expected %q, got %q", expectedPosition, actualPosition)
+	}
+
+	moveHistory := newG.MoveHistory()
+	if len(moveHistory[1].Variations) != 2 {
+		t.Errorf("alt variations not preserved")
+	}
+	if len(moveHistory[1].Variations[0]) != 1 || moveHistory[1].Variations[0][0].Move != (Move{D7, D5, NoPieceType}) {
+		t.Errorf("original move not preserved")
+	}
+	if len(moveHistory[1].Variations[1]) != 2 {
+		t.Errorf("alt variation not preserved")
+	}
+	if len(moveHistory[0].Variations) != 1 {
+		t.Errorf("move 0 variation not preserved")
+	}
+}

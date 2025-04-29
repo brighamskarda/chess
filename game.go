@@ -276,7 +276,11 @@ func (g *Game) MoveUCI(m string) error {
 //
 // Errors are returned if m could not be parsed or the move was illegal.
 func (g *Game) MoveSAN(m string) error {
-	return nil
+	move, err := ParseSANMove(m, g.pos)
+	if err != nil {
+		return err
+	}
+	return g.Move(move)
 }
 
 // Position returns a copy of the current position.
@@ -288,7 +292,20 @@ func (g *Game) Position() *Position {
 //
 // If a negative number is provided, or ply goes beyond the number of moves played nil is returned.
 func (g *Game) PositionPly(ply int) *Position {
-	return nil
+	var pos *Position
+	if g.OtherTags["SetUp"] == "1" {
+		var err error
+		pos, err = ParseFEN(g.OtherTags["FEN"])
+		if err != nil {
+			panic("game somehow got invalid FEN starting position, can get position at ply")
+		}
+	} else {
+		pos, _ = ParseFEN(DefaultFEN)
+	}
+	for _, m := range g.moveHistory[:ply] {
+		pos.Move(m.Move)
+	}
+	return pos
 }
 
 // MoveHistory returns a copy of all the moves played this game with their annotations, commentary and variations. Will not return nil.
@@ -302,33 +319,68 @@ func (g *Game) MoveHistory() []PgnMove {
 
 // AnnotateMove applies a numeric annotation glyph (NAG) to the specified move number. NAG's can be found here: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c10
 //
-// moveNum starts at 0 for the first move. Any previous nag is overwritten.
-func (g *Game) AnnotateMove(moveNum int, nag uint8) {
-
+// plyNum starts at 0 for the first move. Any previous nag is overwritten.
+func (g *Game) AnnotateMove(plyNum int, nag uint8) {
+	g.moveHistory[plyNum].NumericAnnotation = nag
 }
 
 // CommentMove applies a comment to the specified move.
 //
-// moveNum starts at 0 for the first move. Any previous comment is overwritten.
-func (g *Game) CommentMove(moveNum int, comment string) {
-
+// plyNum starts at 0 for the first move. Any previous comment is overwritten.
+func (g *Game) CommentMove(plyNum int, comment string) {
+	g.moveHistory[plyNum].Commentary = comment
 }
 
 // MakeVariation adds a set of variation moves to the specified move. Variation moves must be legal.
 //
-// moveNum starts at 0 for the first move.
-func (g *Game) MakeVariation(movenum int, moves []PgnMove) {
-
+// plyNum starts at 0 for the first move. moves is not copied, it is simply added to the variations list for the appropriate pgn move.
+func (g *Game) MakeVariation(plyNum int, moves []PgnMove) {
+	g.moveHistory[plyNum].Variations = append(g.moveHistory[plyNum].Variations, moves)
 }
 
-// DeleteVariation deletes the variation at the moveNum. Give the index you want to delete (starting at 0).
-func (g *Game) DeleteVariation(movenum int, variationNum int) {
-
+// DeleteVariation deletes the variation at the plyNum. Give the index you want to delete (starting at 0).
+func (g *Game) DeleteVariation(plyNum int, variationNum int) {
+	g.moveHistory[plyNum].Variations = slices.Delete(g.moveHistory[plyNum].Variations, variationNum, variationNum+1)
 }
 
 // GetVariation returns a new game where the specified variation is followed. All other specified variations are preserved, and the main line is also preserved as a variation.
-func (g *Game) GetVariation(movenum int, variationNum int) *Game {
-	return nil
+func (g *Game) GetVariation(plyNum int, variationNum int) *Game {
+	newMoveHistory := g.MoveHistory()[0:plyNum]
+	// Make the specified variation the main move history
+	for _, m := range g.moveHistory[plyNum].Variations[variationNum] {
+		newMoveHistory = append(newMoveHistory, m.Copy())
+	}
+
+	// Make the main move history a variation
+	variation := []PgnMove{}
+	for _, m := range g.moveHistory[plyNum:] {
+		variation = append(variation, m.Copy())
+	}
+	newMoveHistory[plyNum].Variations = append(newMoveHistory[plyNum].Variations, variation)
+
+	// Add other move variations
+	for varNum, variation := range g.moveHistory[plyNum].Variations {
+		if varNum == variationNum {
+			continue
+		}
+		variationCopy := []PgnMove{}
+		for _, m := range variation {
+			variationCopy = append(variationCopy, m.Copy())
+		}
+		newMoveHistory[plyNum].Variations = append(newMoveHistory[plyNum].Variations, variationCopy)
+	}
+
+	newGame := g.Copy()
+	newGame.pos = newGame.PositionPly(0)
+	newGame.moveHistory = []PgnMove{}
+	newGame.moves = nil
+	for _, m := range newMoveHistory {
+		newGame.Move(m.Move)
+	}
+
+	newGame.moveHistory = newMoveHistory
+
+	return newGame
 }
 
 // String provides the game as a valid PGN that can be written to a file. Multiple PGNs can be written to the same file. Just be sure to separate them with a new line.
