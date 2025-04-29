@@ -129,8 +129,8 @@ func (pos *Position) parseFenBody(body string) error {
 	currentRank := Rank8
 	for _, r := range body {
 		if unicode.IsLetter(r) {
-			p := parsePiece(string(r))
-			if p == NoPiece {
+			p, err := parsePiece(string(r))
+			if err != nil {
 				return fmt.Errorf("could not parse piece %q", r)
 			}
 			pos.SetPiece(p, Square{currentFile, currentRank})
@@ -199,7 +199,7 @@ func (pos *Position) parseEnPassant(enPassant string) error {
 	if enPassant == "-" {
 		return nil
 	}
-	square := parseSquare(enPassant)
+	square, _ := ParseSquare(enPassant)
 	if square == NoSquare {
 		return fmt.Errorf("could not parse en passant %q", enPassant)
 	}

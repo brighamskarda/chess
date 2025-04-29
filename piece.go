@@ -16,6 +16,7 @@
 package chess
 
 import (
+	"fmt"
 	"strings"
 	"unicode"
 )
@@ -55,22 +56,22 @@ func (pt PieceType) String() string {
 	}
 }
 
-func parsePieceType(s string) PieceType {
+func parsePieceType(s string) (PieceType, error) {
 	switch strings.ToLower(s) {
 	case "p":
-		return Pawn
+		return Pawn, nil
 	case "n":
-		return Knight
+		return Knight, nil
 	case "b":
-		return Bishop
+		return Bishop, nil
 	case "r":
-		return Rook
+		return Rook, nil
 	case "q":
-		return Queen
+		return Queen, nil
 	case "k":
-		return King
+		return King, nil
 	default:
-		return NoPieceType
+		return NoPieceType, fmt.Errorf("could not parse piece type %q", s)
 	}
 }
 
@@ -111,10 +112,10 @@ func (p Piece) String() string {
 	}
 }
 
-func parsePiece(s string) Piece {
-	pt := parsePieceType(s)
-	if pt == NoPieceType {
-		return NoPiece
+func parsePiece(s string) (Piece, error) {
+	pt, err := parsePieceType(s)
+	if err != nil {
+		return NoPiece, fmt.Errorf("could not parse piece %q", s)
 	}
 	var color Color
 	if unicode.IsUpper(rune(s[0])) {
@@ -122,5 +123,5 @@ func parsePiece(s string) Piece {
 	} else {
 		color = Black
 	}
-	return Piece{color, pt}
+	return Piece{color, pt}, nil
 }

@@ -58,3 +58,371 @@ func TestParseUCIMoveErr(t *testing.T) {
 		t.Error("Expected err to be nil.")
 	}
 }
+
+func TestParseSANMove_PawnMove(t *testing.T) {
+	pos, _ := ParseFEN(DefaultFEN)
+	move, err := ParseSANMove("e4", pos)
+	if err != nil {
+		t.Errorf("got error on e4")
+	}
+	expected := Move{E2, E4, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on e4: expected %v, got %v", expected, move)
+	}
+
+	pos.Move(move)
+	move, err = ParseSANMove("A6", pos)
+	if err != nil {
+		t.Errorf("got error on A6")
+	}
+	expected = Move{A7, A6, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on A6: expected %v, got %v", expected, move)
+	}
+}
+
+func TestParseSANMove_PawnPromotion(t *testing.T) {
+	pos, _ := ParseFEN("8/1P2k3/8/8/8/8/4K1p1/8 w - - 0 1")
+	move, err := ParseSANMove("b8=q", pos)
+	if err != nil {
+		t.Errorf("got error on b8=q")
+	}
+	expected := Move{B7, B8, Queen}
+	if move != expected {
+		t.Errorf("got error on b8=q: expected %v, got %v", expected, move)
+	}
+
+	pos.Move(move)
+	move, err = ParseSANMove("G1=N", pos)
+	if err != nil {
+		t.Errorf("got error on G1=N")
+	}
+	expected = Move{G2, G1, Knight}
+	if move != expected {
+		t.Errorf("got error on G1=N: expected %v, got %v", expected, move)
+	}
+}
+
+func TestParseSANMove_PawnCapture(t *testing.T) {
+	pos, _ := ParseFEN("8/4k3/2r5/1P6/5Pp1/8/3K4/8 b - f3 0 1")
+	s := "gxf3"
+	move, err := ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected := Move{G4, F3, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+
+	pos.Move(move)
+	s = "bxc6"
+	move, err = ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected = Move{B5, C6, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+}
+
+func TestParseSANMove_Castle(t *testing.T) {
+	pos, _ := ParseFEN("r3k3/8/8/8/8/8/8/4K2R w Kq - 0 1")
+	s := "O-O"
+	move, err := ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected := Move{E1, G1, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+
+	pos.Move(move)
+	s = "O-O-O"
+	move, err = ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected = Move{E8, C8, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+}
+
+func TestParseSANMove_Basic(t *testing.T) {
+	pos, _ := ParseFEN("r3k1b1/8/8/8/8/8/8/2N1K2R w Kq - 0 1")
+	s := "nD3"
+	move, err := ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected := Move{C1, D3, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+
+	pos.Move(move)
+	s = "Bh7"
+	move, err = ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected = Move{G8, H7, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+}
+
+func TestParseSANMove_BasicCapture(t *testing.T) {
+	pos, _ := ParseFEN("r3k1b1/5R2/8/8/8/3r4/8/2N1K2R w Kq - 0 1")
+	s := "nxD3"
+	move, err := ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected := Move{C1, D3, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+
+	pos.Move(move)
+	s = "BXf7"
+	move, err = ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected = Move{G8, F7, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+}
+
+func TestParseSANMove_FileDisambiguation(t *testing.T) {
+	pos, _ := ParseFEN("r3k1b1/8/4b3/8/8/8/8/2N1NK1R w Kq - 0 1")
+	s := "ncD3"
+	move, err := ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected := Move{C1, D3, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+
+	pos.Move(move)
+	s = "BGf7"
+	move, err = ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected = Move{G8, F7, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+}
+
+func TestParseSANMove_FileDisambiguationCapture(t *testing.T) {
+	pos, _ := ParseFEN("r3k1b1/5R2/4b3/8/8/3r4/8/2N1NK1R w Kq - 0 1")
+	s := "ncxD3"
+	move, err := ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected := Move{C1, D3, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+
+	pos.Move(move)
+	s = "BGxf7"
+	move, err = ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected = Move{G8, F7, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+}
+
+func TestParseSANMove_RankDisambiguation(t *testing.T) {
+	pos, _ := ParseFEN("r3k1b1/8/6b1/2N5/8/8/8/2N2K1R w Kq - 0 1")
+	s := "n1D3"
+	move, err := ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected := Move{C1, D3, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+
+	pos.Move(move)
+	s = "B8f7"
+	move, err = ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected = Move{G8, F7, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+}
+
+func TestParseSANMove_RankDisambiguationCapture(t *testing.T) {
+	pos, _ := ParseFEN("r3k1b1/5R2/6b1/2N5/8/3p4/8/2N2K1R w Kq - 0 1")
+	s := "n1xD3"
+	move, err := ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected := Move{C1, D3, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+
+	pos.Move(move)
+	s = "B8Xf7"
+	move, err = ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected = Move{G8, F7, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+}
+
+func TestParseSANMove_SquareDisambiguation(t *testing.T) {
+	pos, _ := ParseFEN("r3k1b1/8/4b1b1/2N5/8/8/8/2N1NK1R w Kq - 0 1")
+	s := "nC1D3"
+	move, err := ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected := Move{C1, D3, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+
+	pos.Move(move)
+	s = "BG8f7"
+	move, err = ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected = Move{G8, F7, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+}
+
+func TestParseSANMove_SquareDisambiguationCapture(t *testing.T) {
+	pos, _ := ParseFEN("r3k1b1/5R2/4b1b1/2N5/8/3r4/8/2N1NK1R w Kq - 0 1")
+	s := "nC1xD3"
+	move, err := ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected := Move{C1, D3, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+
+	pos.Move(move)
+	s = "BG8xf7"
+	move, err = ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected = Move{G8, F7, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+}
+
+func TestParseSANMove_SquareDisambiguationCaptureCheck(t *testing.T) {
+	pos, _ := ParseFEN("4K1b1/5R2/4b1b1/2N1k3/8/3r4/8/2N1N3 w - - 0 1")
+	s := "nC1xD3+"
+	move, err := ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected := Move{C1, D3, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+
+	pos.Move(move)
+	s = "BG8xf7+"
+	move, err = ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected = Move{G8, F7, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+}
+
+func TestParseSANMove_SquareDisambiguationCaptureCheckmate(t *testing.T) {
+	pos, _ := ParseFEN("4K1b1/5R2/4b1b1/2N1k3/8/3r4/8/2N1N3 w - - 0 1")
+	s := "nC1xD3#"
+	move, err := ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected := Move{C1, D3, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+
+	pos.Move(move)
+	s = "BG8xf7#"
+	move, err = ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected = Move{G8, F7, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+}
+
+func TestParseSANMove_DisambiguateLetterB(t *testing.T) {
+	pos, _ := ParseFEN("7k/1p1b4/2N5/8/8/8/8/7K b - - 0 1")
+	s := "bxc6"
+	move, err := ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected := Move{B7, C6, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+
+	s = "Bxc6"
+	move, err = ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected = Move{D7, C6, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+}
+
+func TestParseSANMove_DisambiguateMoveThatResultsInCheck(t *testing.T) {
+	pos, _ := ParseFEN("k3r3/8/8/8/8/8/2N1N3/4K3 w - - 0 1")
+	s := "Nd4"
+	move, err := ParseSANMove(s, pos)
+	if err != nil {
+		t.Errorf("got error on %s", s)
+	}
+	expected := Move{C2, D4, NoPieceType}
+	if move != expected {
+		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
+	}
+}

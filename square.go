@@ -15,6 +15,11 @@
 
 package chess
 
+import (
+	"fmt"
+	"strings"
+)
+
 // File is a vertical column of squares as seen on a chess board. The zero value is [NoFile], and the files A-H can be represented.
 type File uint8
 
@@ -198,56 +203,61 @@ var AllSquares = [64]Square{
 	H1, H2, H3, H4, H5, H6, H7, H8,
 }
 
-func parseSquare(s string) Square {
-	square := Square{parseFile(s[0:1]), parseRank(s[1:2])}
+func ParseSquare(s string) (Square, error) {
+	if len(s) != 2 {
+		return NoSquare, fmt.Errorf("could not parse square %q, should have len(s) == 2", s)
+	}
+	f, _ := parseFile(s[0:1])
+	r, _ := parseRank(s[1:2])
+	square := Square{f, r}
 	if square.File == NoFile || square.Rank == NoRank {
-		return NoSquare
+		return NoSquare, fmt.Errorf("could not parse square %q", s)
 	}
-	return square
+	return square, nil
 }
 
-func parseFile(f string) File {
-	switch f {
+func parseFile(f string) (File, error) {
+	switch strings.ToLower(f) {
 	case "a":
-		return FileA
+		return FileA, nil
 	case "b":
-		return FileB
+		return FileB, nil
 	case "c":
-		return FileC
+		return FileC, nil
 	case "d":
-		return FileD
+		return FileD, nil
 	case "e":
-		return FileE
+		return FileE, nil
 	case "f":
-		return FileF
+		return FileF, nil
 	case "g":
-		return FileG
+		return FileG, nil
 	case "h":
-		return FileH
+		return FileH, nil
 	default:
-		return NoFile
+		return NoFile, fmt.Errorf("could not parse file %q", f)
 	}
 }
 
-func parseRank(r string) Rank {
+func parseRank(r string) (Rank, error) {
 	switch r {
 	case "1":
-		return Rank1
+		return Rank1, nil
 	case "2":
-		return Rank2
+		return Rank2, nil
 	case "3":
-		return Rank3
+		return Rank3, nil
 	case "4":
-		return Rank4
+		return Rank4, nil
 	case "5":
-		return Rank5
+		return Rank5, nil
 	case "6":
-		return Rank6
+		return Rank6, nil
 	case "7":
-		return Rank7
+		return Rank7, nil
 	case "8":
-		return Rank8
+		return Rank8, nil
 	default:
-		return NoRank
+		return NoRank, fmt.Errorf("could not parse rank %q", r)
 	}
 }
