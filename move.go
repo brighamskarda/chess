@@ -40,6 +40,158 @@ func (m Move) String() string {
 	return m.FromSquare.String() + m.ToSquare.String() + promotion
 }
 
+// StringSAN provides a move in standard algebraic notation as specified here. https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
+//
+// pos is required to converst a move to SAN. pos should be the position before the move. An empty string is returned if an SAN string could not be generated.
+func (m Move) StringSAN(pos *Position) string {
+	// This is another cry for help, why couldn't the pgn file spec just use UCI notation. This is another set of complex logic that was not necessary.
+	pos = pos.Copy()
+	returnString := ""
+	if pos.Piece(m.FromSquare) == NoPiece {
+		return ""
+	} else if pos.Piece(m.FromSquare).Type == Pawn {
+		returnString = m.pawnStringSAN(pos)
+	} else {
+		returnString = m.normalStringSAN(pos)
+	}
+
+	pos.Move(m)
+	if pos.IsCheck() {
+		if len(LegalMoves(pos)) == 0 {
+			returnString += "#"
+		} else {
+			returnString += "+"
+		}
+	}
+	return returnString
+}
+
+func (m Move) pawnStringSAN(pos *Position) string {
+	returnString := ""
+	if m.FromSquare.File != m.ToSquare.File {
+		returnString += m.FromSquare.File.String() + "x"
+	}
+	returnString += m.ToSquare.String()
+	if m.Promotion != NoPieceType {
+		returnString += "=" + strings.ToUpper(m.Promotion.String())
+	}
+	return returnString
+}
+
+func (m Move) normalStringSAN(pos *Position) string {
+	returnString := ""
+	pieceToMove := pos.Piece(m.FromSquare)
+	returnString += strings.ToUpper(pieceToMove.String())
+	if isFileDisambiguation(m.FromSquare, m.ToSquare, pieceToMove, pos) {
+		returnString += m.FromSquare.File.String()
+	} else if isRankDisambiguation(m.FromSquare, m.ToSquare, pieceToMove, pos) {
+		returnString += m.FromSquare.Rank.String()
+	} else if isSquareDisambiguation(m.ToSquare, pieceToMove, pos) {
+		returnString += m.FromSquare.String()
+	}
+	if pos.Piece(m.ToSquare) != NoPiece {
+		returnString += "x"
+	}
+	returnString += m.ToSquare.String()
+	return returnString
+}
+
+func isFileDisambiguation(fromSquare Square, toSquare Square, pieceToMove Piece, pos *Position) bool {
+	possibleMoves := []Move{}
+	piecesToMove := pos.Bitboard(pieceToMove)
+	for piecesToMove != 0 {
+		singlePiece := 1 << bits.TrailingZeros(uint(piecesToMove))
+		piecesToMove &^= Bitboard(singlePiece)
+		attacks := getPieceAttacks(Bitboard(singlePiece), pieceToMove.Type, pos)
+		if attacks.Square(toSquare) == 1 {
+			fromSquare := indexToSquare(bits.TrailingZeros(uint(singlePiece)))
+			possibleMoves = append(possibleMoves, Move{fromSquare, toSquare, NoPieceType})
+
+		}
+	}
+
+	legalMoves := []Move{}
+	for _, m := range possibleMoves {
+		posCopy := pos.Copy()
+		posCopy.Move(m)
+		posCopy.SideToMove = pos.SideToMove
+		if !posCopy.IsCheck() {
+			legalMoves = append(legalMoves, m)
+		}
+	}
+
+	numMovesFromFile := 0
+
+	for _, m := range legalMoves {
+		if m.FromSquare.File == fromSquare.File {
+			numMovesFromFile++
+		}
+	}
+
+	return numMovesFromFile == 1 && len(legalMoves) > 1
+}
+
+func isRankDisambiguation(fromSquare Square, toSquare Square, pieceToMove Piece, pos *Position) bool {
+	possibleMoves := []Move{}
+	piecesToMove := pos.Bitboard(pieceToMove)
+	for piecesToMove != 0 {
+		singlePiece := 1 << bits.TrailingZeros(uint(piecesToMove))
+		piecesToMove &^= Bitboard(singlePiece)
+		attacks := getPieceAttacks(Bitboard(singlePiece), pieceToMove.Type, pos)
+		if attacks.Square(toSquare) == 1 {
+			fromSquare := indexToSquare(bits.TrailingZeros(uint(singlePiece)))
+			possibleMoves = append(possibleMoves, Move{fromSquare, toSquare, NoPieceType})
+		}
+	}
+
+	legalMoves := []Move{}
+	for _, m := range possibleMoves {
+		posCopy := pos.Copy()
+		posCopy.Move(m)
+		posCopy.SideToMove = pos.SideToMove
+		if !posCopy.IsCheck() {
+			legalMoves = append(legalMoves, m)
+		}
+	}
+
+	numMovesFromRank := 0
+
+	for _, m := range legalMoves {
+		if m.FromSquare.Rank == fromSquare.Rank {
+			numMovesFromRank++
+		}
+	}
+
+	return numMovesFromRank == 1 && len(legalMoves) > 1
+
+}
+
+func isSquareDisambiguation(toSquare Square, pieceToMove Piece, pos *Position) bool {
+	possibleMoves := []Move{}
+	piecesToMove := pos.Bitboard(pieceToMove)
+	for piecesToMove != 0 {
+		singlePiece := 1 << bits.TrailingZeros(uint(piecesToMove))
+		piecesToMove &^= Bitboard(singlePiece)
+		attacks := getPieceAttacks(Bitboard(singlePiece), pieceToMove.Type, pos)
+		if attacks.Square(toSquare) == 1 {
+			fromSquare := indexToSquare(bits.TrailingZeros(uint(singlePiece)))
+			possibleMoves = append(possibleMoves, Move{fromSquare, toSquare, NoPieceType})
+		}
+	}
+
+	legalMoves := []Move{}
+	for _, m := range possibleMoves {
+		posCopy := pos.Copy()
+		posCopy.Move(m)
+		posCopy.SideToMove = pos.SideToMove
+		if !posCopy.IsCheck() {
+			legalMoves = append(legalMoves, m)
+		}
+	}
+
+	return len(legalMoves) > 1
+}
+
 // ParseUCI parses a move string of the form <FromSquare><ToSquare><OptionalPromotion>. (e.g. a2c3 or H2H1q. Returns an error if it could not parse.
 func ParseUCIMove(uci string) (Move, error) {
 	uci = strings.ToLower(uci)
