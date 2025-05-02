@@ -21,6 +21,8 @@ import (
 	"io"
 	"maps"
 	"slices"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -34,12 +36,46 @@ const (
 	Draw
 )
 
+// MarshalText returns "1-0" for [WhiteWins], "0-1" for [BlackWins], "1/2-1/2" for [Draw], and * otherwise. err is always nil.
+func (r Result) MarshalText() (text []byte, err error) {
+	switch r {
+	case WhiteWins:
+		return []byte("1-0"), nil
+	case BlackWins:
+		return []byte("0-1"), nil
+	case Draw:
+		return []byte("1/2-1/2"), nil
+	default:
+		return []byte("*"), nil
+	}
+}
+
+// UnmarshalText sets [WhiteWins] for "1-0", [BlackWins] for "0-1", [Draw] for "1/2-1/2", and [NoResult] for "*". Error is returned if text is not one of these four values.
+func (r *Result) UnmarshalText(text []byte) error {
+	switch string(text) {
+	case "1-0":
+		*r = WhiteWins
+		return nil
+	case "0-1":
+		*r = BlackWins
+		return nil
+	case "1/2-1/2":
+		*r = Draw
+		return nil
+	case "*":
+		*r = NoResult
+		return nil
+	default:
+		return fmt.Errorf("could not parse result %q", text)
+	}
+}
+
 // PgnMove is an expanded move struct used in [Game]. It provides fields for Numeric Annotation Glyphs, commentary and Recursive Annotation Variation (RAV - move variations).
 type PgnMove struct {
 	Move              Move
 	NumericAnnotation uint8
-	Commentary        string
-	// Variations supports multiple variations. Hence it is a 2d slice.
+	Commentary        []string
+	// Variations supports multiple variations. Hence it is a 2d slice. The first move in a variation should replace the current move.
 	Variations [][]PgnMove
 }
 
@@ -48,7 +84,7 @@ func (m PgnMove) Copy() PgnMove {
 	newPgnMove := PgnMove{
 		Move:              m.Move,
 		NumericAnnotation: m.NumericAnnotation,
-		Commentary:        m.Commentary,
+		Commentary:        slices.Clone(m.Commentary),
 		Variations:        make([][]PgnMove, 0, len(m.Variations)),
 	}
 	for _, variation := range m.Variations {
@@ -167,6 +203,8 @@ func NewGameFromFEN(fen string) (*Game, error) {
 func ParsePGN(pgn io.Reader) ([]*Game, error) {
 	// Be sure to not read lines beginning with %. These are comments.
 	// Semicolons are commentary and go to the end of the line.
+
+	// Implement some fuzz testing with this to make sure is always returns error and never panics.
 	return nil, nil
 }
 
@@ -239,7 +277,7 @@ func (g *Game) Move(m Move) error {
 	g.moveHistory = append(g.moveHistory, PgnMove{
 		Move:              m,
 		NumericAnnotation: 0,
-		Commentary:        "",
+		Commentary:        []string{},
 		Variations:        [][]PgnMove{},
 	})
 	g.setResult()
@@ -324,14 +362,21 @@ func (g *Game) AnnotateMove(plyNum int, nag uint8) {
 	g.moveHistory[plyNum].NumericAnnotation = nag
 }
 
-// CommentMove applies a comment to the specified move.
+// CommentMove appends a comment to the specified move.
 //
-// plyNum starts at 0 for the first move. Any previous comment is overwritten.
+// plyNum starts at 0 for the first move.
 func (g *Game) CommentMove(plyNum int, comment string) {
-	g.moveHistory[plyNum].Commentary = comment
+	g.moveHistory[plyNum].Commentary = append(g.moveHistory[plyNum].Commentary, comment)
 }
 
-// MakeVariation adds a set of variation moves to the specified move. Variation moves must be legal.
+// DeleteComment deletes a comment from the specified move.
+//
+// plyNum and commentNum start at 0 for the first move.
+func (g *Game) DeleteComment(plyNum int, commentNum int) {
+	g.moveHistory[0].Commentary = slices.Delete(g.moveHistory[0].Commentary, commentNum, commentNum+1)
+}
+
+// MakeVariation adds a set of variation moves to the specified move. The variation should begin with a move that replaces the current move. Variation moves must be legal.
 //
 // plyNum starts at 0 for the first move. moves is not copied, it is simply added to the variations list for the appropriate pgn move.
 func (g *Game) MakeVariation(plyNum int, moves []PgnMove) {
@@ -384,8 +429,190 @@ func (g *Game) GetVariation(plyNum int, variationNum int) *Game {
 }
 
 // String provides the game as a valid PGN that can be written to a file. Multiple PGNs can be written to the same file. Just be sure to separate them with a new line.
+//
+// The seven tag roster will appear in order, then all other tags will appear in alphabetical order for consistency.
 func (g *Game) String() string {
-	return ""
+	lines := make([]string, 0, 10)
+	g.addTags(&lines)
+	lines = append(lines, "")
+	if g.Commentary != "" {
+		lines = append(lines, fmt.Sprintf("{%s}", g.Commentary))
+	}
+	g.addMoveText(&lines)
+	pgn := strings.Builder{}
+	for i, l := range lines {
+		pgn.WriteString(l)
+		if i != len(lines)-1 {
+			pgn.WriteString("\n")
+		}
+	}
+	return pgn.String()
+}
+
+func (g *Game) addTags(lines *[]string) {
+	*lines = append(*lines, fmt.Sprintf("[Event %q]", g.Event))
+	*lines = append(*lines, fmt.Sprintf("[Site %q]", g.Site))
+	*lines = append(*lines, fmt.Sprintf("[Date %q]", g.Date))
+	*lines = append(*lines, fmt.Sprintf("[Round %q]", g.Round))
+	*lines = append(*lines, fmt.Sprintf("[White %q]", g.White))
+	*lines = append(*lines, fmt.Sprintf("[Black %q]", g.Black))
+	rstStr, err := g.Result.MarshalText()
+	if err != nil {
+		rstStr = []byte("*")
+	}
+	*lines = append(*lines, fmt.Sprintf("[Result %q]", rstStr))
+	g.addOtherTags(lines)
+}
+
+func (g *Game) addOtherTags(lines *[]string) {
+	keys := make([]string, 0, len(g.OtherTags))
+	for k := range g.OtherTags {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+	for _, k := range keys {
+		*lines = append(*lines, fmt.Sprintf("[%s %q]", k, g.OtherTags[k]))
+	}
+}
+
+func (g *Game) addMoveText(lines *[]string) {
+	currPos := g.PositionPly(0)
+	currentLine := strings.Builder{}
+	currentLine.Grow(80)
+
+	includeBlackMoveNum := currPos.SideToMove == Black
+	for _, m := range g.moveHistory {
+		if currPos.SideToMove == White {
+			moveNum := " " + strconv.FormatUint(uint64(currPos.FullMove), 10) + "."
+			appendToPgnLine(moveNum, &currentLine, lines)
+		}
+		if includeBlackMoveNum {
+			moveNum := " " + strconv.FormatUint(uint64(currPos.FullMove), 10) + "..."
+			appendToPgnLine(moveNum, &currentLine, lines)
+		}
+
+		sanMove := " " + m.Move.StringSAN(currPos)
+		nag := nagString(m.NumericAnnotation)
+		if m.NumericAnnotation <= 6 {
+			sanMove += nag
+			appendToPgnLine(sanMove, &currentLine, lines)
+		} else {
+			appendToPgnLine(sanMove, &currentLine, lines)
+			appendToPgnLine(" "+nag, &currentLine, lines)
+		}
+
+		for _, comment := range m.Commentary {
+			cmtStr := fmt.Sprintf(" {%s}", comment)
+			appendToPgnLine(cmtStr, &currentLine, lines)
+		}
+
+		for _, variation := range m.Variations {
+			appendVariation(currPos.Copy(), variation, &currentLine, lines)
+		}
+
+		currPos.Move(m.Move)
+		if (len(m.Commentary) > 0 || len(m.Variations) > 0) && currPos.SideToMove == Black {
+			includeBlackMoveNum = true
+		} else {
+			includeBlackMoveNum = false
+		}
+	}
+	result, _ := g.Result.MarshalText()
+	appendToPgnLine(" "+string(result), &currentLine, lines)
+	*lines = append(*lines, currentLine.String())
+}
+
+// appendToPgnLine appends string s to currentLine. If currentLine would be longer than 80, then it is appended to lines and currentLine is reset to the value of s.
+func appendToPgnLine(s string, currentLine *strings.Builder, lines *[]string) {
+	if len(s)+currentLine.Len() > 80 {
+		*lines = append(*lines, currentLine.String())
+		currentLine.Reset()
+	}
+	if currentLine.Len() == 0 {
+		s = strings.TrimSpace(s)
+	}
+	currentLine.WriteString(s)
+}
+
+func nagString(nag uint8) string {
+	switch nag {
+	case 0:
+		return ""
+	case 1:
+		return "!"
+	case 2:
+		return "?"
+	case 3:
+		return "!!"
+	case 4:
+		return "??"
+	case 5:
+		return "!?"
+	case 6:
+		return "?!"
+	default:
+		return "$" + strconv.FormatUint(uint64(nag), 10)
+	}
+}
+
+func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Builder, lines *[]string) {
+	includeBlackMoveNum := currPos.SideToMove == Black
+	for i, m := range moves {
+		if currPos.SideToMove == White {
+			moveNum := strconv.FormatUint(uint64(currPos.FullMove), 10) + "."
+			if i == 0 {
+				moveNum = "(" + moveNum
+			}
+			moveNum = " " + moveNum
+			appendToPgnLine(moveNum, currentLine, lines)
+		}
+		if includeBlackMoveNum {
+			moveNum := strconv.FormatUint(uint64(currPos.FullMove), 10) + "..."
+			if i == 0 {
+				moveNum = "(" + moveNum
+			}
+			moveNum = " " + moveNum
+			appendToPgnLine(moveNum, currentLine, lines)
+		}
+
+		sanMove := " " + m.Move.StringSAN(currPos)
+		nag := nagString(m.NumericAnnotation)
+		if m.NumericAnnotation <= 6 {
+			sanMove += nag
+			if i == len(moves)-1 && len(m.Commentary) == 0 && len(m.Variations) == 0 {
+				sanMove += ")"
+			}
+			appendToPgnLine(sanMove, currentLine, lines)
+		} else {
+			appendToPgnLine(sanMove, currentLine, lines)
+			if i == len(moves)-1 && len(m.Commentary) == 0 && len(m.Variations) == 0 {
+				nag += ")"
+			}
+			appendToPgnLine(" "+nag, currentLine, lines)
+		}
+
+		for j, comment := range m.Commentary {
+			cmtStr := fmt.Sprintf(" {%s}", comment)
+			if i == len(moves)-1 && j == len(m.Commentary)-1 && len(m.Variations) == 0 {
+				cmtStr += ")"
+			}
+			appendToPgnLine(cmtStr, currentLine, lines)
+		}
+
+		for j, variation := range m.Variations {
+			appendVariation(currPos.Copy(), variation, currentLine, lines)
+			if i == len(moves)-1 && j == len(m.Variations)-1 {
+				appendToPgnLine(")", currentLine, lines)
+			}
+		}
+
+		currPos.Move(m.Move)
+		if (m.NumericAnnotation > 6 || len(m.Commentary) > 0 || len(m.Variations) > 0) && currPos.SideToMove == Black {
+			includeBlackMoveNum = true
+		} else {
+			includeBlackMoveNum = false
+		}
+	}
 }
 
 // ReducedString provides the game as a valid PGN following these rules: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c3.2.4

@@ -240,6 +240,9 @@ func ParseSANMove(san string, pos *Position) (Move, error) {
 	// These characters don't matter for this parsing.
 	san = strings.ReplaceAll(san, "+", "")
 	san = strings.ReplaceAll(san, "#", "")
+	san = strings.ReplaceAll(san, "!", "")
+	san = strings.ReplaceAll(san, "?", "")
+
 	switch classifySANMove(san) {
 	case fileDisambiguation:
 		return parseFileDisambiguation(san, pos)

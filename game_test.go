@@ -51,19 +51,19 @@ func TestPgnMoveCopy(t *testing.T) {
 	myPgnMove := PgnMove{
 		Move:              Move{A1, B1, NoPieceType},
 		NumericAnnotation: 255,
-		Commentary:        "my comment",
+		Commentary:        []string{"my comment"},
 		Variations: [][]PgnMove{
 			[]PgnMove{
 				PgnMove{
 					Move:              Move{},
 					NumericAnnotation: 0,
-					Commentary:        "",
+					Commentary:        []string{},
 					Variations: [][]PgnMove{
 						[]PgnMove{
 							PgnMove{
 								Move:              Move{},
 								NumericAnnotation: 0,
-								Commentary:        "",
+								Commentary:        []string{},
 								Variations:        [][]PgnMove{},
 							},
 						},
@@ -74,7 +74,7 @@ func TestPgnMoveCopy(t *testing.T) {
 				PgnMove{
 					Move:              Move{},
 					NumericAnnotation: 0,
-					Commentary:        "",
+					Commentary:        []string{},
 					Variations:        [][]PgnMove{},
 				},
 			},
@@ -296,10 +296,10 @@ func TestCommentMove(t *testing.T) {
 	g.CommentMove(0, "comment 1")
 	g.CommentMove(1, "comment 2")
 	moveHistory := g.MoveHistory()
-	if moveHistory[0].Commentary != "comment 1" {
+	if moveHistory[0].Commentary[0] != "comment 1" {
 		t.Errorf("for move 0 got %q", moveHistory[0].Commentary)
 	}
-	if moveHistory[1].Commentary != "comment 2" {
+	if moveHistory[1].Commentary[0] != "comment 2" {
 		t.Errorf("for move 1 got %q", moveHistory[1].Commentary)
 	}
 }
@@ -312,12 +312,12 @@ func makeGameWithVariation() *Game {
 	g.MakeVariation(1, []PgnMove{{
 		Move:              Move{B8, C6, NoPieceType},
 		NumericAnnotation: 0,
-		Commentary:        "",
+		Commentary:        []string{},
 		Variations:        [][]PgnMove{},
 	}, {
 		Move:              Move{D2, D4, NoPieceType},
 		NumericAnnotation: 0,
-		Commentary:        "",
+		Commentary:        []string{},
 		Variations:        [][]PgnMove{},
 	}})
 	return g
@@ -348,19 +348,19 @@ func TestGetVariation(t *testing.T) {
 	g.MakeVariation(1, []PgnMove{{
 		Move:              Move{G8, F6, NoPieceType},
 		NumericAnnotation: 0,
-		Commentary:        "",
+		Commentary:        []string{},
 		Variations:        [][]PgnMove{},
 	}, {
 		Move:              Move{D2, D4, NoPieceType},
 		NumericAnnotation: 0,
-		Commentary:        "",
+		Commentary:        []string{},
 		Variations:        [][]PgnMove{},
 	}})
 
 	g.MakeVariation(0, []PgnMove{{
 		Move:              Move{H2, H4, NoPieceType},
 		NumericAnnotation: 0,
-		Commentary:        "",
+		Commentary:        []string{},
 		Variations:        [][]PgnMove{},
 	}})
 
@@ -386,3 +386,193 @@ func TestGetVariation(t *testing.T) {
 		t.Errorf("move 0 variation not preserved")
 	}
 }
+
+func TestGameString(t *testing.T) {
+	g := NewGame()
+	moves := []string{
+		"d4",
+		"e6",
+		"e4",
+		"d5",
+		"exd5",
+		"exd5",
+		"Nf3",
+		"Nf6",
+		"Ne5",
+		"Qe7",
+		"f4",
+		"Bg4",
+		"Be2",
+		"Bd7",
+		"g4",
+		"Ne4",
+		"c4",
+		"Qh4+",
+		"Kf1",
+		"Qf2#",
+	}
+
+	for _, m := range moves {
+		g.MoveSAN(m)
+	}
+
+	g.Commentary = "Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20"
+	g.AnnotateMove(4, 2)
+	g.AnnotateMove(5, 10)
+	g.CommentMove(19, "Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.")
+	g.MakeVariation(2, []PgnMove{
+		PgnMove{
+			Move:              Move{F2, F4, NoPieceType},
+			NumericAnnotation: 0,
+			Commentary:        []string{},
+			Variations:        [][]PgnMove{},
+		},
+		PgnMove{
+			Move:              Move{G7, G5, NoPieceType},
+			NumericAnnotation: 0,
+			Commentary:        []string{"Another variation here", "another comment here"},
+			Variations: [][]PgnMove{[]PgnMove{PgnMove{
+				Move:              Move{H7, H5, NoPieceType},
+				NumericAnnotation: 1,
+				Commentary:        []string{},
+				Variations:        [][]PgnMove{},
+			}}},
+		},
+		PgnMove{
+			Move:              Move{H2, H4, NoPieceType},
+			NumericAnnotation: 0,
+			Commentary:        []string{},
+			Variations:        [][]PgnMove{},
+		},
+	})
+	g.MakeVariation(2, []PgnMove{
+		PgnMove{
+			Move:              Move{A2, A4, NoPieceType},
+			NumericAnnotation: 0,
+			Commentary:        []string{},
+			Variations:        [][]PgnMove{},
+		},
+	})
+	g.Date = "2025.04.09"
+	g.OtherTags["WhiteElo"] = "1090"
+
+	expected := `[Event "?"]
+[Site "https://github.com/brighamskarda/chess"]
+[Date "2025.04.09"]
+[Round "1"]
+[White "?"]
+[Black "?"]
+[Result "0-1"]
+[WhiteElo "1090"]
+
+{Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20}
+1. d4 e6 2. e4 (2. f4 g5 {Another variation here} {another comment here} (2...
+h5!) 3. h4) (2. a4) 2... d5 3. exd5? exd5 $10 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7.
+Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
+{Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.}
+0-1`
+	actual := g.String()
+	if actual != expected {
+		t.Errorf(`incorrect result: expected 
+"""
+%s
+"""
+
+got 
+"""
+%s
+"""`, expected, actual)
+	}
+}
+
+func TestGameString_AltStart(t *testing.T) {
+	g, _ := NewGameFromFEN("r2q3r/ppp3pp/2n1Nnk1/4p3/2Q5/B7/P4PPP/RN3RK1 b - - 0 16")
+	moves := []string{
+		"Qd3",
+		"Qg4+",
+		"Kf7",
+	}
+
+	for _, m := range moves {
+		if g.MoveSAN(m) != nil {
+			t.Fail()
+		}
+	}
+	g.Date = "2025.04.09"
+	g.OtherTags["WhiteElo"] = "1090"
+
+	expected := `[Event "?"]
+[Site "https://github.com/brighamskarda/chess"]
+[Date "2025.04.09"]
+[Round "1"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[FEN "r2q3r/ppp3pp/2n1Nnk1/4p3/2Q5/B7/P4PPP/RN3RK1 b - - 0 16"]
+[SetUp "1"]
+[WhiteElo "1090"]
+
+16... Qd3 17. Qg4+ Kf7 *`
+	actual := g.String()
+	if actual != expected {
+		t.Errorf(`incorrect result: expected 
+"""
+%s
+"""
+
+got 
+"""
+%s
+"""`, expected, actual)
+	}
+}
+
+func TestGameString_NumericAnnotationGlyphs(t *testing.T) {
+	g := NewGame()
+	moves := []string{
+		"d4",
+		"e6",
+		"e4",
+		"d5",
+		"exd5",
+		"exd5",
+		"Nf3",
+	}
+
+	for _, m := range moves {
+		g.MoveSAN(m)
+	}
+
+	g.AnnotateMove(1, 1)
+	g.AnnotateMove(2, 2)
+	g.AnnotateMove(3, 3)
+	g.AnnotateMove(4, 4)
+	g.AnnotateMove(5, 5)
+	g.AnnotateMove(6, 6)
+
+	g.Date = "2025.04.09"
+
+	expected := `[Event "?"]
+[Site "https://github.com/brighamskarda/chess"]
+[Date "2025.04.09"]
+[Round "1"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+
+1. d4 e6! 2. e4? d5!! 3. exd5?? exd5!? 4. Nf3?! *`
+	actual := g.String()
+	if actual != expected {
+		t.Errorf(`incorrect result: expected 
+"""
+%s
+"""
+
+got 
+"""
+%s
+"""`, expected, actual)
+	}
+}
+
+// TODO make game and position use marshal and unmarshal
