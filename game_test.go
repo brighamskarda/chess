@@ -625,3 +625,188 @@ got
 """`, expected, actual)
 	}
 }
+
+func TestGameReducedString(t *testing.T) {
+	g := NewGame()
+	moves := []string{
+		"d4",
+		"e6",
+		"e4",
+		"d5",
+		"exd5",
+		"exd5",
+		"Nf3",
+		"Nf6",
+		"Ne5",
+		"Qe7",
+		"f4",
+		"Bg4",
+		"Be2",
+		"Bd7",
+		"g4",
+		"Ne4",
+		"c4",
+		"Qh4+",
+		"Kf1",
+		"Qf2#",
+	}
+
+	for _, m := range moves {
+		g.MoveSAN(m)
+	}
+
+	g.Commentary = "Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20"
+	g.AnnotateMove(4, 2)
+	g.AnnotateMove(5, 10)
+	g.CommentMove(19, "Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.")
+	g.MakeVariation(2, []PgnMove{
+		PgnMove{
+			Move:              Move{F2, F4, NoPieceType},
+			NumericAnnotation: 0,
+			Commentary:        []string{},
+			Variations:        [][]PgnMove{},
+		},
+		PgnMove{
+			Move:              Move{G7, G5, NoPieceType},
+			NumericAnnotation: 0,
+			Commentary:        []string{"Another variation here", "another comment here"},
+			Variations: [][]PgnMove{[]PgnMove{PgnMove{
+				Move:              Move{H7, H5, NoPieceType},
+				NumericAnnotation: 1,
+				Commentary:        []string{},
+				Variations:        [][]PgnMove{},
+			}}},
+		},
+		PgnMove{
+			Move:              Move{H2, H4, NoPieceType},
+			NumericAnnotation: 0,
+			Commentary:        []string{},
+			Variations:        [][]PgnMove{},
+		},
+	})
+	g.MakeVariation(2, []PgnMove{
+		PgnMove{
+			Move:              Move{A2, A4, NoPieceType},
+			NumericAnnotation: 0,
+			Commentary:        []string{},
+			Variations:        [][]PgnMove{},
+		},
+	})
+	g.Date = "2025.04.09"
+	g.OtherTags["WhiteElo"] = "1090"
+
+	expected := `[Event "?"]
+[Site "https://github.com/brighamskarda/chess"]
+[Date "2025.04.09"]
+[Round "1"]
+[White "?"]
+[Black "?"]
+[Result "0-1"]
+
+1. d4 e6 2. e4 d5 3. exd5 exd5 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7. Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2# 0-1`
+	actual := g.ReducedString()
+	if actual != expected {
+		t.Errorf(`incorrect result: expected 
+"""
+%s
+"""
+
+got 
+"""
+%s
+"""`, expected, actual)
+	}
+}
+
+func TestGameReducedString_AltStart(t *testing.T) {
+	g, _ := NewGameFromFEN("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/1NBQKBNR b Kkq - 0 1")
+	moves := []string{
+		"e6",
+		"e4",
+		"d5",
+		"exd5",
+		"exd5",
+		"Nf3",
+		"Nf6",
+		"Ne5",
+		"Qe7",
+		"f4",
+		"Bg4",
+		"Be2",
+		"Bd7",
+		"g4",
+		"Ne4",
+		"c4",
+		"Qh4+",
+		"Kf1",
+		"Qf2#",
+	}
+
+	for _, m := range moves {
+		g.MoveSAN(m)
+	}
+
+	g.Commentary = "Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20"
+	g.AnnotateMove(3, 2)
+	g.AnnotateMove(4, 10)
+	g.CommentMove(18, "Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.")
+	g.MakeVariation(1, []PgnMove{
+		PgnMove{
+			Move:              Move{F2, F4, NoPieceType},
+			NumericAnnotation: 0,
+			Commentary:        []string{},
+			Variations:        [][]PgnMove{},
+		},
+		PgnMove{
+			Move:              Move{G7, G5, NoPieceType},
+			NumericAnnotation: 0,
+			Commentary:        []string{"Another variation here", "another comment here"},
+			Variations: [][]PgnMove{[]PgnMove{PgnMove{
+				Move:              Move{H7, H5, NoPieceType},
+				NumericAnnotation: 1,
+				Commentary:        []string{},
+				Variations:        [][]PgnMove{},
+			}}},
+		},
+		PgnMove{
+			Move:              Move{H2, H4, NoPieceType},
+			NumericAnnotation: 0,
+			Commentary:        []string{},
+			Variations:        [][]PgnMove{},
+		},
+	})
+	g.MakeVariation(1, []PgnMove{
+		PgnMove{
+			Move:              Move{A2, A4, NoPieceType},
+			NumericAnnotation: 0,
+			Commentary:        []string{},
+			Variations:        [][]PgnMove{},
+		},
+	})
+	g.Date = "2025.04.09"
+	g.OtherTags["WhiteElo"] = "1090"
+
+	expected := `[Event "?"]
+[Site "https://github.com/brighamskarda/chess"]
+[Date "2025.04.09"]
+[Round "1"]
+[White "?"]
+[Black "?"]
+[Result "0-1"]
+[FEN "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/1NBQKBNR b Kkq - 0 1"]
+[SetUp "1"]
+
+1... e6 2. e4 d5 3. exd5 exd5 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7. Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2# 0-1`
+	actual := g.ReducedString()
+	if actual != expected {
+		t.Errorf(`incorrect result: expected 
+"""
+%s
+"""
+
+got 
+"""
+%s
+"""`, expected, actual)
+	}
+}

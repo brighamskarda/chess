@@ -478,6 +478,24 @@ func (g *Game) addTags(lines *[]string) {
 	g.addOtherTags(lines)
 }
 
+func (g *Game) addReducedTags(lines *[]string) {
+	*lines = append(*lines, fmt.Sprintf("[Event %q]", g.Event))
+	*lines = append(*lines, fmt.Sprintf("[Site %q]", g.Site))
+	*lines = append(*lines, fmt.Sprintf("[Date %q]", g.Date))
+	*lines = append(*lines, fmt.Sprintf("[Round %q]", g.Round))
+	*lines = append(*lines, fmt.Sprintf("[White %q]", g.White))
+	*lines = append(*lines, fmt.Sprintf("[Black %q]", g.Black))
+	rstStr, err := g.Result.MarshalText()
+	if err != nil {
+		rstStr = []byte("*")
+	}
+	*lines = append(*lines, fmt.Sprintf("[Result %q]", rstStr))
+	if g.OtherTags["SetUp"] == "1" {
+		*lines = append(*lines, fmt.Sprintf("[FEN %q]", g.OtherTags["FEN"]))
+		*lines = append(*lines, fmt.Sprintf("[SetUp %q]", g.OtherTags["SetUp"]))
+	}
+}
+
 func (g *Game) addOtherTags(lines *[]string) {
 	keys := make([]string, 0, len(g.OtherTags))
 	for k := range g.OtherTags {
@@ -534,6 +552,31 @@ func (g *Game) addMoveText(lines *[]string) {
 	result, _ := g.Result.MarshalText()
 	appendToPgnLine(" "+string(result), &currentLine, lines)
 	*lines = append(*lines, currentLine.String())
+}
+
+func (g *Game) addReducedMoveText(lines *[]string) {
+	currPos := g.PositionPly(0)
+	currentLine := strings.Builder{}
+	currentLine.Grow(80)
+
+	includeBlackMoveNum := currPos.SideToMove == Black
+	for _, m := range g.moveHistory {
+		if currPos.SideToMove == White {
+			moveNum := " " + strconv.FormatUint(uint64(currPos.FullMove), 10) + "."
+			currentLine.WriteString(moveNum)
+		}
+		if includeBlackMoveNum {
+			moveNum := " " + strconv.FormatUint(uint64(currPos.FullMove), 10) + "..."
+			currentLine.WriteString(moveNum)
+			includeBlackMoveNum = false
+		}
+		sanMove := " " + m.Move.StringSAN(currPos)
+		currentLine.WriteString(sanMove)
+		currPos.Move(m.Move)
+	}
+	result, _ := g.Result.MarshalText()
+	currentLine.WriteString(" " + string(result))
+	*lines = append(*lines, strings.TrimSpace(currentLine.String()))
 }
 
 // appendToPgnLine appends string s to currentLine. If currentLine would be longer than 80, then it is appended to lines and currentLine is reset to the value of s.
@@ -630,6 +673,19 @@ func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Bu
 }
 
 // ReducedString provides the game as a valid PGN following these rules: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c3.2.4
+//
+// It essentially removes all unnecessary information from the PGN, useful for archival purposes.
 func (g *Game) ReducedString() string {
-	return ""
+	lines := make([]string, 0, 10)
+	g.addReducedTags(&lines)
+	lines = append(lines, "")
+	g.addReducedMoveText(&lines)
+	pgn := strings.Builder{}
+	for i, l := range lines {
+		pgn.WriteString(l)
+		if i != len(lines)-1 {
+			pgn.WriteString("\n")
+		}
+	}
+	return pgn.String()
 }
