@@ -33,7 +33,8 @@ func TestMoveString(t *testing.T) {
 }
 
 func TestMoveStringSAN_basicPawnMove(t *testing.T) {
-	pos, _ := ParseFEN(DefaultFEN)
+	pos := &Position{}
+	pos.UnmarshalText([]byte(DefaultFEN))
 	m := Move{E2, E4, NoPieceType}
 	actual := m.StringSAN(pos)
 	expected := "e4"
@@ -51,7 +52,8 @@ func TestMoveStringSAN_basicPawnMove(t *testing.T) {
 }
 
 func TestMoveStringSAN_pawnCapture(t *testing.T) {
-	pos, _ := ParseFEN("rnbqkbnr/ppp1p1pp/8/3p4/4PpP1/8/PPPP1P1P/RNBQKBNR b KQkq g3 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("rnbqkbnr/ppp1p1pp/8/3p4/4PpP1/8/PPPP1P1P/RNBQKBNR b KQkq g3 0 1"))
 	m := Move{F4, G3, NoPieceType}
 	actual := m.StringSAN(pos)
 	expected := "fxg3"
@@ -69,7 +71,8 @@ func TestMoveStringSAN_pawnCapture(t *testing.T) {
 }
 
 func TestMoveStringSAN_pawnPromotion(t *testing.T) {
-	pos, _ := ParseFEN("rnbqkbnr/pPpppp1p/8/8/8/8/PPPPP1pP/RNBQKB1R w KQkq - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("rnbqkbnr/pPpppp1p/8/8/8/8/PPPPP1pP/RNBQKB1R w KQkq - 0 1"))
 	m := Move{B7, A8, Knight}
 	actual := m.StringSAN(pos)
 	expected := "bxa8=N"
@@ -87,7 +90,8 @@ func TestMoveStringSAN_pawnPromotion(t *testing.T) {
 }
 
 func TestMoveStringSAN_BasicMove(t *testing.T) {
-	pos, _ := ParseFEN("rnbqkbnr/1Pp1pp1p/8/8/8/4P3/PPPP2pP/RNBQKB1R w KQkq - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("rnbqkbnr/1Pp1pp1p/8/8/8/4P3/PPPP2pP/RNBQKB1R w KQkq - 0 1"))
 	m := Move{F1, D3, NoPieceType}
 	actual := m.StringSAN(pos)
 	expected := "Bd3"
@@ -105,7 +109,8 @@ func TestMoveStringSAN_BasicMove(t *testing.T) {
 }
 
 func TestMoveStringSAN_BasicCapture(t *testing.T) {
-	pos, _ := ParseFEN("rnbqkbnr/1Pp1pp1p/8/8/8/4P3/PPPP2pP/RNBQKB1R w KQkq - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("rnbqkbnr/1Pp1pp1p/8/8/8/4P3/PPPP2pP/RNBQKB1R w KQkq - 0 1"))
 	m := Move{F1, G2, NoPieceType}
 	actual := m.StringSAN(pos)
 	expected := "Bxg2"
@@ -123,7 +128,8 @@ func TestMoveStringSAN_BasicCapture(t *testing.T) {
 }
 
 func TestMoveStringSAN_FileDisambiguation(t *testing.T) {
-	pos, _ := ParseFEN("rnbqkbnr/1Pp1pp1p/Pr6/3N4/8/4P3/1PPP2pP/RNBQKB1R w KQkq - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("rnbqkbnr/1Pp1pp1p/Pr6/3N4/8/4P3/1PPP2pP/RNBQKB1R w KQkq - 0 1"))
 	m := Move{D5, C3, NoPieceType}
 	actual := m.StringSAN(pos)
 	expected := "Ndc3"
@@ -141,7 +147,8 @@ func TestMoveStringSAN_FileDisambiguation(t *testing.T) {
 }
 
 func TestMoveStringSAN_RankDisambiguation(t *testing.T) {
-	pos, _ := ParseFEN("rnbqkbnr/1Pp1pp1p/P7/8/r2N4/4P3/1PPN2pP/R1BQKB1R w KQkq - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("rnbqkbnr/1Pp1pp1p/P7/8/r2N4/4P3/1PPN2pP/R1BQKB1R w KQkq - 0 1"))
 	m := Move{D4, B3, NoPieceType}
 	actual := m.StringSAN(pos)
 	expected := "N4b3"
@@ -159,7 +166,8 @@ func TestMoveStringSAN_RankDisambiguation(t *testing.T) {
 }
 
 func TestMoveStringSAN_SquareDisambiguation(t *testing.T) {
-	pos, _ := ParseFEN("qnb1kbnr/1Pp1pp1p/P1q5/8/qBqB4/4P3/1BPB2pP/R1BQKB1R w KQk - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("qnb1kbnr/1Pp1pp1p/P1q5/8/qBqB4/4P3/1BPB2pP/R1BQKB1R w KQk - 0 1"))
 	m := Move{D2, C3, NoPieceType}
 	actual := m.StringSAN(pos)
 	expected := "Bd2c3"
@@ -179,7 +187,8 @@ func TestMoveStringSAN_SquareDisambiguation(t *testing.T) {
 // No disambiguation needed due to check.
 func TestMoveStringSAN_NoDisambiguation(t *testing.T) {
 	// This test is a great example of the stupidity of SAN
-	pos, _ := ParseFEN("3k4/3n1n2/8/8/8/8/3R4/3K4 b - - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("3k4/3n1n2/8/8/8/8/3R4/3K4 b - - 0 1"))
 	m := Move{F7, F5, NoPieceType}
 	actual := m.StringSAN(pos)
 	expected := "Nf5"
@@ -189,7 +198,8 @@ func TestMoveStringSAN_NoDisambiguation(t *testing.T) {
 }
 
 func TestMoveStringSAN_CheckSymbol(t *testing.T) {
-	pos, _ := ParseFEN("3k4/8/8/8/8/3b4/8/3K4 b - - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("3k4/8/8/8/8/3b4/8/3K4 b - - 0 1"))
 	m := Move{D3, E2, NoPieceType}
 	actual := m.StringSAN(pos)
 	expected := "Be2+"
@@ -199,7 +209,8 @@ func TestMoveStringSAN_CheckSymbol(t *testing.T) {
 }
 
 func TestMoveStringSAN_CheckmateSymbol(t *testing.T) {
-	pos, _ := ParseFEN("8/8/8/3p4/8/1K2PN2/p3Q3/7k w - - 0 74")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("8/8/8/3p4/8/1K2PN2/p3Q3/7k w - - 0 74"))
 	m := Move{E2, H2, NoPieceType}
 	actual := m.StringSAN(pos)
 	expected := "Qh2#"
@@ -236,7 +247,8 @@ func TestParseUCIMoveErr(t *testing.T) {
 }
 
 func TestParseSANMove_PawnMove(t *testing.T) {
-	pos, _ := ParseFEN(DefaultFEN)
+	pos := &Position{}
+	pos.UnmarshalText([]byte(DefaultFEN))
 	move, err := ParseSANMove("e4", pos)
 	if err != nil {
 		t.Errorf("got error on e4")
@@ -258,7 +270,8 @@ func TestParseSANMove_PawnMove(t *testing.T) {
 }
 
 func TestParseSANMove_PawnPromotion(t *testing.T) {
-	pos, _ := ParseFEN("8/1P2k3/8/8/8/8/4K1p1/8 w - - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("8/1P2k3/8/8/8/8/4K1p1/8 w - - 0 1"))
 	move, err := ParseSANMove("b8=q", pos)
 	if err != nil {
 		t.Errorf("got error on b8=q")
@@ -280,7 +293,8 @@ func TestParseSANMove_PawnPromotion(t *testing.T) {
 }
 
 func TestParseSANMove_PawnCapture(t *testing.T) {
-	pos, _ := ParseFEN("8/4k3/2r5/1P6/5Pp1/8/3K4/8 b - f3 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("8/4k3/2r5/1P6/5Pp1/8/3K4/8 b - f3 0 1"))
 	s := "gxf3"
 	move, err := ParseSANMove(s, pos)
 	if err != nil {
@@ -304,7 +318,8 @@ func TestParseSANMove_PawnCapture(t *testing.T) {
 }
 
 func TestParseSANMove_Castle(t *testing.T) {
-	pos, _ := ParseFEN("r3k3/8/8/8/8/8/8/4K2R w Kq - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("r3k3/8/8/8/8/8/8/4K2R w Kq - 0 1"))
 	s := "O-O"
 	move, err := ParseSANMove(s, pos)
 	if err != nil {
@@ -328,7 +343,8 @@ func TestParseSANMove_Castle(t *testing.T) {
 }
 
 func TestParseSANMove_Basic(t *testing.T) {
-	pos, _ := ParseFEN("r3k1b1/8/8/8/8/8/8/2N1K2R w Kq - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("r3k1b1/8/8/8/8/8/8/2N1K2R w Kq - 0 1"))
 	s := "nD3"
 	move, err := ParseSANMove(s, pos)
 	if err != nil {
@@ -352,7 +368,8 @@ func TestParseSANMove_Basic(t *testing.T) {
 }
 
 func TestParseSANMove_BasicCapture(t *testing.T) {
-	pos, _ := ParseFEN("r3k1b1/5R2/8/8/8/3r4/8/2N1K2R w Kq - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("r3k1b1/5R2/8/8/8/3r4/8/2N1K2R w Kq - 0 1"))
 	s := "nxD3"
 	move, err := ParseSANMove(s, pos)
 	if err != nil {
@@ -376,7 +393,8 @@ func TestParseSANMove_BasicCapture(t *testing.T) {
 }
 
 func TestParseSANMove_FileDisambiguation(t *testing.T) {
-	pos, _ := ParseFEN("r3k1b1/8/4b3/8/8/8/8/2N1NK1R w Kq - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("r3k1b1/8/4b3/8/8/8/8/2N1NK1R w Kq - 0 1"))
 	s := "ncD3"
 	move, err := ParseSANMove(s, pos)
 	if err != nil {
@@ -400,7 +418,8 @@ func TestParseSANMove_FileDisambiguation(t *testing.T) {
 }
 
 func TestParseSANMove_FileDisambiguationCapture(t *testing.T) {
-	pos, _ := ParseFEN("r3k1b1/5R2/4b3/8/8/3r4/8/2N1NK1R w Kq - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("r3k1b1/5R2/4b3/8/8/3r4/8/2N1NK1R w Kq - 0 1"))
 	s := "ncxD3"
 	move, err := ParseSANMove(s, pos)
 	if err != nil {
@@ -424,7 +443,8 @@ func TestParseSANMove_FileDisambiguationCapture(t *testing.T) {
 }
 
 func TestParseSANMove_RankDisambiguation(t *testing.T) {
-	pos, _ := ParseFEN("r3k1b1/8/6b1/2N5/8/8/8/2N2K1R w Kq - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("r3k1b1/8/6b1/2N5/8/8/8/2N2K1R w Kq - 0 1"))
 	s := "n1D3"
 	move, err := ParseSANMove(s, pos)
 	if err != nil {
@@ -448,7 +468,8 @@ func TestParseSANMove_RankDisambiguation(t *testing.T) {
 }
 
 func TestParseSANMove_RankDisambiguationCapture(t *testing.T) {
-	pos, _ := ParseFEN("r3k1b1/5R2/6b1/2N5/8/3p4/8/2N2K1R w Kq - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("r3k1b1/5R2/6b1/2N5/8/3p4/8/2N2K1R w Kq - 0 1"))
 	s := "n1xD3"
 	move, err := ParseSANMove(s, pos)
 	if err != nil {
@@ -472,7 +493,8 @@ func TestParseSANMove_RankDisambiguationCapture(t *testing.T) {
 }
 
 func TestParseSANMove_SquareDisambiguation(t *testing.T) {
-	pos, _ := ParseFEN("r3k1b1/8/4b1b1/2N5/8/8/8/2N1NK1R w Kq - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("r3k1b1/8/4b1b1/2N5/8/8/8/2N1NK1R w Kq - 0 1"))
 	s := "nC1D3"
 	move, err := ParseSANMove(s, pos)
 	if err != nil {
@@ -496,7 +518,8 @@ func TestParseSANMove_SquareDisambiguation(t *testing.T) {
 }
 
 func TestParseSANMove_SquareDisambiguationCapture(t *testing.T) {
-	pos, _ := ParseFEN("r3k1b1/5R2/4b1b1/2N5/8/3r4/8/2N1NK1R w Kq - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("r3k1b1/5R2/4b1b1/2N5/8/3r4/8/2N1NK1R w Kq - 0 1"))
 	s := "nC1xD3"
 	move, err := ParseSANMove(s, pos)
 	if err != nil {
@@ -520,7 +543,8 @@ func TestParseSANMove_SquareDisambiguationCapture(t *testing.T) {
 }
 
 func TestParseSANMove_SquareDisambiguationCaptureCheck(t *testing.T) {
-	pos, _ := ParseFEN("4K1b1/5R2/4b1b1/2N1k3/8/3r4/8/2N1N3 w - - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("4K1b1/5R2/4b1b1/2N1k3/8/3r4/8/2N1N3 w - - 0 1"))
 	s := "nC1xD3+"
 	move, err := ParseSANMove(s, pos)
 	if err != nil {
@@ -544,7 +568,8 @@ func TestParseSANMove_SquareDisambiguationCaptureCheck(t *testing.T) {
 }
 
 func TestParseSANMove_SquareDisambiguationCaptureCheckmate(t *testing.T) {
-	pos, _ := ParseFEN("4K1b1/5R2/4b1b1/2N1k3/8/3r4/8/2N1N3 w - - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("4K1b1/5R2/4b1b1/2N1k3/8/3r4/8/2N1N3 w - - 0 1"))
 	s := "nC1xD3#"
 	move, err := ParseSANMove(s, pos)
 	if err != nil {
@@ -568,7 +593,8 @@ func TestParseSANMove_SquareDisambiguationCaptureCheckmate(t *testing.T) {
 }
 
 func TestParseSANMove_DisambiguateLetterB(t *testing.T) {
-	pos, _ := ParseFEN("7k/1p1b4/2N5/8/8/8/8/7K b - - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("7k/1p1b4/2N5/8/8/8/8/7K b - - 0 1"))
 	s := "bxc6"
 	move, err := ParseSANMove(s, pos)
 	if err != nil {
@@ -591,7 +617,8 @@ func TestParseSANMove_DisambiguateLetterB(t *testing.T) {
 }
 
 func TestParseSANMove_DisambiguateMoveThatResultsInCheck(t *testing.T) {
-	pos, _ := ParseFEN("k3r3/8/8/8/8/8/2N1N3/4K3 w - - 0 1")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("k3r3/8/8/8/8/8/2N1N3/4K3 w - - 0 1"))
 	s := "Nd4"
 	move, err := ParseSANMove(s, pos)
 	if err != nil {

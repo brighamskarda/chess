@@ -28,7 +28,8 @@ const DefaultFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 //
 // The zero value is usable, though not very useful. You likely will want to use the following instead:
 //
-//	chess.ParseFEN(DefaultFEN)
+//	pos := &Position{}
+//	pos.UnmarshalText([]byte(DefaultFEN))
 type Position struct {
 	whitePawns   Bitboard
 	whiteRooks   Bitboard
@@ -90,38 +91,39 @@ func (pos *Position) Equal(other *Position) bool {
 		pos.EnPassant == other.EnPassant
 }
 
-// ParseFEN returns an error if it could not parse an FEN. It was likely malformed or missing important pieces.
-func ParseFEN(fen string) (*Position, error) {
-	words := strings.Fields(fen)
+// UnmarshalText implements [encoding.TextUnmarshaler]. It returns an error if it could not parse an FEN. It was likely malformed or missing important pieces.
+func (p *Position) UnmarshalText(fen []byte) error {
+	words := strings.Fields(string(fen))
 	if len(words) != 6 {
-		return nil, fmt.Errorf("fen %q could not be parsed: fen should contain 6 distinct sections", fen)
+		return fmt.Errorf("fen %q could not be parsed: fen should contain 6 distinct sections", fen)
 	}
 	pos := &Position{}
 	err := pos.parseFenBody(words[0])
 	if err != nil {
-		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
 	err = pos.parseSideToMove(words[1])
 	if err != nil {
-		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
 	err = pos.parseCastleRights(words[2])
 	if err != nil {
-		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
 	err = pos.parseEnPassant(words[3])
 	if err != nil {
-		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
 	err = pos.parseHalfMove(words[4])
 	if err != nil {
-		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
 	err = pos.parseFullMove(words[5])
 	if err != nil {
-		return nil, fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
-	return pos, nil
+	*p = *pos
+	return nil
 }
 
 func (pos *Position) parseFenBody(body string) error {
@@ -225,7 +227,12 @@ func (pos *Position) parseFullMove(fullMove string) error {
 	return nil
 }
 
-// String generates an FEN string for the current position. See [Position.PrettyString] for getting a board like representation.
+// MarshalText implements [encoding.TextMarshaler]. It provides the FEN representation of the board and err is always nil.
+func (pos *Position) MarshalText() (text []byte, err error) {
+	return []byte(pos.String()), nil
+}
+
+// String calls [pos.MarshalText]. See [Position.PrettyString] for getting a board like representation.
 func (pos *Position) String() string {
 	fen := ""
 	fen += pos.boardString() + " "

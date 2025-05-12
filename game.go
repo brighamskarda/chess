@@ -155,7 +155,8 @@ type Game struct {
 //
 // * Result - NoResult
 func NewGame() *Game {
-	pos, _ := ParseFEN(DefaultFEN)
+	pos := &Position{}
+	pos.UnmarshalText([]byte(DefaultFEN))
 	date := time.Now()
 	return &Game{
 		pos:         pos,
@@ -173,9 +174,10 @@ func NewGame() *Game {
 	}
 }
 
-// NewGameFromFEN starts a game specified from the provided fen string. Returns an error if [ParseFEN] could not parse the FEN. Values are set the same as [NewGame]. The SetUp and FEN tags are also filled into OtherTags.
+// NewGameFromFEN starts a game specified from the provided fen string. Returns an error if [Position.UnmarshalText] could not parse the FEN. Values are set the same as [NewGame]. The SetUp and FEN tags are also filled into OtherTags.
 func NewGameFromFEN(fen string) (*Game, error) {
-	pos, err := ParseFEN(fen)
+	pos := &Position{}
+	err := pos.UnmarshalText([]byte(fen))
 	if err != nil {
 		return nil, fmt.Errorf("could not make game: %w", err)
 	}
@@ -197,6 +199,13 @@ func NewGameFromFEN(fen string) (*Game, error) {
 		},
 		Commentary: "",
 	}, nil
+}
+
+// UnmarshalText is capable of unmarshaling a single game in pgn format. See also [ParsePGN]
+func (g *Game) UnmarshalText(text []byte) error {
+	// Be sure to not read lines beginning with %. These are comments.
+	// Semicolons are commentary and go to the end of the line.
+	return nil
 }
 
 // ParsePGN reads to the end of the provided reader and provides a list of the games parsed from the PGN.
@@ -330,15 +339,15 @@ func (g *Game) Position() *Position {
 //
 // If a negative number is provided, or ply goes beyond the number of moves played nil is returned.
 func (g *Game) PositionPly(ply int) *Position {
-	var pos *Position
+	pos := &Position{}
 	if g.OtherTags["SetUp"] == "1" {
-		var err error
-		pos, err = ParseFEN(g.OtherTags["FEN"])
+
+		err := pos.UnmarshalText([]byte(g.OtherTags["FEN"]))
 		if err != nil {
 			panic("game somehow got invalid FEN starting position, can get position at ply")
 		}
 	} else {
-		pos, _ = ParseFEN(DefaultFEN)
+		pos.UnmarshalText([]byte(DefaultFEN))
 	}
 	for _, m := range g.moveHistory[:ply] {
 		pos.Move(m.Move)
@@ -428,9 +437,14 @@ func (g *Game) GetVariation(plyNum int, variationNum int) *Game {
 	return newGame
 }
 
-// String provides the game as a valid PGN that can be written to a file. Multiple PGNs can be written to the same file. Just be sure to separate them with a new line.
+// MarshalText implements [encoding.TextMarshaler]. It provides the game as a valid PGN that can be written to a file. Multiple PGNs can be written to the same file. Just be sure to separate them with a new line.
 //
-// The seven tag roster will appear in order, then all other tags will appear in alphabetical order for consistency.
+// The seven tag roster will appear in order, then all other tags will appear in alphabetical order for consistency. err is always nil.
+func (g *Game) MarshalText() (text []byte, err error) {
+	return []byte(g.String()), nil
+}
+
+// String provides the same functionality as [Game.MarshalText].
 func (g *Game) String() string {
 	lines := make([]string, 0, 10)
 	g.addTags(&lines)

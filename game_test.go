@@ -575,4 +575,53 @@ got
 	}
 }
 
-// TODO make game and position use marshal and unmarshal
+func TestGameMarshalText(t *testing.T) {
+	g := NewGame()
+	moves := []string{
+		"d4",
+		"e6",
+		"e4",
+		"d5",
+		"exd5",
+		"exd5",
+		"Nf3",
+	}
+
+	for _, m := range moves {
+		g.MoveSAN(m)
+	}
+
+	g.AnnotateMove(1, 1)
+	g.AnnotateMove(2, 2)
+	g.AnnotateMove(3, 3)
+	g.AnnotateMove(4, 4)
+	g.AnnotateMove(5, 5)
+	g.AnnotateMove(6, 6)
+
+	g.Date = "2025.04.09"
+
+	expected := `[Event "?"]
+[Site "https://github.com/brighamskarda/chess"]
+[Date "2025.04.09"]
+[Round "1"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+
+1. d4 e6! 2. e4? d5!! 3. exd5?? exd5!? 4. Nf3?! *`
+	actual, err := g.MarshalText()
+	if err != nil {
+		t.Errorf("incorrect result: expected err to be nil.")
+	}
+	if string(actual) != expected {
+		t.Errorf(`incorrect result: expected 
+"""
+%s
+"""
+
+got 
+"""
+%s
+"""`, expected, actual)
+	}
+}

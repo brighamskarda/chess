@@ -76,13 +76,15 @@ func TestGeneratePseudoLegalMoves(t *testing.T) {
 		{G1, H3, NoPieceType},
 	}
 
-	pos, _ := ParseFEN(DefaultFEN)
+	pos := &Position{}
+	pos.UnmarshalText([]byte(DefaultFEN))
 	moves := PseudoLegalMoves(pos)
 	if !moveSetsEqual(defaultMoveSet, moves) {
 		t.Errorf("incorrect result for default board: expected %v, got %v", defaultMoveSet, moves)
 	}
 
-	pos, _ = ParseFEN("r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R w KQkq - 2 14")
+	pos = &Position{}
+	pos.UnmarshalText([]byte("r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R w KQkq - 2 14"))
 	expectedMoves := []Move{
 		{A2, A3, NoPieceType},
 		{A2, A4, NoPieceType},
@@ -212,13 +214,15 @@ func TestGenerateLegalMoves(t *testing.T) {
 		{G1, H3, NoPieceType},
 	}
 
-	pos, _ := ParseFEN(DefaultFEN)
+	pos := &Position{}
+	pos.UnmarshalText([]byte(DefaultFEN))
 	moves := LegalMoves(pos)
 	if !moveSetsEqual(defaultMoveSet, moves) {
 		t.Errorf("incorrect result for default board: expected %v, got %v", defaultMoveSet, moves)
 	}
 
-	pos, _ = ParseFEN("r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R w KQkq - 2 14")
+	pos = &Position{}
+	pos.UnmarshalText([]byte("r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R w KQkq - 2 14"))
 	expectedMoves := []Move{
 		{B2, B4, NoPieceType},
 		{C2, C3, NoPieceType},
@@ -718,7 +722,8 @@ func TestGenerateCastleMovesBlack(t *testing.T) {
 }
 
 func BenchmarkGeneratePseudoLegalMoves(b *testing.B) {
-	pos, _ := ParseFEN("r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R w KQkq - 2 14")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R w KQkq - 2 14"))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		PseudoLegalMoves(pos)
@@ -726,7 +731,8 @@ func BenchmarkGeneratePseudoLegalMoves(b *testing.B) {
 }
 
 func BenchmarkGenerateLegalMoves(b *testing.B) {
-	pos, _ := ParseFEN("r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R w KQkq - 2 14")
+	pos := &Position{}
+	pos.UnmarshalText([]byte("r3kb1r/2p3pp/pp3n2/q4P2/2B1p3/6Q1/PPP2PPP/RNB1K2R w KQkq - 2 14"))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		LegalMoves(pos)
