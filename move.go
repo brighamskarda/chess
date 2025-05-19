@@ -204,7 +204,7 @@ func ParseUCIMove(uci string) (Move, error) {
 	if len(uci) == 5 {
 		prom, err := parsePieceType(uci[4:5])
 		if err != nil {
-			fmt.Errorf("could not parse move promotion, %q", uci)
+			return Move{}, fmt.Errorf("could not parse move promotion, %q", uci)
 		}
 		promotion = prom
 	}
@@ -258,6 +258,8 @@ func ParseSANMove(san string, pos *Position) (Move, error) {
 		return parsePawnCapture(san, pos)
 	case castleMove:
 		return parseCastleMove(san, pos)
+	case unknown:
+		return Move{}, fmt.Errorf("could not parse SAN move %q: could not determine san move type, the move was likely malformed", san)
 	default:
 		panic("unexpected chess.sanMoveType")
 	}
@@ -501,10 +503,12 @@ func parseSquareDisambiguation(san string, pos *Position) (Move, error) {
 	}
 
 	var toSquare Square
-	if strings.Contains(san, "x") {
+	if strings.Contains(san, "x") && len(san) >= 6 {
 		toSquare, err = ParseSquare(san[4:6])
-	} else {
+	} else if len(san) >= 5 {
 		toSquare, err = ParseSquare(san[3:5])
+	} else {
+		err = fmt.Errorf("could not parse SAN move %q: malformed square disambiguation", san)
 	}
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move %q: could not parse to square", san)

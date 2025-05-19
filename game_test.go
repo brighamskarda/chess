@@ -17,6 +17,8 @@ package chess
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"testing"
 	"time"
 )
@@ -809,4 +811,269 @@ got
 %s
 """`, expected, actual)
 	}
+}
+
+func TestGameUnmarshal(t *testing.T) {
+	g := NewGame()
+	err := g.UnmarshalText([]byte(`[Event "idc"]
+[Site "ur mom's house"]
+[Date "2025.04.09"]
+[Round "2"]
+[White "phil"]
+[Black "donna"]
+[Result "0-1"]
+[WhiteElo "1090"]
+
+{Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20}
+1. d4 e6 2. e4 (2. f4 g5 {Another variation here} {another comment here} (2...
+h5!) 3. h4) (2. a4) 2... d5 3. exd5? exd5 $10 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7.
+Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
+{Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.}
+0-1`))
+
+	if err != nil {
+		t.Fatalf("err != nil: %s", err)
+	}
+
+	if g.Event != "idc" {
+		t.Errorf("event incorrect")
+	}
+
+	if g.Site != "ur mom's house" {
+		t.Errorf("site incorrect")
+	}
+
+	if g.Date != "2025.04.09" {
+		t.Errorf("date incorrect")
+	}
+
+	if g.Round != "2" {
+		t.Errorf("round incorrect")
+	}
+
+	if g.White != "phil" {
+		t.Errorf("white player incorrect")
+	}
+
+	if g.Black != "donna" {
+		t.Errorf("black player incorrect")
+	}
+
+	if g.Result != BlackWins {
+		t.Errorf("result incorrect")
+	}
+
+	if g.OtherTags["WhiteElo"] != "1090" {
+		t.Errorf("whiteElo incorrect")
+	}
+
+	if g.Commentary != "Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20" {
+		t.Errorf("commentary incorrect")
+	}
+
+	moveHis := g.MoveHistory()
+	if len(moveHis) != 20 {
+		t.Errorf("moveHistory incorrect length")
+	}
+
+	if len(moveHis[0].Variations) != 0 {
+		t.Errorf("moveHistory has variation where none are present")
+	}
+
+	if len(moveHis[2].Variations) != 2 {
+		t.Errorf("ply 2 does not have 2 variations")
+	}
+
+	if len(moveHis[2].Variations[0][1].Commentary) != 2 {
+		t.Errorf("ply 2 missing commentary")
+	}
+
+	if len(moveHis[2].Variations[0]) != 3 {
+		t.Errorf("variation length incorrect")
+	}
+
+	if moveHis[4].NumericAnnotation != 2 {
+		t.Errorf("ply 4 missing numeric annotation")
+	}
+
+	if moveHis[5].NumericAnnotation != 10 {
+		t.Errorf("ply 4 missing numeric annotation")
+	}
+}
+
+func TestGameUnmarshalComments(t *testing.T) {
+	g := NewGame()
+	err := g.UnmarshalText([]byte(`[Event "idc"]
+[Site "ur mom's house"]
+[Date "2025.04.09"]
+[Round "2"]
+[White "phil"]
+[Black "donna"]
+[Result "0-1"]
+%[WhiteElo "1090"]
+
+{Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20}
+1. d4 e6 2. e4 (2. f4 g5 {Another variation here} {another comment here} (2...
+h5!) 3. h4) (2. a4) 2... d5 3. exd5? exd5 $10 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4; this is a comment 
+7. Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
+{Black wins by checkmate. Now I need ;this comment to 
+be even 
+longer than before, preferably longer than 80% characters for some testing.}
+0-1`))
+
+	if err != nil {
+		t.Fatalf("err != nil: %s", err)
+	}
+	moveHis := g.MoveHistory()
+	if moveHis[11].Commentary[0] != "this is a comment" {
+		t.Errorf("semicolon move comment not parsed")
+	}
+	if moveHis[19].Commentary[0] != `Black wins by checkmate. Now I need ;this comment to 
+be even 
+longer than before, preferably longer than 80% characters for some testing.` {
+		t.Errorf("multiline commentary not parsed")
+	}
+	if _, ok := g.OtherTags["WhiteElo"]; ok != false {
+		t.Errorf("dev escape not working")
+	}
+}
+
+func TestGameUnmarshalAltStart(t *testing.T) {
+	g := NewGame()
+	err := g.UnmarshalText([]byte(`[Event "?"]
+[Site "https://github.com/brighamskarda/chess"]
+[Date "2025.04.09"]
+[Round "1"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[FEN "r2q3r/ppp3pp/2n1Nnk1/4p3/2Q5/B7/P4PPP/RN3RK1 b - - 0 16"]
+[SetUp "1"]
+[WhiteElo "1090"]
+
+16... Qd3 17. Qg4+ Kf7 *`))
+
+	if err != nil {
+		t.Errorf("err != nil")
+	}
+
+	if g.OtherTags["FEN"] != "r2q3r/ppp3pp/2n1Nnk1/4p3/2Q5/B7/P4PPP/RN3RK1 b - - 0 16" {
+		t.Errorf("fen not set")
+	}
+
+	if g.OtherTags["SetUp"] != "1" {
+		t.Errorf("setup != 1")
+	}
+
+	if g.PositionPly(0).String() != "r2q3r/ppp3pp/2n1Nnk1/4p3/2Q5/B7/P4PPP/RN3RK1 b - - 0 16" {
+		t.Errorf("alt start position not set")
+	}
+
+	if g.PositionPly(1).String() != "r6r/ppp3pp/2n1Nnk1/4p3/2Q5/B2q4/P4PPP/RN3RK1 w - - 1 17" {
+		t.Errorf("alt ply 1 incorrect")
+	}
+}
+
+func TestGameUnmarshalFailure(t *testing.T) {
+	g := NewGame()
+	err := g.UnmarshalText([]byte(`[Event "idc"]
+[Site "ur mom's house"]
+[Date "2025.04.09"]
+[Round "2"]
+[White "phil"]
+[Black "donna"]
+[Result "0-1"]
+[WhiteElo "1090"]
+
+{Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20}
+1. dfs4 e6 2. e4 (2. f4 g5 {Another variation here} {another comment here} (2...
+h5!) 3. h4) (2. a4) 2... d5 3. exd5? exd5 $10 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4; this is a comment 
+7. Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
+{Black wins by checkmate. Now I need ;this comment to 
+be even longer than before, preferably longer than 80% characters for some testing.}
+0-1`))
+
+	if err == nil {
+		t.Errorf("err == nil")
+	}
+	if !compareGames(g, NewGame()) {
+		t.Errorf("game was modified on failure")
+	}
+}
+
+// compareGames returns true if they are the same.
+func compareGames(g1 *Game, g2 *Game) bool {
+	return g1.Event == g2.Event &&
+		g1.Site == g2.Site &&
+		g1.Date == g2.Date &&
+		g1.Round == g2.Round &&
+		g1.White == g2.White &&
+		g1.Black == g2.Black &&
+		g1.Result == g2.Result &&
+		maps.Equal(g1.OtherTags, g2.OtherTags) &&
+		g1.Commentary == g2.Commentary &&
+		compareMoveHistories(g1.moveHistory, g2.moveHistory)
+}
+
+func compareMoveHistories(mh1 []PgnMove, mh2 []PgnMove) bool {
+	if len(mh1) != len(mh2) {
+		return false
+	}
+	for i := range mh1 {
+		if !slices.Equal(mh1[i].Commentary, mh2[i].Commentary) ||
+			mh1[i].NumericAnnotation != mh2[i].NumericAnnotation ||
+			mh1[i].Move != mh2[i].Move ||
+			len(mh1[i].Variations) != len(mh2[i].Variations) {
+			return false
+		}
+		for j := range mh1[i].Variations {
+			if !compareMoveHistories(mh1[i].Variations[j], mh2[i].Variations[j]) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func TestGameUnmarshal_randomBraces(t *testing.T) {
+	g := NewGame()
+	g.UnmarshalText([]byte("[] \"]\"]\n\nRandom game I found on Lichess.com, https://lichess.org/YF5EBq7m#20}\n1. d4 e6 2. e4 (2. f4 g5 {Another variation here} {another comment here} (2...\nh5!) 3. h4) (2. a4) 2... d5 3. exd5? exd5 $10 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7.\nBe2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#\n{"))
+	// Just make sure it doesn't panic
+}
+
+func TestGameUnmarshal_miscInputs(t *testing.T) {
+	inputs := []string{"[]\n\n0",
+		"[a]\n\n0",
+		"[ \"]\n\n0",
+		"%0\n\n(", "%0\n\n{}",
+		"[]\n\n}{ s y . w I r",
+		"%\n\nAA1x0 0-1"}
+	for _, s := range inputs {
+		g := NewGame()
+		g.UnmarshalText([]byte(s))
+		// Just make sure it doesn't panic
+	}
+}
+
+func FuzzGameUnmarshal(f *testing.F) {
+	f.Add(`[Event "idc"]
+[Site "ur mom's house"]
+[Date "2025.04.09"]
+[Round "2"]
+[White "phil"]
+[Black "donna"]
+[Result "0-1"]
+[WhiteElo "1090"]
+
+{Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20}
+1. d4 e6 2. e4 (2. f4 g5 {Another variation here} {another comment here} (2...
+h5!) 3. h4) (2. a4) 2... d5 3. exd5? exd5 $10 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7.
+Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
+{Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.}
+0-1`)
+	f.Fuzz(func(t *testing.T, pgn string) {
+		// Just make sure it doesn't panic
+		g := NewGame()
+		g.UnmarshalText([]byte(pgn))
+	})
 }
