@@ -629,3 +629,37 @@ func TestParseSANMove_DisambiguateMoveThatResultsInCheck(t *testing.T) {
 		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
 	}
 }
+
+func TestParseSANMove_miscInput(t *testing.T) {
+
+	p := Position{}
+	p.UnmarshalText([]byte("rnbqkbnr/pppp1pp1/8/8/8/8/1PPP1PPP/RNBQKBNR w KQkq - 0 1"))
+
+	inputs := []string{
+		"RAX0", "Bꀀ0", "\U0006bac10", "P2XA1",
+	}
+
+	for _, san := range inputs {
+		// Just make sure it doesn't panic
+		ParseSANMove(san, p.Copy())
+	}
+}
+
+func FuzzParseSANMove(f *testing.F) {
+	legalMoves := []string{
+		"Ra3", "Ra4", "b3", "b4", "c3", "c4", "d3", "d4",
+		"Ke2", "Qf3", "Bc4", "f4", "g3", "g4", "h3", "h4",
+		"Na3", "Nc3", "Nf3", "Nh3",
+	}
+
+	for _, m := range legalMoves {
+		f.Add(m)
+	}
+
+	p := Position{}
+	p.UnmarshalText([]byte("rnbqkbnr/pppp1pp1/8/8/8/8/1PPP1PPP/RNBQKBNR w KQkq - 0 1"))
+	f.Fuzz(func(t *testing.T, san string) {
+		// Just make sure it doesn't panic
+		ParseSANMove(san, p.Copy())
+	})
+}

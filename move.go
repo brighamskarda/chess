@@ -266,21 +266,20 @@ func ParseSANMove(san string, pos *Position) (Move, error) {
 }
 
 func classifySANMove(san string) sanMoveType {
-	sanRunes := []rune(san)
-	switch len(sanRunes) {
+	switch len(san) {
 	case 2:
 		return pawnAdvance
 	case 3:
-		if unicode.ToLower(sanRunes[0]) == 'o' && sanRunes[1] == '-' && unicode.ToLower(sanRunes[2]) == 'o' {
+		if strings.ToLower(san[0:1]) == "o" && san[1] == '-' && strings.ToLower(san[2:3]) == "o" {
 			return castleMove
 		}
 		return normalMove
 	case 4:
-		return classifySANMove4(sanRunes)
+		return classifySANMove4(san)
 	case 5:
-		return classifySANMove5(sanRunes)
+		return classifySANMove5(san)
 	case 6:
-		if sanRunes[4] == '=' {
+		if san[4] == '=' {
 			return pawnCapture
 		}
 		return squareDisambiguation
@@ -289,21 +288,21 @@ func classifySANMove(san string) sanMoveType {
 	}
 }
 
-func classifySANMove4(san []rune) sanMoveType {
-	if san[0] == 'B' || slices.Contains([]rune{'r', 'n', 'q', 'k'}, unicode.ToLower(san[0])) {
-		if unicode.ToLower(san[1]) == 'x' {
+func classifySANMove4(san string) sanMoveType {
+	if san[0] == 'B' || slices.Contains([]rune{'r', 'n', 'q', 'k'}, unicode.ToLower(rune(san[0]))) {
+		if strings.ToLower(san[1:2]) == "x" {
 			return normalMove
-		} else if slices.Contains([]rune{'1', '2', '3', '4', '5', '6', '7', '8'}, san[1]) {
+		} else if slices.Contains([]rune{'1', '2', '3', '4', '5', '6', '7', '8'}, rune(san[1])) {
 			return rankDisambiguation
-		} else if slices.Contains([]rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}, unicode.ToLower(san[1])) {
+		} else if slices.Contains([]rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}, unicode.ToLower(rune(san[1]))) {
 			return fileDisambiguation
 		} else {
 			return unknown
 		}
-	} else if slices.Contains([]rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}, unicode.ToLower(san[0])) {
+	} else if slices.Contains([]rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}, unicode.ToLower(rune(san[0]))) {
 		if san[2] == '=' {
 			return pawnAdvance
-		} else if unicode.ToLower(san[1]) == 'x' {
+		} else if strings.ToLower(san[1:2]) == "x" {
 			return pawnCapture
 		} else {
 			return unknown
@@ -313,13 +312,13 @@ func classifySANMove4(san []rune) sanMoveType {
 	}
 }
 
-func classifySANMove5(san []rune) sanMoveType {
-	if unicode.ToLower(san[0]) == 'o' && san[1] == '-' && unicode.ToLower(san[2]) == 'o' && san[3] == '-' && unicode.ToLower(san[4]) == 'o' {
+func classifySANMove5(san string) sanMoveType {
+	if strings.ToLower(san[0:1]) == "o" && san[1] == '-' && strings.ToLower(san[2:3]) == "o" && san[3] == '-' && strings.ToLower(san[4:5]) == "o" {
 		return castleMove
-	} else if unicode.ToLower(san[2]) == 'x' {
-		if slices.Contains([]rune{'1', '2', '3', '4', '5', '6', '7', '8'}, san[1]) {
+	} else if strings.ToLower(san[2:3]) == "x" {
+		if slices.Contains([]rune{'1', '2', '3', '4', '5', '6', '7', '8'}, rune(san[1])) {
 			return rankDisambiguation
-		} else if slices.Contains([]rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}, unicode.ToLower(san[1])) {
+		} else if slices.Contains([]rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}, unicode.ToLower(rune(san[1]))) {
 			return fileDisambiguation
 		} else {
 			return unknown
@@ -422,6 +421,9 @@ func parseNormalMove(san string, pos *Position) (Move, error) {
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move %q: %w", san, err)
 	}
+	if pt == Pawn || pt == NoPieceType {
+		return Move{}, fmt.Errorf("could not parse SAN move %q: detected piece to move was a pawn or NoPiece, this is illegal", san)
+	}
 	pieceToMove := Piece{pos.SideToMove, pt}
 	var toSquare Square
 	if len(san) == 3 {
@@ -522,8 +524,14 @@ func parseFileDisambiguation(san string, pos *Position) (Move, error) {
 	var toSquare Square
 	var err error
 	if strings.Contains(san, "x") || strings.Contains(san, "X") {
+		if len(san) < 5 {
+			return Move{}, fmt.Errorf("could not parse SAN move %q: could not parse to square", san)
+		}
 		toSquare, err = ParseSquare(san[3:5])
 	} else {
+		if len(san) < 4 {
+			return Move{}, fmt.Errorf("could not parse SAN move %q: could not parse to square", san)
+		}
 		toSquare, err = ParseSquare(san[2:4])
 	}
 	if err != nil {
@@ -537,6 +545,9 @@ func parseFileDisambiguation(san string, pos *Position) (Move, error) {
 	pt, err := parsePieceType(san[0:1])
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move %q: could not determine from square", san)
+	}
+	if pt == Pawn || pt == NoPieceType {
+		return Move{}, fmt.Errorf("could not parse SAN move %q: detected piece to move was a pawn or NoPiece, this is illegal", san)
 	}
 	pieceToMove := Piece{pos.SideToMove, pt}
 	possibleFromRanks := []Rank{}
@@ -583,8 +594,14 @@ func parseRankDisambiguation(san string, pos *Position) (Move, error) {
 	var toSquare Square
 	var err error
 	if strings.Contains(san, "x") || strings.Contains(san, "X") {
+		if len(san) < 5 {
+			return Move{}, fmt.Errorf("could not parse SAN move %q: could not parse to square", san)
+		}
 		toSquare, err = ParseSquare(san[3:5])
 	} else {
+		if len(san) < 4 {
+			return Move{}, fmt.Errorf("could not parse SAN move %q: could not parse to square", san)
+		}
 		toSquare, err = ParseSquare(san[2:4])
 	}
 	if err != nil {
@@ -598,6 +615,9 @@ func parseRankDisambiguation(san string, pos *Position) (Move, error) {
 	pt, err := parsePieceType(san[0:1])
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move %q: could not determine from square", san)
+	}
+	if pt == Pawn || pt == NoPieceType {
+		return Move{}, fmt.Errorf("could not parse SAN move %q: detected piece to move was a pawn or NoPiece, this is illegal", san)
 	}
 	pieceToMove := Piece{pos.SideToMove, pt}
 	possibleFromFiles := []File{}
