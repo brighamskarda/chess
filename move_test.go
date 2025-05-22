@@ -663,3 +663,19 @@ func FuzzParseSANMove(f *testing.F) {
 		ParseSANMove(san, p.Copy())
 	})
 }
+
+func FuzzParseUCIMove(f *testing.F) {
+	uciMoves := []string{
+		"e2e4", "d2d4", "c2c4", "g1f3", "b1c3", "f2f4",
+		"e7e8q", "d7d8r", "c7c8b", "h7h8n", "g7g8q", "f7f8r",
+		"a2a1b", "b2b1n", "e7e8q", "d7d8r", "c7c8b", "h7h8n",
+		"e1g1", "d8h5",
+	}
+	for _, m := range uciMoves {
+		f.Add(m)
+	}
+	f.Fuzz(func(t *testing.T, uci string) {
+		// Just make sure it doesn't panic
+		ParseUCIMove(uci)
+	})
+}
