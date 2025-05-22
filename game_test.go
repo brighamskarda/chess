@@ -1041,6 +1041,29 @@ func TestGameUnmarshal_randomBraces(t *testing.T) {
 	// Just make sure it doesn't panic
 }
 
+func TestBlackStart_altPos(t *testing.T) {
+	g := &Game{}
+	err := g.UnmarshalText([]byte(`[Event "Hamguy123's Study: Chapter 1"]
+[Result "*"]
+[Variant "From Position"]
+[FEN "rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N5/PPQ1PPPP/R1B1KBNR b KQkq - 0 1"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "Hamguy123's Study"]
+[ChapterName "Chapter 1"]
+[SetUp "1"]
+[UTCDate "2025.05.22"]
+[UTCTime "01:06:42"]
+[Annotator "https://lichess.org/@/Hamguy123"]
+[ChapterURL "https://lichess.org/study/lfAbjJ1u/fSzsIBlu"]
+
+1... Nd5 2. e3 Qf6 3. Bd2 O-O 4. O-O-O Nc6 5. Be2 b6 6. Nh3 Rb8 7. Rhf1 *
+`))
+	if err != nil {
+		t.Fail()
+	}
+}
+
 func TestGameUnmarshal_miscInputs(t *testing.T) {
 	inputs := []string{"[]\n\n0",
 		"[a]\n\n0",
@@ -1071,6 +1094,30 @@ h5!) 3. h4) (2. a4) 2... d5 3. exd5? exd5 $10 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7.
 Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
 {Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.}
 0-1`)
+	f.Fuzz(func(t *testing.T, pgn string) {
+		// Just make sure it doesn't panic
+		g := NewGame()
+		g.UnmarshalText([]byte(pgn))
+	})
+}
+
+func FuzzGameUnmarshal_altStart(f *testing.F) {
+	f.Add(`[Event "Hamguy123's Study: Chapter 1"]
+[Result "*"]
+[Variant "From Position"]
+[FEN "rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N5/PPQ1PPPP/R1B1KBNR b KQkq - 0 1"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "Hamguy123's Study"]
+[ChapterName "Chapter 1"]
+[SetUp "1"]
+[UTCDate "2025.05.22"]
+[UTCTime "01:06:42"]
+[Annotator "https://lichess.org/@/Hamguy123"]
+[ChapterURL "https://lichess.org/study/lfAbjJ1u/fSzsIBlu"]
+
+1... Nd5 2. e3 Qf6 3. Bd2 O-O 4. O-O-O Nc6 5. Be2 b6 6. Nh3 Rb8 7. Rhf1 *
+`)
 	f.Fuzz(func(t *testing.T, pgn string) {
 		// Just make sure it doesn't panic
 		g := NewGame()
