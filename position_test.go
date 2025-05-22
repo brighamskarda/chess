@@ -524,3 +524,13 @@ func TestPositionMarshalers(t *testing.T) {
 		t.Errorf("position marshalers not working")
 	}
 }
+
+func FuzzPositionUnmarshal(f *testing.F) {
+	f.Add(DefaultFEN)
+
+	f.Fuzz(func(t *testing.T, fen string) {
+		pos := &Position{}
+		pos.UnmarshalText([]byte(fen))
+		// Make sure it doesn't panic
+	})
+}
