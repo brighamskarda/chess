@@ -16,6 +16,7 @@
 package chess
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -619,13 +620,88 @@ func splitWordsPreserveWhitespace(s string) []string {
 	return words
 }
 
-// ParsePGN reads to the end of the provided reader and provides a list of the games parsed from the PGN.
-func ParsePGN(pgn io.Reader) ([]*Game, error) {
-	// Be sure to not read lines beginning with %. These are comments.
-	// Semicolons are commentary and go to the end of the line.
+// ParsePGN reads until the provided reader returns [io.EOF] and provides a list of the games parsed from the PGN.
+// If an error is encountered before reaching EOF, all the games that could be parsed will be returned with the error.
+// For large pgn files this function may take a few seconds.
+// See also [Game.UnmarshalText].
+func ParsePGN(rd io.Reader) ([]*Game, error) {
+	bufReader := bufio.NewReader(rd)
+	games := []*Game{}
+	gameParseErrors := []error{}
+	pgn, err := extractSinglePgn(bufReader)
+	for ; err == nil || (err == io.EOF && len(pgn) > 0); pgn, err = extractSinglePgn(bufReader) {
+		newG := &Game{}
+		gameErr := newG.UnmarshalText(pgn)
+		if gameErr != nil {
+			gameParseErrors = append(gameParseErrors, gameErr)
+		} else {
+			games = append(games, newG)
+		}
+		if err == io.EOF {
+			break
+		}
+	}
+	if err != io.EOF {
+		return games, fmt.Errorf("error parsing entire file: %w", err)
+	}
+	if len(gameParseErrors) > 0 {
+		errorString := strings.Builder{}
+		errorString.WriteRune('[')
+		for _, e := range gameParseErrors {
+			errorString.WriteString("\"" + e.Error() + "\",\n")
+		}
+		errorString.WriteRune(']')
+		return games, fmt.Errorf("error parsing games, here is a list of all encountered errors: %s", errorString.String())
+	}
+	return games, nil
+}
 
-	// Implement some fuzz testing with this to make sure is always returns error and never panics.
-	return nil, nil
+func extractSinglePgn(bufrd *bufio.Reader) ([]byte, error) {
+	pgn := []byte{}
+	// get tag section
+	for {
+		buf, err := bufrd.ReadBytes('\n')
+		if err != nil {
+			if len(pgn) == 0 && err == io.EOF {
+				return nil, err
+			} else {
+				return nil, fmt.Errorf("could not parse a complete pgn: %w", err)
+			}
+		}
+
+		pgn = append(pgn, buf...)
+		if isEmptyLine(buf) {
+			break
+		}
+	}
+
+	// get movetext section
+	reachedEOF := false
+	for {
+		buf, err := bufrd.ReadBytes('\n')
+		if err != nil && err != io.EOF {
+			return nil, fmt.Errorf("error reading pgn file: %w", err)
+		}
+
+		pgn = append(pgn, buf...)
+		if err == io.EOF {
+			reachedEOF = true
+			break
+		}
+		if isEmptyLine(buf) {
+			break
+		}
+	}
+
+	if reachedEOF {
+		return pgn, io.EOF
+	}
+	return pgn, nil
+}
+
+func isEmptyLine(buf []byte) bool {
+	return (len(buf) == 1 && buf[0] == '\n') ||
+		(len(buf) == 2 && buf[0] == '\r' && buf[1] == '\n')
 }
 
 // Copy returns a copy of the game.

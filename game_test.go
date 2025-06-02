@@ -16,8 +16,11 @@
 package chess
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"maps"
+	"os"
 	"slices"
 	"testing"
 	"time"
@@ -1064,6 +1067,90 @@ func TestBlackStart_altPos(t *testing.T) {
 	}
 }
 
+func TestParsePgn(t *testing.T) {
+	f, err := os.Open("./testdata/SaintLouis2023.pgn")
+	if err != nil {
+		t.Errorf("issue reading test file at \"./testdata/SaintLouis2023.pgn\"")
+	}
+	games, err := ParsePGN(f)
+
+	if err != nil {
+		t.Fatalf("got error parsing pgn file: %v", err)
+	}
+
+	if len(games) != 91 {
+		t.Fatalf("did not parse all 91 games.")
+	}
+
+	if len(games[0].MoveHistory()) != 89 {
+		t.Errorf("first game move length not 89, got %d", len(games[0].MoveHistory()))
+	}
+
+	if games[0].Result != WhiteWins {
+		t.Errorf("first game result incorrect, got %v", games[0].Result)
+	}
+
+	if games[0].Black != "Sevian,Samuel" {
+		t.Errorf("first game black incorrect, got %s", games[0].Black)
+	}
+
+	if len(games[90].MoveHistory()) != 137 {
+		t.Errorf("first game move length not 137, got %d", len(games[90].MoveHistory()))
+	}
+
+	if games[90].Result != Draw {
+		t.Errorf("first game result incorrect, got %v", games[90].Result)
+	}
+
+	if games[90].Black != "Lee,Alice" {
+		t.Errorf("first game black incorrect, got %s", games[90].Black)
+	}
+}
+
+func TestParsePgn_BadGame(t *testing.T) {
+	f, err := os.Open("./testdata/SaintLouis2023.pgn")
+	if err != nil {
+		t.Errorf("issue reading test file at \"./testdata/SaintLouis2023.pgn\"")
+	}
+	b, err := io.ReadAll(f)
+	if err != nil {
+		t.Errorf("issue reading test file at \"./testdata/SaintLouis2023.pgn\"")
+	}
+	b[726] = 'k'
+	br := bytes.NewReader(b)
+	games, err := ParsePGN(br)
+
+	if err == nil {
+		t.Fatalf("did not get error parsing pgn file")
+	}
+
+	if len(games) != 90 {
+		t.Fatalf("did not parse 90 games, got %d", len(games))
+	}
+
+	if len(games[0].MoveHistory()) != 143 {
+		t.Errorf("first game move length not 143, got %d", len(games[0].MoveHistory()))
+	}
+}
+
+func BenchmarkParsePgn(b *testing.B) {
+	file, err := os.Open("./testdata/SaintLouis2023.pgn")
+	if err != nil {
+		b.Fatalf("issue reading test file at \"./testdata/SaintLouis2023.pgn\"")
+	}
+
+	pgn, err := io.ReadAll(file)
+	if err != nil {
+		b.Fatalf("issue reading test file at \"./testdata/SaintLouis2023.pgn\"")
+	}
+
+	r := bytes.NewReader(pgn)
+	for b.Loop() {
+		ParsePGN(r)
+		r.Reset(pgn)
+	}
+}
+
 func TestGameUnmarshal_miscInputs(t *testing.T) {
 	inputs := []string{"[]\n\n0",
 		"[a]\n\n0",
@@ -1078,6 +1165,25 @@ func TestGameUnmarshal_miscInputs(t *testing.T) {
 	}
 }
 
+// This fuzz test is quite slow.
+func FuzzParsePgn(f *testing.F) {
+	file, err := os.Open("./testdata/SaintLouis2023-first3.pgn")
+	if err != nil {
+		f.Fatalf("issue reading test file at \"./testdata/SaintLouis2023-first3.pgn\"")
+	}
+
+	pgn, err := io.ReadAll(file)
+	if err != nil {
+		f.Fatalf("issue reading test file at \"./testdata/SaintLouis2023-first3.pgn\"")
+	}
+
+	f.Add(pgn)
+	f.Fuzz(func(t *testing.T, pgn []byte) {
+		pgnReader := bytes.NewReader(pgn)
+		ParsePGN(pgnReader)
+		// Just make sure it doesn't panic.
+	})
+}
 func FuzzGameUnmarshal(f *testing.F) {
 	f.Add(`[Event "idc"]
 [Site "ur mom's house"]
