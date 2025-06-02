@@ -22,6 +22,7 @@ import (
 	"maps"
 	"os"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 )
@@ -1072,6 +1073,7 @@ func TestParsePgn(t *testing.T) {
 	if err != nil {
 		t.Errorf("issue reading test file at \"./testdata/SaintLouis2023.pgn\"")
 	}
+	defer f.Close()
 	games, err := ParsePGN(f)
 
 	if err != nil {
@@ -1112,6 +1114,7 @@ func TestParsePgn_BadGame(t *testing.T) {
 	if err != nil {
 		t.Errorf("issue reading test file at \"./testdata/SaintLouis2023.pgn\"")
 	}
+	defer f.Close()
 	b, err := io.ReadAll(f)
 	if err != nil {
 		t.Errorf("issue reading test file at \"./testdata/SaintLouis2023.pgn\"")
@@ -1138,6 +1141,7 @@ func BenchmarkParsePgn(b *testing.B) {
 	if err != nil {
 		b.Fatalf("issue reading test file at \"./testdata/SaintLouis2023.pgn\"")
 	}
+	defer file.Close()
 
 	pgn, err := io.ReadAll(file)
 	if err != nil {
@@ -1171,6 +1175,7 @@ func FuzzParsePgn(f *testing.F) {
 	if err != nil {
 		f.Fatalf("issue reading test file at \"./testdata/SaintLouis2023-first3.pgn\"")
 	}
+	defer file.Close()
 
 	pgn, err := io.ReadAll(file)
 	if err != nil {
@@ -1229,4 +1234,54 @@ func FuzzGameUnmarshal_altStart(f *testing.F) {
 		g := NewGame()
 		g.UnmarshalText([]byte(pgn))
 	})
+}
+
+// TestRealPGNs ignores files that are in subdirectories. Useful for ignoring large files.
+func TestRealPGNs(t *testing.T) {
+	testdir := "./testdata/extra_pgns"
+	files, err := os.ReadDir(testdir)
+	if err != nil {
+		t.Fatalf("could not read test directory ./testdata/extra_pgns: %v", err)
+	}
+
+	for _, fileEntry := range files {
+		if fileEntry.IsDir() {
+			continue
+		}
+
+		t.Logf("parsing file %s", fileEntry.Name())
+		file, err := os.Open(testdir + "/" + fileEntry.Name())
+		if err != nil {
+			t.Errorf("could not read file %s", fileEntry.Name())
+		}
+		defer file.Close()
+		pgn, err := io.ReadAll(file)
+		if err != nil {
+			t.Errorf("issues reading file %s", fileEntry.Name())
+		}
+
+		pgnReader := bytes.NewReader(pgn)
+		games, errs := ParsePGN(pgnReader)
+		if errs != nil {
+			t.Errorf("error parsing file %s: %s", fileEntry.Name(), errs.Error())
+		}
+
+		_, err = createPgn(games)
+		if err != nil {
+			t.Errorf("error regenerating pgn for file %s: %s", fileEntry.Name(), err)
+		}
+	}
+}
+
+func createPgn(games []*Game) (string, error) {
+	sb := strings.Builder{}
+	for i, g := range games {
+		pgn, err := g.MarshalText()
+		if err != nil {
+			return sb.String(), fmt.Errorf("error generating pgn for game %d: %w", i, err)
+		}
+		sb.Write(pgn)
+		sb.WriteRune('\n')
+	}
+	return sb.String(), nil
 }
