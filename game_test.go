@@ -57,19 +57,19 @@ func TestPgnMoveCopy(t *testing.T) {
 	myPgnMove := PgnMove{
 		Move:              Move{A1, B1, NoPieceType},
 		NumericAnnotation: 255,
-		Commentary:        []string{"my comment"},
+		PostCommentary:    []string{"my comment"},
 		Variations: [][]PgnMove{
 			[]PgnMove{
 				PgnMove{
 					Move:              Move{},
 					NumericAnnotation: 0,
-					Commentary:        []string{},
+					PostCommentary:    []string{},
 					Variations: [][]PgnMove{
 						[]PgnMove{
 							PgnMove{
 								Move:              Move{},
 								NumericAnnotation: 0,
-								Commentary:        []string{},
+								PostCommentary:    []string{},
 								Variations:        [][]PgnMove{},
 							},
 						},
@@ -80,7 +80,7 @@ func TestPgnMoveCopy(t *testing.T) {
 				PgnMove{
 					Move:              Move{},
 					NumericAnnotation: 0,
-					Commentary:        []string{},
+					PostCommentary:    []string{},
 					Variations:        [][]PgnMove{},
 				},
 			},
@@ -290,7 +290,7 @@ func TestPositionPly_AltStart(t *testing.T) {
 	}
 }
 
-func TestCommentMove(t *testing.T) {
+func TestCommentAfterMove(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
 		t.Fail()
@@ -299,14 +299,106 @@ func TestCommentMove(t *testing.T) {
 		t.Fail()
 	}
 
-	g.CommentMove(0, "comment 1")
-	g.CommentMove(1, "comment 2")
+	g.CommentAfterMove(0, "comment 1")
+	g.CommentAfterMove(1, "comment 2")
 	moveHistory := g.MoveHistory()
-	if moveHistory[0].Commentary[0] != "comment 1" {
-		t.Errorf("for move 0 got %q", moveHistory[0].Commentary)
+	if moveHistory[0].PostCommentary[0] != "comment 1" {
+		t.Errorf("for move 0 got %q", moveHistory[0].PostCommentary)
 	}
-	if moveHistory[1].Commentary[0] != "comment 2" {
-		t.Errorf("for move 1 got %q", moveHistory[1].Commentary)
+	if moveHistory[1].PostCommentary[0] != "comment 2" {
+		t.Errorf("for move 1 got %q", moveHistory[1].PostCommentary)
+	}
+}
+
+func TestCommentBeforeMove(t *testing.T) {
+	g := NewGame()
+	if g.Move(Move{E2, E4, NoPieceType}) != nil {
+		t.Fail()
+	}
+	if g.Move(Move{D7, D5, NoPieceType}) != nil {
+		t.Fail()
+	}
+
+	g.CommentBeforeMove(0, "comment 1")
+	g.CommentBeforeMove(1, "comment 2")
+	moveHistory := g.MoveHistory()
+	if moveHistory[0].PreCommentary[0] != "comment 1" {
+		t.Errorf("for move 0 got %q", moveHistory[0].PreCommentary)
+	}
+	if moveHistory[1].PreCommentary[0] != "comment 2" {
+		t.Errorf("for move 1 got %q", moveHistory[1].PreCommentary)
+	}
+}
+
+func TestDeleteCommentBefore(t *testing.T) {
+	g := NewGame()
+	if g.Move(Move{E2, E4, NoPieceType}) != nil {
+		t.Fail()
+	}
+	if g.Move(Move{D7, D5, NoPieceType}) != nil {
+		t.Fail()
+	}
+
+	g.CommentBeforeMove(0, "comment 1")
+	g.CommentBeforeMove(1, "comment 2")
+	g.CommentBeforeMove(0, "comment 3")
+	g.CommentBeforeMove(1, "comment 4")
+	moveHistory := g.MoveHistory()
+	if len(moveHistory[0].PreCommentary) != 2 || len(moveHistory[1].PreCommentary) != 2 {
+		t.Errorf("comment before not working")
+	}
+	g.DeleteCommentBefore(0, 1)
+	moveHistory = g.MoveHistory()
+	if len(moveHistory[0].PreCommentary) != 1 {
+		t.Errorf("len of moveHistory[0].PreCommentary incorrect, got %d", len(moveHistory[0].PreCommentary))
+	}
+	if moveHistory[0].PreCommentary[0] != "comment 1" {
+		t.Errorf("deleted wrong comment from move 0")
+	}
+
+	g.DeleteCommentBefore(1, 0)
+	moveHistory = g.MoveHistory()
+	if len(moveHistory[1].PreCommentary) != 1 {
+		t.Errorf("len of moveHistory[1].PreCommentary incorrect, got %d", len(moveHistory[1].PreCommentary))
+	}
+	if moveHistory[1].PreCommentary[0] != "comment 4" {
+		t.Errorf("deleted wrong comment from move 1")
+	}
+}
+
+func TestDeleteCommentAfter(t *testing.T) {
+	g := NewGame()
+	if g.Move(Move{E2, E4, NoPieceType}) != nil {
+		t.Fail()
+	}
+	if g.Move(Move{D7, D5, NoPieceType}) != nil {
+		t.Fail()
+	}
+
+	g.CommentAfterMove(0, "comment 1")
+	g.CommentAfterMove(1, "comment 2")
+	g.CommentAfterMove(0, "comment 3")
+	g.CommentAfterMove(1, "comment 4")
+	moveHistory := g.MoveHistory()
+	if len(moveHistory[0].PostCommentary) != 2 || len(moveHistory[1].PostCommentary) != 2 {
+		t.Errorf("comment before not working")
+	}
+	g.DeleteCommentAfter(0, 1)
+	moveHistory = g.MoveHistory()
+	if len(moveHistory[0].PostCommentary) != 1 {
+		t.Errorf("len of moveHistory[0].PreCommentary incorrect, got %d", len(moveHistory[0].PostCommentary))
+	}
+	if moveHistory[0].PostCommentary[0] != "comment 1" {
+		t.Errorf("deleted wrong comment from move 0")
+	}
+
+	g.DeleteCommentAfter(1, 0)
+	moveHistory = g.MoveHistory()
+	if len(moveHistory[1].PostCommentary) != 1 {
+		t.Errorf("len of moveHistory[1].PreCommentary incorrect, got %d", len(moveHistory[1].PostCommentary))
+	}
+	if moveHistory[1].PostCommentary[0] != "comment 4" {
+		t.Errorf("deleted wrong comment from move 1")
 	}
 }
 
@@ -318,12 +410,12 @@ func makeGameWithVariation() *Game {
 	g.MakeVariation(1, []PgnMove{{
 		Move:              Move{B8, C6, NoPieceType},
 		NumericAnnotation: 0,
-		Commentary:        []string{},
+		PostCommentary:    []string{},
 		Variations:        [][]PgnMove{},
 	}, {
 		Move:              Move{D2, D4, NoPieceType},
 		NumericAnnotation: 0,
-		Commentary:        []string{},
+		PostCommentary:    []string{},
 		Variations:        [][]PgnMove{},
 	}})
 	return g
@@ -354,19 +446,19 @@ func TestGetVariation(t *testing.T) {
 	g.MakeVariation(1, []PgnMove{{
 		Move:              Move{G8, F6, NoPieceType},
 		NumericAnnotation: 0,
-		Commentary:        []string{},
+		PostCommentary:    []string{},
 		Variations:        [][]PgnMove{},
 	}, {
 		Move:              Move{D2, D4, NoPieceType},
 		NumericAnnotation: 0,
-		Commentary:        []string{},
+		PostCommentary:    []string{},
 		Variations:        [][]PgnMove{},
 	}})
 
 	g.MakeVariation(0, []PgnMove{{
 		Move:              Move{H2, H4, NoPieceType},
 		NumericAnnotation: 0,
-		Commentary:        []string{},
+		PostCommentary:    []string{},
 		Variations:        [][]PgnMove{},
 	}})
 
@@ -422,32 +514,32 @@ func TestGameString(t *testing.T) {
 		g.MoveSAN(m)
 	}
 
-	g.Commentary = "Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20"
+	g.CommentBeforeMove(0, "Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20")
 	g.AnnotateMove(4, 2)
 	g.AnnotateMove(5, 10)
-	g.CommentMove(19, "Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.")
+	g.CommentAfterMove(19, "Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.")
 	g.MakeVariation(2, []PgnMove{
 		PgnMove{
 			Move:              Move{F2, F4, NoPieceType},
 			NumericAnnotation: 0,
-			Commentary:        []string{},
+			PostCommentary:    []string{},
 			Variations:        [][]PgnMove{},
 		},
 		PgnMove{
 			Move:              Move{G7, G5, NoPieceType},
 			NumericAnnotation: 0,
-			Commentary:        []string{"Another variation here", "another comment here"},
+			PostCommentary:    []string{"Another variation here", "another comment here"},
 			Variations: [][]PgnMove{[]PgnMove{PgnMove{
 				Move:              Move{H7, H5, NoPieceType},
 				NumericAnnotation: 1,
-				Commentary:        []string{},
+				PostCommentary:    []string{},
 				Variations:        [][]PgnMove{},
 			}}},
 		},
 		PgnMove{
 			Move:              Move{H2, H4, NoPieceType},
 			NumericAnnotation: 0,
-			Commentary:        []string{},
+			PostCommentary:    []string{},
 			Variations:        [][]PgnMove{},
 		},
 	})
@@ -455,7 +547,7 @@ func TestGameString(t *testing.T) {
 		PgnMove{
 			Move:              Move{A2, A4, NoPieceType},
 			NumericAnnotation: 0,
-			Commentary:        []string{},
+			PostCommentary:    []string{},
 			Variations:        [][]PgnMove{},
 		},
 	})
@@ -471,10 +563,10 @@ func TestGameString(t *testing.T) {
 [Result "0-1"]
 [WhiteElo "1090"]
 
-{Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20}
-1. d4 e6 2. e4 (2. f4 g5 {Another variation here} {another comment here} (2...
-h5!) 3. h4) (2. a4) 2... d5 3. exd5? exd5 $10 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7.
-Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
+{Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20} 1. d4 e6
+2. e4 (2. f4 g5 {Another variation here} {another comment here} (2... h5!) 3.
+h4) (2. a4) 2... d5 3. exd5? exd5 $10 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7. Be2 Bd7
+8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
 {Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.}
 0-1`
 	actual := g.String()
@@ -661,32 +753,32 @@ func TestGameReducedString(t *testing.T) {
 		g.MoveSAN(m)
 	}
 
-	g.Commentary = "Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20"
+	g.CommentBeforeMove(0, "Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20")
 	g.AnnotateMove(4, 2)
 	g.AnnotateMove(5, 10)
-	g.CommentMove(19, "Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.")
+	g.CommentAfterMove(19, "Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.")
 	g.MakeVariation(2, []PgnMove{
 		PgnMove{
 			Move:              Move{F2, F4, NoPieceType},
 			NumericAnnotation: 0,
-			Commentary:        []string{},
+			PostCommentary:    []string{},
 			Variations:        [][]PgnMove{},
 		},
 		PgnMove{
 			Move:              Move{G7, G5, NoPieceType},
 			NumericAnnotation: 0,
-			Commentary:        []string{"Another variation here", "another comment here"},
+			PostCommentary:    []string{"Another variation here", "another comment here"},
 			Variations: [][]PgnMove{[]PgnMove{PgnMove{
 				Move:              Move{H7, H5, NoPieceType},
 				NumericAnnotation: 1,
-				Commentary:        []string{},
+				PostCommentary:    []string{},
 				Variations:        [][]PgnMove{},
 			}}},
 		},
 		PgnMove{
 			Move:              Move{H2, H4, NoPieceType},
 			NumericAnnotation: 0,
-			Commentary:        []string{},
+			PostCommentary:    []string{},
 			Variations:        [][]PgnMove{},
 		},
 	})
@@ -694,7 +786,7 @@ func TestGameReducedString(t *testing.T) {
 		PgnMove{
 			Move:              Move{A2, A4, NoPieceType},
 			NumericAnnotation: 0,
-			Commentary:        []string{},
+			PostCommentary:    []string{},
 			Variations:        [][]PgnMove{},
 		},
 	})
@@ -752,32 +844,32 @@ func TestGameReducedString_AltStart(t *testing.T) {
 		g.MoveSAN(m)
 	}
 
-	g.Commentary = "Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20"
+	g.CommentBeforeMove(0, "Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20")
 	g.AnnotateMove(3, 2)
 	g.AnnotateMove(4, 10)
-	g.CommentMove(18, "Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.")
+	g.CommentAfterMove(18, "Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.")
 	g.MakeVariation(1, []PgnMove{
 		PgnMove{
 			Move:              Move{F2, F4, NoPieceType},
 			NumericAnnotation: 0,
-			Commentary:        []string{},
+			PostCommentary:    []string{},
 			Variations:        [][]PgnMove{},
 		},
 		PgnMove{
 			Move:              Move{G7, G5, NoPieceType},
 			NumericAnnotation: 0,
-			Commentary:        []string{"Another variation here", "another comment here"},
+			PostCommentary:    []string{"Another variation here", "another comment here"},
 			Variations: [][]PgnMove{[]PgnMove{PgnMove{
 				Move:              Move{H7, H5, NoPieceType},
 				NumericAnnotation: 1,
-				Commentary:        []string{},
+				PostCommentary:    []string{},
 				Variations:        [][]PgnMove{},
 			}}},
 		},
 		PgnMove{
 			Move:              Move{H2, H4, NoPieceType},
 			NumericAnnotation: 0,
-			Commentary:        []string{},
+			PostCommentary:    []string{},
 			Variations:        [][]PgnMove{},
 		},
 	})
@@ -785,7 +877,7 @@ func TestGameReducedString_AltStart(t *testing.T) {
 		PgnMove{
 			Move:              Move{A2, A4, NoPieceType},
 			NumericAnnotation: 0,
-			Commentary:        []string{},
+			PostCommentary:    []string{},
 			Variations:        [][]PgnMove{},
 		},
 	})
@@ -871,11 +963,10 @@ Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
 		t.Errorf("whiteElo incorrect")
 	}
 
-	if g.Commentary != "Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20" {
+	moveHis := g.MoveHistory()
+	if moveHis[0].PreCommentary[0] != "Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20" {
 		t.Errorf("commentary incorrect")
 	}
-
-	moveHis := g.MoveHistory()
 	if len(moveHis) != 20 {
 		t.Errorf("moveHistory incorrect length")
 	}
@@ -888,7 +979,7 @@ Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
 		t.Errorf("ply 2 does not have 2 variations")
 	}
 
-	if len(moveHis[2].Variations[0][1].Commentary) != 2 {
+	if len(moveHis[2].Variations[0][1].PostCommentary) != 2 {
 		t.Errorf("ply 2 missing commentary")
 	}
 
@@ -929,16 +1020,67 @@ longer than before, preferably longer than 80% characters for some testing.}
 		t.Fatalf("err != nil: %s", err)
 	}
 	moveHis := g.MoveHistory()
-	if moveHis[11].Commentary[0] != "this is a comment" {
+	if moveHis[11].PostCommentary[0] != "this is a comment" {
 		t.Errorf("semicolon move comment not parsed")
 	}
-	if moveHis[19].Commentary[0] != `Black wins by checkmate. Now I need ;this comment to 
+	if moveHis[19].PostCommentary[0] != `Black wins by checkmate. Now I need ;this comment to 
 be even 
 longer than before, preferably longer than 80% characters for some testing.` {
 		t.Errorf("multiline commentary not parsed")
 	}
 	if _, ok := g.OtherTags["WhiteElo"]; ok != false {
 		t.Errorf("dev escape not working")
+	}
+}
+
+func TestGameUnmarshalPreComments(t *testing.T) {
+	g := NewGame()
+	err := g.UnmarshalText([]byte(`[Event "idc"]
+[Site "ur mom's house"]
+[Date "2025.04.09"]
+[Round "2"]
+[White "phil"]
+[Black "donna"]
+[Result "0-1"]
+%[WhiteElo "1090"]
+
+{Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20}{precomment 2}
+1. d4 e6 2. e4 {This is a post comment} ({ This is a pre comment}{This is another pre comment }2. f4 g5 {Another variation here} {another comment here} (2...
+h5!) 3. h4) (2. a4) 2... d5 3. exd5? exd5 $10 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4; this is a comment 
+7. Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
+{Black wins by checkmate. Now I need ;this comment to 
+be even 
+longer than before, preferably longer than 80% characters for some testing.}
+0-1`))
+
+	if err != nil {
+		t.Fatalf("err != nil: %s", err)
+	}
+	moveHis := g.MoveHistory()
+	if len(moveHis[0].PreCommentary) != 2 {
+		t.Errorf("start of game pre commentary not working")
+	}
+	if moveHis[0].PreCommentary[0] != "Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20" {
+		t.Errorf("start of game pre commentary comment 1 incorrect")
+	}
+	if moveHis[0].PreCommentary[1] != "precomment 2" {
+		t.Errorf("start of game pre commentary comment 2 incorrect")
+	}
+	if len(moveHis[2].PreCommentary) != 0 {
+		t.Errorf("found pre commentary on move 2, should not exist")
+	}
+	if moveHis[2].PostCommentary[0] != "This is a post comment" {
+		t.Errorf("post commentary on move 2 incorrect, got %s", moveHis[2].PostCommentary[0])
+	}
+	if len(moveHis[2].Variations[0][0].PreCommentary) != 2 {
+		t.Errorf("pre commentary on first variation incorrect length")
+	}
+	variation := moveHis[2].Variations[0]
+	if variation[0].PreCommentary[0] != "This is a pre comment" {
+		t.Errorf("variation pre comment 1 incorrect, got %s", variation[0].PreCommentary[0])
+	}
+	if variation[0].PreCommentary[1] != "This is another pre comment" {
+		t.Errorf("variation pre comment 1 incorrect, got %s", variation[0].PreCommentary[1])
 	}
 }
 
@@ -1015,7 +1157,6 @@ func compareGames(g1 *Game, g2 *Game) bool {
 		g1.Black == g2.Black &&
 		g1.Result == g2.Result &&
 		maps.Equal(g1.OtherTags, g2.OtherTags) &&
-		g1.Commentary == g2.Commentary &&
 		compareMoveHistories(g1.moveHistory, g2.moveHistory)
 }
 
@@ -1024,7 +1165,8 @@ func compareMoveHistories(mh1 []PgnMove, mh2 []PgnMove) bool {
 		return false
 	}
 	for i := range mh1 {
-		if !slices.Equal(mh1[i].Commentary, mh2[i].Commentary) ||
+		if !slices.Equal(mh1[i].PostCommentary, mh2[i].PostCommentary) ||
+			!slices.Equal(mh1[i].PreCommentary, mh2[i].PreCommentary) ||
 			mh1[i].NumericAnnotation != mh2[i].NumericAnnotation ||
 			mh1[i].Move != mh2[i].Move ||
 			len(mh1[i].Variations) != len(mh2[i].Variations) {

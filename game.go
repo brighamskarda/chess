@@ -76,7 +76,8 @@ func (r *Result) UnmarshalText(text []byte) error {
 type PgnMove struct {
 	Move              Move
 	NumericAnnotation uint8
-	Commentary        []string
+	PreCommentary     []string
+	PostCommentary    []string
 	// Variations supports multiple variations. Hence it is a 2d slice. The first move in a variation should replace the current move.
 	Variations [][]PgnMove
 }
@@ -86,7 +87,8 @@ func (m PgnMove) Copy() PgnMove {
 	newPgnMove := PgnMove{
 		Move:              m.Move,
 		NumericAnnotation: m.NumericAnnotation,
-		Commentary:        slices.Clone(m.Commentary),
+		PreCommentary:     slices.Clone(m.PreCommentary),
+		PostCommentary:    slices.Clone(m.PostCommentary),
 		Variations:        make([][]PgnMove, 0, len(m.Variations)),
 	}
 	for _, variation := range m.Variations {
@@ -136,9 +138,6 @@ type Game struct {
 	Result Result
 	// OtherTags is intended for custom PGN game tags. Some examples are provided here: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c9
 	OtherTags map[string]string
-
-	// Commentary represents a game level comment. It will appear before the first move.
-	Commentary string
 }
 
 // NewGame returns a fresh game of chess with the starting position initialized. Tags are set as follows:
@@ -172,7 +171,6 @@ func NewGame() *Game {
 		Black:       "?",
 		Result:      NoResult,
 		OtherTags:   map[string]string{},
-		Commentary:  "",
 	}
 }
 
@@ -199,7 +197,6 @@ func NewGameFromFEN(fen string) (*Game, error) {
 			"SetUp": "1",
 			"FEN":   fen,
 		},
-		Commentary: "",
 	}, nil
 }
 
@@ -341,10 +338,6 @@ func (g *Game) parseMovetext(lines []string) error {
 	if len(tokens) == 0 || tokens[len(tokens)-1].tokenType != result {
 		return fmt.Errorf("there is no result at end of pgn")
 	}
-	if tokens[0].tokenType == commentary {
-		g.Commentary = tokens[0].body
-		tokens = tokens[1:]
-	}
 
 	moveHis, err := createMoveHistory(tokens, g.Position())
 	if err != nil {
@@ -368,14 +361,16 @@ func (g *Game) parseMovetext(lines []string) error {
 func createMoveHistory(tokens []pgnToken, pos *Position) ([]PgnMove, error) {
 	moveHis := []PgnMove{}
 	prevPos := pos.Copy()
+	preCommentary := []string{}
 	for i := 0; i < len(tokens); i++ {
 		t := tokens[i]
 		switch t.tokenType {
 		case commentary:
 			if len(moveHis) == 0 {
-				return nil, fmt.Errorf("this library does not support comments before moves")
+				preCommentary = append(preCommentary, t.body)
+			} else {
+				moveHis[len(moveHis)-1].PostCommentary = append(moveHis[len(moveHis)-1].PostCommentary, t.body)
 			}
-			moveHis[len(moveHis)-1].Commentary = append(moveHis[len(moveHis)-1].Commentary, t.body)
 		case move:
 			prevPos = pos.Copy()
 			m, err := ParseSANMove(t.body, pos)
@@ -385,13 +380,15 @@ func createMoveHistory(tokens []pgnToken, pos *Position) ([]PgnMove, error) {
 			moveHis = append(moveHis, PgnMove{
 				Move:              m,
 				NumericAnnotation: 0,
-				Commentary:        []string{},
+				PreCommentary:     preCommentary,
+				PostCommentary:    []string{},
 				Variations:        [][]PgnMove{},
 			})
 			if !slices.Contains(LegalMoves(pos), m) {
 				return nil, fmt.Errorf("pgn contains illegal move: %s", m)
 			}
 			pos.Move(m)
+			preCommentary = []string{}
 		case moveNum:
 			// no action needed
 		case numericAnnotation:
@@ -718,7 +715,6 @@ func (g *Game) Copy() *Game {
 		Black:       g.Black,
 		Result:      g.Result,
 		OtherTags:   maps.Clone(g.OtherTags),
-		Commentary:  g.Commentary,
 	}
 }
 
@@ -773,7 +769,8 @@ func (g *Game) Move(m Move) error {
 	g.moveHistory = append(g.moveHistory, PgnMove{
 		Move:              m,
 		NumericAnnotation: 0,
-		Commentary:        []string{},
+		PreCommentary:     []string{},
+		PostCommentary:    []string{},
 		Variations:        [][]PgnMove{},
 	})
 	g.setResult()
@@ -858,18 +855,30 @@ func (g *Game) AnnotateMove(plyNum int, nag uint8) {
 	g.moveHistory[plyNum].NumericAnnotation = nag
 }
 
-// CommentMove appends a comment to the specified move.
+// CommentAfterMove appends a comment to the specified move.
 //
 // plyNum starts at 0 for the first move.
-func (g *Game) CommentMove(plyNum int, comment string) {
-	g.moveHistory[plyNum].Commentary = append(g.moveHistory[plyNum].Commentary, comment)
+func (g *Game) CommentAfterMove(plyNum int, comment string) {
+	g.moveHistory[plyNum].PostCommentary = append(g.moveHistory[plyNum].PostCommentary, comment)
 }
 
-// DeleteComment deletes a comment from the specified move.
+// CommentBeforeMove appends appends a comment to be displayed before a move.
+// Commentary is not well defined in the pgn specification, thus in most situations it is impossible to tell if a comment should be associated with the move right before it, or right after it. By default comments will be associated with the move right before them, but in some cases (such as the start of a game, or start of a variation) it is possible to have a comment that must precede a move. This is to say that if you marshal and then unmarshal a game, most comments will be parsed as being after a move.
+//
+// plyNum starts at 0 for the first move.
+func (g *Game) CommentBeforeMove(plyNum int, comment string) {
+	g.moveHistory[plyNum].PreCommentary = append(g.moveHistory[plyNum].PreCommentary, comment)
+}
+
+// DeleteCommentAfter deletes a comment after the specified move.
 //
 // plyNum and commentNum start at 0 for the first move.
-func (g *Game) DeleteComment(plyNum int, commentNum int) {
-	g.moveHistory[0].Commentary = slices.Delete(g.moveHistory[0].Commentary, commentNum, commentNum+1)
+func (g *Game) DeleteCommentAfter(plyNum int, commentNum int) {
+	g.moveHistory[plyNum].PostCommentary = slices.Delete(g.moveHistory[plyNum].PostCommentary, commentNum, commentNum+1)
+}
+
+func (g *Game) DeleteCommentBefore(plyNum int, commentNum int) {
+	g.moveHistory[plyNum].PreCommentary = slices.Delete(g.moveHistory[plyNum].PreCommentary, commentNum, commentNum+1)
 }
 
 // MakeVariation adds a set of variation moves to the specified move. The variation should begin with a move that replaces the current move. Variation moves must be legal.
@@ -936,9 +945,6 @@ func (g *Game) String() string {
 	lines := make([]string, 0, 10)
 	g.addTags(&lines)
 	lines = append(lines, "")
-	if g.Commentary != "" {
-		lines = append(lines, fmt.Sprintf("{%s}", g.Commentary))
-	}
 	g.addMoveText(&lines)
 	pgn := strings.Builder{}
 	for i, l := range lines {
@@ -1001,6 +1007,10 @@ func (g *Game) addMoveText(lines *[]string) {
 
 	includeBlackMoveNum := currPos.SideToMove == Black
 	for _, m := range g.moveHistory {
+		for _, comment := range m.PreCommentary {
+			cmtStr := fmt.Sprintf(" {%s}", comment)
+			appendToPgnLine(cmtStr, &currentLine, lines)
+		}
 		if currPos.SideToMove == White {
 			moveNum := " " + strconv.FormatUint(uint64(currPos.FullMove), 10) + "."
 			appendToPgnLine(moveNum, &currentLine, lines)
@@ -1020,7 +1030,7 @@ func (g *Game) addMoveText(lines *[]string) {
 			appendToPgnLine(" "+nag, &currentLine, lines)
 		}
 
-		for _, comment := range m.Commentary {
+		for _, comment := range m.PostCommentary {
 			cmtStr := fmt.Sprintf(" {%s}", comment)
 			appendToPgnLine(cmtStr, &currentLine, lines)
 		}
@@ -1030,7 +1040,7 @@ func (g *Game) addMoveText(lines *[]string) {
 		}
 
 		currPos.Move(m.Move)
-		if (len(m.Commentary) > 0 || len(m.Variations) > 0) && currPos.SideToMove == Black {
+		if (len(m.PostCommentary) > 0 || len(m.Variations) > 0) && currPos.SideToMove == Black {
 			includeBlackMoveNum = true
 		} else {
 			includeBlackMoveNum = false
@@ -1123,21 +1133,21 @@ func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Bu
 		nag := nagString(m.NumericAnnotation)
 		if m.NumericAnnotation <= 6 {
 			sanMove += nag
-			if i == len(moves)-1 && len(m.Commentary) == 0 && len(m.Variations) == 0 {
+			if i == len(moves)-1 && len(m.PostCommentary) == 0 && len(m.Variations) == 0 {
 				sanMove += ")"
 			}
 			appendToPgnLine(sanMove, currentLine, lines)
 		} else {
 			appendToPgnLine(sanMove, currentLine, lines)
-			if i == len(moves)-1 && len(m.Commentary) == 0 && len(m.Variations) == 0 {
+			if i == len(moves)-1 && len(m.PostCommentary) == 0 && len(m.Variations) == 0 {
 				nag += ")"
 			}
 			appendToPgnLine(" "+nag, currentLine, lines)
 		}
 
-		for j, comment := range m.Commentary {
+		for j, comment := range m.PostCommentary {
 			cmtStr := fmt.Sprintf(" {%s}", comment)
-			if i == len(moves)-1 && j == len(m.Commentary)-1 && len(m.Variations) == 0 {
+			if i == len(moves)-1 && j == len(m.PostCommentary)-1 && len(m.Variations) == 0 {
 				cmtStr += ")"
 			}
 			appendToPgnLine(cmtStr, currentLine, lines)
@@ -1151,7 +1161,7 @@ func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Bu
 		}
 
 		currPos.Move(m.Move)
-		if (m.NumericAnnotation > 6 || len(m.Commentary) > 0 || len(m.Variations) > 0) && currPos.SideToMove == Black {
+		if (m.NumericAnnotation > 6 || len(m.PostCommentary) > 0 || len(m.Variations) > 0) && currPos.SideToMove == Black {
 			includeBlackMoveNum = true
 		} else {
 			includeBlackMoveNum = false
