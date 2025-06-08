@@ -629,3 +629,53 @@ func TestParseSANMove_DisambiguateMoveThatResultsInCheck(t *testing.T) {
 		t.Errorf("got error on %s: expected %v, got %v", s, expected, move)
 	}
 }
+
+func TestParseSANMove_miscInput(t *testing.T) {
+
+	p := Position{}
+	p.UnmarshalText([]byte("rnbqkbnr/pppp1pp1/8/8/8/8/1PPP1PPP/RNBQKBNR w KQkq - 0 1"))
+
+	inputs := []string{
+		"RAX0", "Bꀀ0", "\U0006bac10", "P2XA1",
+	}
+
+	for _, san := range inputs {
+		// Just make sure it doesn't panic
+		ParseSANMove(san, p.Copy())
+	}
+}
+
+func FuzzParseSANMove(f *testing.F) {
+	legalMoves := []string{
+		"Ra3", "Ra4", "b3", "b4", "c3", "c4", "d3", "d4",
+		"Ke2", "Qf3", "Bc4", "f4", "g3", "g4", "h3", "h4",
+		"Na3", "Nc3", "Nf3", "Nh3",
+	}
+
+	for _, m := range legalMoves {
+		f.Add(m)
+	}
+
+	p := Position{}
+	p.UnmarshalText([]byte("rnbqkbnr/pppp1pp1/8/8/8/8/1PPP1PPP/RNBQKBNR w KQkq - 0 1"))
+	f.Fuzz(func(t *testing.T, san string) {
+		// Just make sure it doesn't panic
+		ParseSANMove(san, p.Copy())
+	})
+}
+
+func FuzzParseUCIMove(f *testing.F) {
+	uciMoves := []string{
+		"e2e4", "d2d4", "c2c4", "g1f3", "b1c3", "f2f4",
+		"e7e8q", "d7d8r", "c7c8b", "h7h8n", "g7g8q", "f7f8r",
+		"a2a1b", "b2b1n", "e7e8q", "d7d8r", "c7c8b", "h7h8n",
+		"e1g1", "d8h5",
+	}
+	for _, m := range uciMoves {
+		f.Add(m)
+	}
+	f.Fuzz(func(t *testing.T, uci string) {
+		// Just make sure it doesn't panic
+		ParseUCIMove(uci)
+	})
+}

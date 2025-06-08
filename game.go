@@ -16,6 +16,7 @@
 package chess
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -24,6 +25,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // Result represents the result of a chess [Game].
@@ -74,7 +76,8 @@ func (r *Result) UnmarshalText(text []byte) error {
 type PgnMove struct {
 	Move              Move
 	NumericAnnotation uint8
-	Commentary        []string
+	PreCommentary     []string
+	PostCommentary    []string
 	// Variations supports multiple variations. Hence it is a 2d slice. The first move in a variation should replace the current move.
 	Variations [][]PgnMove
 }
@@ -84,7 +87,8 @@ func (m PgnMove) Copy() PgnMove {
 	newPgnMove := PgnMove{
 		Move:              m.Move,
 		NumericAnnotation: m.NumericAnnotation,
-		Commentary:        slices.Clone(m.Commentary),
+		PreCommentary:     slices.Clone(m.PreCommentary),
+		PostCommentary:    slices.Clone(m.PostCommentary),
 		Variations:        make([][]PgnMove, 0, len(m.Variations)),
 	}
 	for _, variation := range m.Variations {
@@ -134,9 +138,6 @@ type Game struct {
 	Result Result
 	// OtherTags is intended for custom PGN game tags. Some examples are provided here: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c9
 	OtherTags map[string]string
-
-	// Commentary represents a game level comment. It will appear before the first move.
-	Commentary string
 }
 
 // NewGame returns a fresh game of chess with the starting position initialized. Tags are set as follows:
@@ -170,7 +171,6 @@ func NewGame() *Game {
 		Black:       "?",
 		Result:      NoResult,
 		OtherTags:   map[string]string{},
-		Commentary:  "",
 	}
 }
 
@@ -197,24 +197,508 @@ func NewGameFromFEN(fen string) (*Game, error) {
 			"SetUp": "1",
 			"FEN":   fen,
 		},
-		Commentary: "",
 	}, nil
 }
 
-// UnmarshalText is capable of unmarshaling a single game in pgn format. See also [ParsePGN]
+// UnmarshalText is capable of unmarshaling a single game in pgn format.
+//
+// Games can start from any position, but all the moves must be legal.
+//
+// See also [ParsePGN]
 func (g *Game) UnmarshalText(text []byte) error {
 	// Be sure to not read lines beginning with %. These are comments.
 	// Semicolons are commentary and go to the end of the line.
+	pgn := string(text)
+	pgn = strings.TrimSpace(pgn)
+	lines := strings.Split(strings.ReplaceAll(pgn, "\r\n", "\n"), "\n")
+	lines = removeCommentLines(lines)
+	tags, movetext := separateTagsAndMovetext(lines)
+	if len(movetext) == 0 {
+		return fmt.Errorf("expected an empty newline after tags followed by movetext")
+	}
+
+	newG := NewGame()
+	err := newG.parseTags(tags)
+	if err != nil {
+		return fmt.Errorf("could not parse pgn tags: %w", err)
+	}
+
+	err = newG.parseMovetext(movetext)
+	if err != nil {
+		return fmt.Errorf("could not parse movetext: %w", err)
+	}
+
+	*g = *newG
 	return nil
 }
 
-// ParsePGN reads to the end of the provided reader and provides a list of the games parsed from the PGN.
-func ParsePGN(pgn io.Reader) ([]*Game, error) {
-	// Be sure to not read lines beginning with %. These are comments.
-	// Semicolons are commentary and go to the end of the line.
+func removeCommentLines(lines []string) []string {
+	var filteredLines []string
+	for _, line := range lines {
+		if len(line) == 0 || line[0] != '%' {
+			filteredLines = append(filteredLines, line)
+		}
+	}
+	return filteredLines
+}
 
-	// Implement some fuzz testing with this to make sure is always returns error and never panics.
-	return nil, nil
+func separateTagsAndMovetext(lines []string) (tags []string, movetext []string) {
+	emptyLineIndex := slices.Index(lines, "")
+	if emptyLineIndex == -1 {
+		return nil, nil
+	}
+	return lines[0:emptyLineIndex], lines[emptyLineIndex+1:]
+
+}
+
+func (g *Game) parseTags(lines []string) error {
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if !strings.HasPrefix(line, "[") || !strings.HasSuffix(line, "]") {
+			return fmt.Errorf("tag %q missing square braces", line)
+		}
+		if len(line) <= 2 {
+			// empty tag
+			continue
+		}
+		if err := g.parseSingleTag([]byte(line[1 : len(line)-1])); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (g *Game) parseSingleTag(tag []byte) error {
+	name := ""
+	i := 0
+	for ; i < len(tag) && tag[i] != ' '; i++ {
+		name += string(tag[i])
+	}
+	i++
+	if i >= len(tag) {
+		return fmt.Errorf("tag missing value after key")
+	}
+	if tag[i] != '"' {
+		return fmt.Errorf("expected a single space in between tag name and opening quote, %q", tag)
+	}
+	i++
+
+	body := ""
+	for ; i < len(tag)-1 && tag[i] != '"'; i++ {
+		body += string(tag[i])
+	}
+	if i >= len(tag) || tag[i] != '"' {
+		return fmt.Errorf("missing closing quote for tag body, %q", tag)
+	}
+	return g.setTag(name, body)
+}
+
+// setTag automatically set the 7 tag roster, and the Setup and FEN tags. When setting the FEN tag it will set the position as well.
+func (g *Game) setTag(name string, body string) error {
+	switch name {
+	case "Event":
+		g.Event = body
+	case "Site":
+		g.Site = body
+	case "Date":
+		g.Date = body
+	case "Round":
+		g.Round = body
+	case "White":
+		g.White = body
+	case "Black":
+		g.Black = body
+	case "Result":
+		err := g.Result.UnmarshalText([]byte(body))
+		if err != nil {
+			return fmt.Errorf("could not parse Result")
+		}
+	case "FEN":
+		g.OtherTags["FEN"] = body
+		err := g.pos.UnmarshalText([]byte(body))
+		if err != nil {
+			return fmt.Errorf("could not parse fen: %w", err)
+		}
+	default:
+		g.OtherTags[name] = body
+	}
+	return nil
+}
+
+func (g *Game) parseMovetext(lines []string) error {
+	text := ""
+	for _, line := range lines {
+		text += line
+		text += "\n"
+	}
+	tokens, err := tokenizeMovetext(text)
+	if err != nil {
+		return err
+	}
+	if len(tokens) == 0 || tokens[len(tokens)-1].tokenType != result {
+		return fmt.Errorf("there is no result at end of pgn")
+	}
+
+	moveHis, err := createMoveHistory(tokens, g.Position())
+	if err != nil {
+		return err
+	}
+	for _, m := range moveHis {
+		err := g.Move(m.Move)
+		if err != nil {
+			return fmt.Errorf("found illegal move %s in pgn", m.Move)
+		}
+	}
+	g.moveHistory = moveHis
+
+	err = g.Result.UnmarshalText([]byte(tokens[len(tokens)-1].body))
+	if err != nil {
+		return fmt.Errorf("could not parse result %q", tokens[len(tokens)-1].body)
+	}
+	return nil
+}
+
+func createMoveHistory(tokens []pgnToken, pos *Position) ([]PgnMove, error) {
+	moveHis := []PgnMove{}
+	prevPos := pos.Copy()
+	preCommentary := []string{}
+	for i := 0; i < len(tokens); i++ {
+		t := tokens[i]
+		switch t.tokenType {
+		case commentary:
+			if len(moveHis) == 0 {
+				preCommentary = append(preCommentary, t.body)
+			} else {
+				moveHis[len(moveHis)-1].PostCommentary = append(moveHis[len(moveHis)-1].PostCommentary, t.body)
+			}
+		case move:
+			prevPos = pos.Copy()
+			m, err := ParseSANMove(t.body, pos)
+			if err != nil {
+				return nil, err
+			}
+			moveHis = append(moveHis, PgnMove{
+				Move:              m,
+				NumericAnnotation: 0,
+				PreCommentary:     preCommentary,
+				PostCommentary:    []string{},
+				Variations:        [][]PgnMove{},
+			})
+			if !slices.Contains(LegalMoves(pos), m) {
+				return nil, fmt.Errorf("pgn contains illegal move: %s", m)
+			}
+			pos.Move(m)
+			preCommentary = []string{}
+		case moveNum:
+			// no action needed
+		case numericAnnotation:
+			if len(moveHis) == 0 {
+				return nil, fmt.Errorf("can't apply numeric annotation without a move")
+			}
+			nag, err := strconv.ParseUint(t.body[1:], 10, 8)
+			if err != nil {
+				return nil, fmt.Errorf("numeric annotation glyph is not between 0 and 255")
+			}
+			moveHis[len(moveHis)-1].NumericAnnotation = uint8(nag)
+		case numericSuffixAnnotation:
+			if len(moveHis) == 0 {
+				return nil, fmt.Errorf("can't apply numeric suffix annotation without a move")
+			}
+			nag, err := parseNumericSuffixAnnotation(t.body)
+			if err != nil {
+				return nil, err
+			}
+			moveHis[len(moveHis)-1].NumericAnnotation = nag
+		case ravOpen:
+			closeToken := i + findRavClose(tokens[i:])
+			rav, err := createMoveHistory(tokens[i+1:closeToken], prevPos.Copy())
+			if err != nil {
+				return nil, err
+			}
+			if len(moveHis) == 0 {
+				return nil, fmt.Errorf("can't have variation without a move first")
+			}
+			moveHis[len(moveHis)-1].Variations = append(moveHis[len(moveHis)-1].Variations, rav)
+			i = closeToken
+		case ravClose:
+			// no action needed
+		case result:
+			if i != len(tokens)-1 {
+				return nil, fmt.Errorf("encountered a result before the end of the pgn")
+			}
+		default:
+			panic(fmt.Sprintf("unexpected chess.pgnTokenType: %#v", t.tokenType))
+		}
+	}
+	return moveHis, nil
+}
+
+// findRavClose finds the accompanying closing token index from a slice of tokens given the first token is an open token. Returns len(tokens) if it was not found.
+func findRavClose(tokens []pgnToken) int {
+	numOpenTokens := 0
+	for i, t := range tokens {
+		if t.tokenType == ravOpen {
+			numOpenTokens++
+		}
+		if t.tokenType == ravClose {
+			if numOpenTokens == 1 {
+				return i
+			} else {
+				numOpenTokens--
+			}
+		}
+	}
+	return len(tokens)
+}
+
+func parseNumericSuffixAnnotation(nag string) (uint8, error) {
+	switch nag {
+	case "!":
+		return 1, nil
+	case "?":
+		return 2, nil
+	case "!!":
+		return 3, nil
+	case "??":
+		return 4, nil
+	case "!?":
+		return 5, nil
+	case "?!":
+		return 6, nil
+	default:
+		return 0, fmt.Errorf("unrecognized numeric suffix annotation %q", nag)
+	}
+}
+
+type pgnTokenType uint8
+
+const (
+	moveNum pgnTokenType = iota
+	move
+	commentary
+	numericAnnotation
+	numericSuffixAnnotation
+	ravOpen
+	ravClose
+	result
+)
+
+type pgnToken struct {
+	tokenType pgnTokenType
+	body      string
+}
+
+func tokenizeMovetext(text string) ([]pgnToken, error) {
+	// This could perhaps use a nicer tokenization system. But it seems to work well for my current needs.
+	tokens := []pgnToken{}
+	words := splitWordsPreserveWhitespace(text)
+	for i := 0; i < len(words); i++ {
+		if len(words[i]) == 0 {
+			continue
+		}
+		if words[i] == "1-0" ||
+			words[i] == "0-1" ||
+			words[i] == "1/2-1/2" ||
+			words[i] == "*" {
+			// Result
+			tokens = append(tokens, pgnToken{result, words[i]})
+		} else if unicode.IsDigit(rune(words[i][0])) {
+			// Move number
+			nonPeriodIndex := firstNonPeriod(words[i][1:]) + 1
+			tokens = append(tokens, pgnToken{moveNum, words[i][0:nonPeriodIndex]})
+			words[i] = words[i][nonPeriodIndex:]
+			i--
+		} else if words[i][0] == '(' {
+			// Begin recursive annotation variation
+			tokens = append(tokens, pgnToken{ravOpen, "("})
+			words[i] = words[i][1:]
+			i--
+		} else if words[i][0] == ')' {
+			// End recursive annotation variation
+			tokens = append(tokens, pgnToken{ravClose, ")"})
+			words[i] = words[i][1:]
+			i--
+		} else if words[i][0] == '$' {
+			// Numeric annotation
+			nonDigitIndex := firstNonDigit(words[i][1:]) + 1
+			tokens = append(tokens, pgnToken{numericAnnotation, words[i][0:nonDigitIndex]})
+			words[i] = words[i][nonDigitIndex:]
+			i--
+		} else if words[i][0] == '!' || words[i][0] == '?' {
+			// Numeric suffix annotation
+			if len(words[i]) > 1 && (words[i][1] == '!' || words[i][1] == '?') {
+				tokens = append(tokens, pgnToken{numericSuffixAnnotation, words[i][0:2]})
+				words[i] = words[i][2:]
+				i--
+			} else {
+				tokens = append(tokens, pgnToken{numericSuffixAnnotation, words[i][0:1]})
+				words[i] = words[i][1:]
+				i--
+			}
+		} else if words[i][0] == ';' {
+			// Line comment
+			words[i] = words[i][1:]
+			comment := ""
+			for words[i] != "\n" {
+				comment += words[i]
+				i++
+			}
+			tokens = append(tokens, pgnToken{commentary, strings.TrimSpace(comment)})
+		} else if words[i][0] == '{' {
+			// Curly brace comment
+			words[i] = words[i][1:]
+			comment := ""
+			for !strings.Contains(words[i], "}") {
+				comment += words[i]
+				i++
+				if i >= len(words) {
+					return nil, fmt.Errorf("unmatched { in movetext")
+				}
+			}
+			braceIndex := strings.Index(words[i], "}")
+			comment += words[i][0:braceIndex]
+			tokens = append(tokens, pgnToken{commentary, strings.TrimSpace(comment)})
+			words[i] = words[i][braceIndex+1:]
+			i--
+		} else if words[i][0] == '}' {
+			return nil, fmt.Errorf("unmatched } in movetext")
+		} else if !unicode.IsSpace([]rune(words[i])[0]) {
+			// Move
+			endMoveIndex := strings.IndexAny(words[i], "!?{}()$;")
+			if endMoveIndex == -1 {
+				endMoveIndex = len(words[i])
+			}
+			movetext := words[i][0:endMoveIndex]
+			words[i] = words[i][endMoveIndex:]
+			i--
+			tokens = append(tokens, pgnToken{move, movetext})
+		}
+	}
+	return tokens, nil
+}
+
+func firstNonDigit(s string) int {
+	for i, r := range s {
+		if !unicode.IsDigit(r) {
+			return i
+		}
+	}
+	return len(s)
+}
+
+func firstNonPeriod(s string) int {
+	for i, r := range s {
+		if r != '.' {
+			return i
+		}
+	}
+	return len(s)
+}
+
+func splitWordsPreserveWhitespace(s string) []string {
+	words := []string{}
+	for s != "" {
+		whitespaceIndex := 0
+		for i, r := range s {
+			if unicode.IsSpace(r) {
+				whitespaceIndex = i
+				break
+			}
+		}
+		if whitespaceIndex == 0 {
+			words = append(words, s[0:1])
+			s = s[1:]
+			continue
+		}
+		words = append(words, s[0:whitespaceIndex])
+		words = append(words, s[whitespaceIndex:whitespaceIndex+1])
+		s = s[whitespaceIndex+1:]
+	}
+	return words
+}
+
+// ParsePGN reads until the provided reader returns [io.EOF] and provides a list of the games parsed from the PGN.
+// If an error is encountered before reaching EOF, all the games that could be parsed will be returned with the error.
+// For large pgn files this function may take a few seconds.
+// See also [Game.UnmarshalText].
+func ParsePGN(rd io.Reader) ([]*Game, error) {
+	bufReader := bufio.NewReader(rd)
+	games := []*Game{}
+	gameParseErrors := []error{}
+	pgn, err := extractSinglePgn(bufReader)
+	for ; err == nil || (err == io.EOF && len(pgn) > 0); pgn, err = extractSinglePgn(bufReader) {
+		newG := &Game{}
+		gameErr := newG.UnmarshalText(pgn)
+		if gameErr != nil {
+			gameParseErrors = append(gameParseErrors, gameErr)
+		} else {
+			games = append(games, newG)
+		}
+		if err == io.EOF {
+			break
+		}
+	}
+	if err != io.EOF {
+		return games, fmt.Errorf("error parsing entire file: %w", err)
+	}
+	if len(gameParseErrors) > 0 {
+		errorString := strings.Builder{}
+		errorString.WriteRune('[')
+		for _, e := range gameParseErrors {
+			errorString.WriteString("\"" + e.Error() + "\",\n")
+		}
+		errorString.WriteRune(']')
+		return games, fmt.Errorf("error parsing games, here is a list of all encountered errors: %s", errorString.String())
+	}
+	return games, nil
+}
+
+func extractSinglePgn(bufrd *bufio.Reader) ([]byte, error) {
+	pgn := []byte{}
+	// get tag section
+	for {
+		buf, err := bufrd.ReadBytes('\n')
+		if err != nil {
+			if len(pgn) == 0 && err == io.EOF {
+				return nil, err
+			} else {
+				return nil, fmt.Errorf("could not parse a complete pgn: %w", err)
+			}
+		}
+
+		pgn = append(pgn, buf...)
+		if isEmptyLine(buf) {
+			break
+		}
+	}
+
+	// get movetext section
+	reachedEOF := false
+	for {
+		buf, err := bufrd.ReadBytes('\n')
+		if err != nil && err != io.EOF {
+			return nil, fmt.Errorf("error reading pgn file: %w", err)
+		}
+
+		pgn = append(pgn, buf...)
+		if err == io.EOF {
+			reachedEOF = true
+			break
+		}
+		if isEmptyLine(buf) {
+			break
+		}
+	}
+
+	if reachedEOF {
+		return pgn, io.EOF
+	}
+	return pgn, nil
+}
+
+func isEmptyLine(buf []byte) bool {
+	return (len(buf) == 1 && buf[0] == '\n') ||
+		(len(buf) == 2 && buf[0] == '\r' && buf[1] == '\n')
 }
 
 // Copy returns a copy of the game.
@@ -231,7 +715,6 @@ func (g *Game) Copy() *Game {
 		Black:       g.Black,
 		Result:      g.Result,
 		OtherTags:   maps.Clone(g.OtherTags),
-		Commentary:  g.Commentary,
 	}
 }
 
@@ -286,7 +769,8 @@ func (g *Game) Move(m Move) error {
 	g.moveHistory = append(g.moveHistory, PgnMove{
 		Move:              m,
 		NumericAnnotation: 0,
-		Commentary:        []string{},
+		PreCommentary:     []string{},
+		PostCommentary:    []string{},
 		Variations:        [][]PgnMove{},
 	})
 	g.setResult()
@@ -337,7 +821,7 @@ func (g *Game) Position() *Position {
 
 // PositionPly returns a copy of the position at a certain ply (half move). 0 returns the initial game position.
 //
-// If a negative number is provided, or ply goes beyond the number of moves played nil is returned.
+// If a negative number is provided, or ply goes beyond the number of moves played nil is returned. Ply always starts at 0 and increments by 1, even if the game starts at move 16 for example.
 func (g *Game) PositionPly(ply int) *Position {
 	pos := &Position{}
 	if g.OtherTags["SetUp"] == "1" {
@@ -371,18 +855,52 @@ func (g *Game) AnnotateMove(plyNum int, nag uint8) {
 	g.moveHistory[plyNum].NumericAnnotation = nag
 }
 
-// CommentMove appends a comment to the specified move.
+// CommentAfterMove appends a comment to the specified move. Returns and error if plyNum is out of range.
 //
 // plyNum starts at 0 for the first move.
-func (g *Game) CommentMove(plyNum int, comment string) {
-	g.moveHistory[plyNum].Commentary = append(g.moveHistory[plyNum].Commentary, comment)
+func (g *Game) CommentAfterMove(plyNum int, comment string) error {
+	if plyNum < 0 || plyNum >= len(g.moveHistory) {
+		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+	}
+	g.moveHistory[plyNum].PostCommentary = append(g.moveHistory[plyNum].PostCommentary, comment)
+	return nil
 }
 
-// DeleteComment deletes a comment from the specified move.
+// CommentBeforeMove appends appends a comment to be displayed before a move.
+// Commentary is not well defined in the pgn specification, thus in most situations it is impossible to tell if a comment should be associated with the move right before it, or right after it. By default comments will be associated with the move right before them, but in some cases (such as the start of a game, or start of a variation) it is possible to have a comment that must precede a move. This is to say that if you marshal and then unmarshal a game, most comments will be parsed as being after a move.
+//
+// plyNum starts at 0 for the first move.
+func (g *Game) CommentBeforeMove(plyNum int, comment string) error {
+	if plyNum < 0 || plyNum >= len(g.moveHistory) {
+		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+	}
+	g.moveHistory[plyNum].PreCommentary = append(g.moveHistory[plyNum].PreCommentary, comment)
+	return nil
+}
+
+// DeleteCommentAfter deletes a comment after the specified move.
 //
 // plyNum and commentNum start at 0 for the first move.
-func (g *Game) DeleteComment(plyNum int, commentNum int) {
-	g.moveHistory[0].Commentary = slices.Delete(g.moveHistory[0].Commentary, commentNum, commentNum+1)
+func (g *Game) DeleteCommentAfter(plyNum int, commentNum int) error {
+	if plyNum < 0 || plyNum >= len(g.moveHistory) {
+		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+	}
+	if commentNum < 0 || commentNum >= len(g.moveHistory[plyNum].PostCommentary) {
+		return fmt.Errorf("commentNum is too large or to small: len(PostCommentary) = %d, commentNum = %d", len(g.moveHistory[plyNum].PostCommentary), commentNum)
+	}
+	g.moveHistory[plyNum].PostCommentary = slices.Delete(g.moveHistory[plyNum].PostCommentary, commentNum, commentNum+1)
+	return nil
+}
+
+func (g *Game) DeleteCommentBefore(plyNum int, commentNum int) error {
+	if plyNum < 0 || plyNum >= len(g.moveHistory) {
+		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+	}
+	if commentNum < 0 || commentNum >= len(g.moveHistory[plyNum].PreCommentary) {
+		return fmt.Errorf("commentNum is too large or to small: len(PreCommentary) = %d, commentNum = %d", len(g.moveHistory[plyNum].PreCommentary), commentNum)
+	}
+	g.moveHistory[plyNum].PreCommentary = slices.Delete(g.moveHistory[plyNum].PreCommentary, commentNum, commentNum+1)
+	return nil
 }
 
 // MakeVariation adds a set of variation moves to the specified move. The variation should begin with a move that replaces the current move. Variation moves must be legal.
@@ -449,9 +967,6 @@ func (g *Game) String() string {
 	lines := make([]string, 0, 10)
 	g.addTags(&lines)
 	lines = append(lines, "")
-	if g.Commentary != "" {
-		lines = append(lines, fmt.Sprintf("{%s}", g.Commentary))
-	}
 	g.addMoveText(&lines)
 	pgn := strings.Builder{}
 	for i, l := range lines {
@@ -514,6 +1029,10 @@ func (g *Game) addMoveText(lines *[]string) {
 
 	includeBlackMoveNum := currPos.SideToMove == Black
 	for _, m := range g.moveHistory {
+		for _, comment := range m.PreCommentary {
+			cmtStr := fmt.Sprintf(" {%s}", comment)
+			appendToPgnLine(cmtStr, &currentLine, lines)
+		}
 		if currPos.SideToMove == White {
 			moveNum := " " + strconv.FormatUint(uint64(currPos.FullMove), 10) + "."
 			appendToPgnLine(moveNum, &currentLine, lines)
@@ -533,7 +1052,7 @@ func (g *Game) addMoveText(lines *[]string) {
 			appendToPgnLine(" "+nag, &currentLine, lines)
 		}
 
-		for _, comment := range m.Commentary {
+		for _, comment := range m.PostCommentary {
 			cmtStr := fmt.Sprintf(" {%s}", comment)
 			appendToPgnLine(cmtStr, &currentLine, lines)
 		}
@@ -543,7 +1062,7 @@ func (g *Game) addMoveText(lines *[]string) {
 		}
 
 		currPos.Move(m.Move)
-		if (len(m.Commentary) > 0 || len(m.Variations) > 0) && currPos.SideToMove == Black {
+		if (len(m.PostCommentary) > 0 || len(m.Variations) > 0) && currPos.SideToMove == Black {
 			includeBlackMoveNum = true
 		} else {
 			includeBlackMoveNum = false
@@ -636,21 +1155,21 @@ func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Bu
 		nag := nagString(m.NumericAnnotation)
 		if m.NumericAnnotation <= 6 {
 			sanMove += nag
-			if i == len(moves)-1 && len(m.Commentary) == 0 && len(m.Variations) == 0 {
+			if i == len(moves)-1 && len(m.PostCommentary) == 0 && len(m.Variations) == 0 {
 				sanMove += ")"
 			}
 			appendToPgnLine(sanMove, currentLine, lines)
 		} else {
 			appendToPgnLine(sanMove, currentLine, lines)
-			if i == len(moves)-1 && len(m.Commentary) == 0 && len(m.Variations) == 0 {
+			if i == len(moves)-1 && len(m.PostCommentary) == 0 && len(m.Variations) == 0 {
 				nag += ")"
 			}
 			appendToPgnLine(" "+nag, currentLine, lines)
 		}
 
-		for j, comment := range m.Commentary {
+		for j, comment := range m.PostCommentary {
 			cmtStr := fmt.Sprintf(" {%s}", comment)
-			if i == len(moves)-1 && j == len(m.Commentary)-1 && len(m.Variations) == 0 {
+			if i == len(moves)-1 && j == len(m.PostCommentary)-1 && len(m.Variations) == 0 {
 				cmtStr += ")"
 			}
 			appendToPgnLine(cmtStr, currentLine, lines)
@@ -664,7 +1183,7 @@ func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Bu
 		}
 
 		currPos.Move(m.Move)
-		if (m.NumericAnnotation > 6 || len(m.Commentary) > 0 || len(m.Variations) > 0) && currPos.SideToMove == Black {
+		if (m.NumericAnnotation > 6 || len(m.PostCommentary) > 0 || len(m.Variations) > 0) && currPos.SideToMove == Black {
 			includeBlackMoveNum = true
 		} else {
 			includeBlackMoveNum = false

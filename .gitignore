@@ -30,5 +30,7 @@ go.work.sum
 # Other
 *design*
 testPGNs/*.pgn
+testdata/fuzz/
+testdata/extra_pgns
 
 todo
