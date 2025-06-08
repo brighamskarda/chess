@@ -310,6 +310,26 @@ func TestCommentAfterMove(t *testing.T) {
 	}
 }
 
+func TestCommentAfterMoveErr(t *testing.T) {
+	g := NewGame()
+	if g.Move(Move{E2, E4, NoPieceType}) != nil {
+		t.Fail()
+	}
+	if g.Move(Move{D7, D5, NoPieceType}) != nil {
+		t.Fail()
+	}
+
+	if g.CommentAfterMove(0, "comment 1") != nil {
+		t.Errorf("got error when none expected")
+	}
+	if g.CommentAfterMove(-1, "fff") == nil {
+		t.Errorf("did not get error")
+	}
+	if g.CommentAfterMove(2, "fff") == nil {
+		t.Errorf("did not get error")
+	}
+}
+
 func TestCommentBeforeMove(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
@@ -327,6 +347,26 @@ func TestCommentBeforeMove(t *testing.T) {
 	}
 	if moveHistory[1].PreCommentary[0] != "comment 2" {
 		t.Errorf("for move 1 got %q", moveHistory[1].PreCommentary)
+	}
+}
+
+func TestCommentBeforeMoveErr(t *testing.T) {
+	g := NewGame()
+	if g.Move(Move{E2, E4, NoPieceType}) != nil {
+		t.Fail()
+	}
+	if g.Move(Move{D7, D5, NoPieceType}) != nil {
+		t.Fail()
+	}
+
+	if g.CommentBeforeMove(0, "comment 1") != nil {
+		t.Errorf("got error when none expected")
+	}
+	if g.CommentBeforeMove(-1, "fff") == nil {
+		t.Errorf("did not get error")
+	}
+	if g.CommentBeforeMove(2, "fff") == nil {
+		t.Errorf("did not get error")
 	}
 }
 
@@ -366,6 +406,35 @@ func TestDeleteCommentBefore(t *testing.T) {
 	}
 }
 
+func TestDeleteCommentBeforeError(t *testing.T) {
+	g := NewGame()
+	if g.Move(Move{E2, E4, NoPieceType}) != nil {
+		t.Fail()
+	}
+	if g.Move(Move{D7, D5, NoPieceType}) != nil {
+		t.Fail()
+	}
+
+	g.CommentBeforeMove(0, "comment 1")
+	g.CommentBeforeMove(1, "comment 2")
+
+	if g.DeleteCommentBefore(0, 0) != nil {
+		t.Error("got error when none expected")
+	}
+	if g.DeleteCommentBefore(-1, 0) == nil {
+		t.Error("did not get error")
+	}
+	if g.DeleteCommentBefore(0, 0) == nil {
+		t.Error("did not get error")
+	}
+	if g.DeleteCommentBefore(1, 1) == nil {
+		t.Error("did not get error")
+	}
+	if g.DeleteCommentBefore(1, -1) == nil {
+		t.Error("did not get error")
+	}
+}
+
 func TestDeleteCommentAfter(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
@@ -399,6 +468,35 @@ func TestDeleteCommentAfter(t *testing.T) {
 	}
 	if moveHistory[1].PostCommentary[0] != "comment 4" {
 		t.Errorf("deleted wrong comment from move 1")
+	}
+}
+
+func TestDeleteCommentAfterError(t *testing.T) {
+	g := NewGame()
+	if g.Move(Move{E2, E4, NoPieceType}) != nil {
+		t.Fail()
+	}
+	if g.Move(Move{D7, D5, NoPieceType}) != nil {
+		t.Fail()
+	}
+
+	g.CommentAfterMove(0, "comment 1")
+	g.CommentAfterMove(1, "comment 2")
+
+	if g.DeleteCommentAfter(0, 0) != nil {
+		t.Error("got error when none expected")
+	}
+	if g.DeleteCommentAfter(-1, 0) == nil {
+		t.Error("did not get error")
+	}
+	if g.DeleteCommentAfter(0, 0) == nil {
+		t.Error("did not get error")
+	}
+	if g.DeleteCommentAfter(1, 1) == nil {
+		t.Error("did not get error")
+	}
+	if g.DeleteCommentAfter(1, -1) == nil {
+		t.Error("did not get error")
 	}
 }
 

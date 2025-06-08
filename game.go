@@ -855,30 +855,52 @@ func (g *Game) AnnotateMove(plyNum int, nag uint8) {
 	g.moveHistory[plyNum].NumericAnnotation = nag
 }
 
-// CommentAfterMove appends a comment to the specified move.
+// CommentAfterMove appends a comment to the specified move. Returns and error if plyNum is out of range.
 //
 // plyNum starts at 0 for the first move.
-func (g *Game) CommentAfterMove(plyNum int, comment string) {
+func (g *Game) CommentAfterMove(plyNum int, comment string) error {
+	if plyNum < 0 || plyNum >= len(g.moveHistory) {
+		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+	}
 	g.moveHistory[plyNum].PostCommentary = append(g.moveHistory[plyNum].PostCommentary, comment)
+	return nil
 }
 
 // CommentBeforeMove appends appends a comment to be displayed before a move.
 // Commentary is not well defined in the pgn specification, thus in most situations it is impossible to tell if a comment should be associated with the move right before it, or right after it. By default comments will be associated with the move right before them, but in some cases (such as the start of a game, or start of a variation) it is possible to have a comment that must precede a move. This is to say that if you marshal and then unmarshal a game, most comments will be parsed as being after a move.
 //
 // plyNum starts at 0 for the first move.
-func (g *Game) CommentBeforeMove(plyNum int, comment string) {
+func (g *Game) CommentBeforeMove(plyNum int, comment string) error {
+	if plyNum < 0 || plyNum >= len(g.moveHistory) {
+		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+	}
 	g.moveHistory[plyNum].PreCommentary = append(g.moveHistory[plyNum].PreCommentary, comment)
+	return nil
 }
 
 // DeleteCommentAfter deletes a comment after the specified move.
 //
 // plyNum and commentNum start at 0 for the first move.
-func (g *Game) DeleteCommentAfter(plyNum int, commentNum int) {
+func (g *Game) DeleteCommentAfter(plyNum int, commentNum int) error {
+	if plyNum < 0 || plyNum >= len(g.moveHistory) {
+		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+	}
+	if commentNum < 0 || commentNum >= len(g.moveHistory[plyNum].PostCommentary) {
+		return fmt.Errorf("commentNum is too large or to small: len(PostCommentary) = %d, commentNum = %d", len(g.moveHistory[plyNum].PostCommentary), commentNum)
+	}
 	g.moveHistory[plyNum].PostCommentary = slices.Delete(g.moveHistory[plyNum].PostCommentary, commentNum, commentNum+1)
+	return nil
 }
 
-func (g *Game) DeleteCommentBefore(plyNum int, commentNum int) {
+func (g *Game) DeleteCommentBefore(plyNum int, commentNum int) error {
+	if plyNum < 0 || plyNum >= len(g.moveHistory) {
+		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+	}
+	if commentNum < 0 || commentNum >= len(g.moveHistory[plyNum].PreCommentary) {
+		return fmt.Errorf("commentNum is too large or to small: len(PreCommentary) = %d, commentNum = %d", len(g.moveHistory[plyNum].PreCommentary), commentNum)
+	}
 	g.moveHistory[plyNum].PreCommentary = slices.Delete(g.moveHistory[plyNum].PreCommentary, commentNum, commentNum+1)
+	return nil
 }
 
 // MakeVariation adds a set of variation moves to the specified move. The variation should begin with a move that replaces the current move. Variation moves must be legal.
