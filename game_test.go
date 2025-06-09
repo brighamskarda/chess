@@ -727,7 +727,7 @@ func TestGetVariationError(t *testing.T) {
 	}
 }
 
-func TestGameString(t *testing.T) {
+func TestGameMarshalText(t *testing.T) {
 	g := NewGame()
 	moves := []string{
 		"d4",
@@ -811,8 +811,8 @@ h4) (2. a4) 2... d5 3. exd5? exd5 $10 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7. Be2 Bd7
 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
 {Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.}
 0-1`
-	actual := g.String()
-	if actual != expected {
+	actual, _ := g.MarshalText()
+	if string(actual) != expected {
 		t.Errorf(`incorrect result: expected 
 """
 %s
@@ -825,7 +825,7 @@ got
 	}
 }
 
-func TestGameString_AltStart(t *testing.T) {
+func TestGameMarshalText_AltStart(t *testing.T) {
 	g, _ := NewGameFromFEN("r2q3r/ppp3pp/2n1Nnk1/4p3/2Q5/B7/P4PPP/RN3RK1 b - - 0 16")
 	moves := []string{
 		"Qd3",
@@ -853,8 +853,8 @@ func TestGameString_AltStart(t *testing.T) {
 [WhiteElo "1090"]
 
 16... Qd3 17. Qg4+ Kf7 *`
-	actual := g.String()
-	if actual != expected {
+	actual, _ := g.MarshalText()
+	if string(actual) != expected {
 		t.Errorf(`incorrect result: expected 
 """
 %s
@@ -867,7 +867,7 @@ got
 	}
 }
 
-func TestGameString_NumericAnnotationGlyphs(t *testing.T) {
+func TestGameMarshalText_NumericAnnotationGlyphs(t *testing.T) {
 	g := NewGame()
 	moves := []string{
 		"d4",
@@ -901,8 +901,8 @@ func TestGameString_NumericAnnotationGlyphs(t *testing.T) {
 [Result "*"]
 
 1. d4 e6! 2. e4? d5!! 3. exd5?? exd5!? 4. Nf3?! *`
-	actual := g.String()
-	if actual != expected {
+	actual, _ := g.MarshalText()
+	if string(actual) != expected {
 		t.Errorf(`incorrect result: expected 
 """
 %s
@@ -915,7 +915,7 @@ got
 	}
 }
 
-func TestGameMarshalText(t *testing.T) {
+func TestGameMarshalText2(t *testing.T) {
 	g := NewGame()
 	moves := []string{
 		"d4",

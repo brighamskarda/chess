@@ -1007,11 +1007,6 @@ func (g *Game) GetVariation(plyNum int, variationNum int) (*Game, error) {
 //
 // The seven tag roster will appear in order, then all other tags will appear in alphabetical order for consistency. err is always nil.
 func (g *Game) MarshalText() (text []byte, err error) {
-	return []byte(g.String()), nil
-}
-
-// String provides the same functionality as [Game.MarshalText].
-func (g *Game) String() string {
 	lines := make([]string, 0, 10)
 	g.addTags(&lines)
 	lines = append(lines, "")
@@ -1023,7 +1018,7 @@ func (g *Game) String() string {
 			pgn.WriteString("\n")
 		}
 	}
-	return pgn.String()
+	return []byte(pgn.String()), nil
 }
 
 func (g *Game) addTags(lines *[]string) {
