@@ -1539,20 +1539,6 @@ func BenchmarkParsePgn(b *testing.B) {
 	}
 }
 
-func TestGameUnmarshal_miscInputs(t *testing.T) {
-	inputs := []string{"[]\n\n0",
-		"[a]\n\n0",
-		"[ \"]\n\n0",
-		"%0\n\n(", "%0\n\n{}",
-		"[]\n\n}{ s y . w I r",
-		"%\n\nAA1x0 0-1"}
-	for _, s := range inputs {
-		g := NewGame()
-		g.UnmarshalText([]byte(s))
-		// Just make sure it doesn't panic
-	}
-}
-
 // This fuzz test is quite slow.
 func FuzzParsePgn(f *testing.F) {
 	file, err := os.Open("./testdata/SaintLouis2023-first3.pgn")
@@ -1574,7 +1560,18 @@ func FuzzParsePgn(f *testing.F) {
 	})
 }
 func FuzzGameUnmarshal(f *testing.F) {
-	f.Add(`[Event "idc"]
+	inputs := []string{"[]\n\n0",
+		"[a]\n\n0",
+		"[ \"]\n\n0",
+		"%0\n\n(", "%0\n\n{}",
+		"[]\n\n}{ s y . w I r",
+		"%\n\nAA1x0 0-1"}
+
+	for _, s := range inputs {
+		f.Add([]byte(s))
+	}
+
+	f.Add([]byte(`[Event "idc"]
 [Site "ur mom's house"]
 [Date "2025.04.09"]
 [Round "2"]
@@ -1588,16 +1585,16 @@ func FuzzGameUnmarshal(f *testing.F) {
 h5!) 3. h4) (2. a4) 2... d5 3. exd5? exd5 $10 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7.
 Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
 {Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.}
-0-1`)
-	f.Fuzz(func(t *testing.T, pgn string) {
+0-1`))
+	f.Fuzz(func(t *testing.T, pgn []byte) {
 		// Just make sure it doesn't panic
 		g := NewGame()
-		g.UnmarshalText([]byte(pgn))
+		g.UnmarshalText(pgn)
 	})
 }
 
 func FuzzGameUnmarshal_altStart(f *testing.F) {
-	f.Add(`[Event "Hamguy123's Study: Chapter 1"]
+	f.Add([]byte(`[Event "Hamguy123's Study: Chapter 1"]
 [Result "*"]
 [Variant "From Position"]
 [FEN "rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N5/PPQ1PPPP/R1B1KBNR b KQkq - 0 1"]
@@ -1612,11 +1609,11 @@ func FuzzGameUnmarshal_altStart(f *testing.F) {
 [ChapterURL "https://lichess.org/study/lfAbjJ1u/fSzsIBlu"]
 
 1... Nd5 2. e3 Qf6 3. Bd2 O-O 4. O-O-O Nc6 5. Be2 b6 6. Nh3 Rb8 7. Rhf1 *
-`)
-	f.Fuzz(func(t *testing.T, pgn string) {
+`))
+	f.Fuzz(func(t *testing.T, pgn []byte) {
 		// Just make sure it doesn't panic
 		g := NewGame()
-		g.UnmarshalText([]byte(pgn))
+		g.UnmarshalText(pgn)
 	})
 }
 

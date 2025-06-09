@@ -41,6 +41,8 @@ const (
 // MarshalText returns "1-0" for [WhiteWins], "0-1" for [BlackWins], "1/2-1/2" for [Draw], and * otherwise. err is always nil.
 func (r Result) MarshalText() (text []byte, err error) {
 	switch r {
+	case NoResult:
+		return []byte("*"), nil
 	case WhiteWins:
 		return []byte("1-0"), nil
 	case BlackWins:
@@ -48,7 +50,7 @@ func (r Result) MarshalText() (text []byte, err error) {
 	case Draw:
 		return []byte("1/2-1/2"), nil
 	default:
-		return []byte("*"), nil
+		return nil, fmt.Errorf("invalid Result %#v", r)
 	}
 }
 
@@ -254,26 +256,25 @@ func separateTagsAndMovetext(lines []string) (tags []string, movetext []string) 
 func (g *Game) parseTags(lines []string) error {
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
-		if !strings.HasPrefix(line, "[") || !strings.HasSuffix(line, "]") {
+		if len(line) == 0 || line[0] != '[' || line[len(line)-1] != ']' {
 			return fmt.Errorf("tag %q missing square braces", line)
 		}
 		if len(line) <= 2 {
 			// empty tag
 			continue
 		}
-		if err := g.parseSingleTag([]byte(line[1 : len(line)-1])); err != nil {
+		if err := g.parseSingleTag(line[1 : len(line)-1]); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (g *Game) parseSingleTag(tag []byte) error {
-	name := ""
+func (g *Game) parseSingleTag(tag string) error {
 	i := 0
 	for ; i < len(tag) && tag[i] != ' '; i++ {
-		name += string(tag[i])
 	}
+	name := tag[0:i]
 	i++
 	if i >= len(tag) {
 		return fmt.Errorf("tag missing value after key")
@@ -282,14 +283,13 @@ func (g *Game) parseSingleTag(tag []byte) error {
 		return fmt.Errorf("expected a single space in between tag name and opening quote, %q", tag)
 	}
 	i++
-
-	body := ""
+	bodyStart := i
 	for ; i < len(tag)-1 && tag[i] != '"'; i++ {
-		body += string(tag[i])
 	}
 	if i >= len(tag) || tag[i] != '"' {
 		return fmt.Errorf("missing closing quote for tag body, %q", tag)
 	}
+	body := tag[bodyStart:i]
 	return g.setTag(name, body)
 }
 
@@ -1009,9 +1009,15 @@ func (g *Game) GetVariation(plyNum int, variationNum int) (*Game, error) {
 // The seven tag roster will appear in order, then all other tags will appear in alphabetical order for consistency. err is always nil.
 func (g *Game) MarshalText() (text []byte, err error) {
 	lines := make([]string, 0, 10)
-	g.addTags(&lines)
+	err = g.addTags(&lines)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal tags: %w", err)
+	}
 	lines = append(lines, "")
-	g.addMoveText(&lines)
+	err = g.addMoveText(&lines)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal movetext: %w", err)
+	}
 	pgn := strings.Builder{}
 	for i, l := range lines {
 		pgn.WriteString(l)
@@ -1022,7 +1028,7 @@ func (g *Game) MarshalText() (text []byte, err error) {
 	return []byte(pgn.String()), nil
 }
 
-func (g *Game) addTags(lines *[]string) {
+func (g *Game) addTags(lines *[]string) error {
 	*lines = append(*lines, fmt.Sprintf("[Event %q]", g.Event))
 	*lines = append(*lines, fmt.Sprintf("[Site %q]", g.Site))
 	*lines = append(*lines, fmt.Sprintf("[Date %q]", g.Date))
@@ -1031,13 +1037,14 @@ func (g *Game) addTags(lines *[]string) {
 	*lines = append(*lines, fmt.Sprintf("[Black %q]", g.Black))
 	rstStr, err := g.Result.MarshalText()
 	if err != nil {
-		rstStr = []byte("*")
+		return err
 	}
 	*lines = append(*lines, fmt.Sprintf("[Result %q]", rstStr))
 	g.addOtherTags(lines)
+	return nil
 }
 
-func (g *Game) addReducedTags(lines *[]string) {
+func (g *Game) addReducedTags(lines *[]string) error {
 	*lines = append(*lines, fmt.Sprintf("[Event %q]", g.Event))
 	*lines = append(*lines, fmt.Sprintf("[Site %q]", g.Site))
 	*lines = append(*lines, fmt.Sprintf("[Date %q]", g.Date))
@@ -1046,13 +1053,14 @@ func (g *Game) addReducedTags(lines *[]string) {
 	*lines = append(*lines, fmt.Sprintf("[Black %q]", g.Black))
 	rstStr, err := g.Result.MarshalText()
 	if err != nil {
-		rstStr = []byte("*")
+		return err
 	}
 	*lines = append(*lines, fmt.Sprintf("[Result %q]", rstStr))
 	if g.OtherTags["SetUp"] == "1" {
 		*lines = append(*lines, fmt.Sprintf("[FEN %q]", g.OtherTags["FEN"]))
 		*lines = append(*lines, fmt.Sprintf("[SetUp %q]", g.OtherTags["SetUp"]))
 	}
+	return nil
 }
 
 func (g *Game) addOtherTags(lines *[]string) {
@@ -1066,7 +1074,7 @@ func (g *Game) addOtherTags(lines *[]string) {
 	}
 }
 
-func (g *Game) addMoveText(lines *[]string) {
+func (g *Game) addMoveText(lines *[]string) error {
 	currPos := g.PositionPly(0)
 	currentLine := strings.Builder{}
 	currentLine.Grow(80)
@@ -1112,12 +1120,16 @@ func (g *Game) addMoveText(lines *[]string) {
 			includeBlackMoveNum = false
 		}
 	}
-	result, _ := g.Result.MarshalText()
+	result, err := g.Result.MarshalText()
+	if err != nil {
+		return err
+	}
 	appendToPgnLine(" "+string(result), &currentLine, lines)
 	*lines = append(*lines, currentLine.String())
+	return nil
 }
 
-func (g *Game) addReducedMoveText(lines *[]string) {
+func (g *Game) addReducedMoveText(lines *[]string) error {
 	currPos := g.PositionPly(0)
 	currentLine := strings.Builder{}
 	currentLine.Grow(80)
@@ -1137,9 +1149,13 @@ func (g *Game) addReducedMoveText(lines *[]string) {
 		currentLine.WriteString(sanMove)
 		currPos.Move(m.Move)
 	}
-	result, _ := g.Result.MarshalText()
+	result, err := g.Result.MarshalText()
+	if err != nil {
+		return err
+	}
 	currentLine.WriteString(" " + string(result))
 	*lines = append(*lines, strings.TrimSpace(currentLine.String()))
+	return nil
 }
 
 // appendToPgnLine appends string s to currentLine. If currentLine would be longer than 80, then it is appended to lines and currentLine is reset to the value of s.
@@ -1240,9 +1256,15 @@ func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Bu
 // It essentially removes all unnecessary information from the PGN, useful for archival purposes. err is always nil.
 func (g *Game) MarshalTextReduced() (text []byte, err error) {
 	lines := make([]string, 0, 10)
-	g.addReducedTags(&lines)
+	err = g.addReducedTags(&lines)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal tags: %w", err)
+	}
 	lines = append(lines, "")
-	g.addReducedMoveText(&lines)
+	err = g.addReducedMoveText(&lines)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal movetext: %w", err)
+	}
 	pgn := strings.Builder{}
 	for i, l := range lines {
 		pgn.WriteString(l)
