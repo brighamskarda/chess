@@ -200,14 +200,42 @@ func TestAnnotateMove(t *testing.T) {
 		t.Fail()
 	}
 
-	g.AnnotateMove(0, 3)
-	g.AnnotateMove(1, 2)
+	if g.AnnotateMove(0, 3) != nil {
+		t.Error("annotate move gave an error")
+	}
+	if g.AnnotateMove(1, 2) != nil {
+		t.Error("annotate move gave an error")
+	}
 	moveHistory := g.MoveHistory()
 	if moveHistory[0].NumericAnnotation != 3 {
 		t.Errorf("for move 0 expected 3, got %d", moveHistory[0].NumericAnnotation)
 	}
 	if moveHistory[1].NumericAnnotation != 2 {
 		t.Errorf("for move 1 expected 23, got %d", moveHistory[1].NumericAnnotation)
+	}
+}
+
+func TestAnnotateMoveError(t *testing.T) {
+	g := NewGame()
+	if g.Move(Move{E2, E4, NoPieceType}) != nil {
+		t.Fail()
+	}
+	if g.Move(Move{D7, D5, NoPieceType}) != nil {
+		t.Fail()
+	}
+
+	if g.AnnotateMove(-1, 3) == nil {
+		t.Error("annotate move gave no error")
+	}
+	if g.AnnotateMove(2, 2) == nil {
+		t.Error("annotate move gave no error")
+	}
+	moveHistory := g.MoveHistory()
+	if moveHistory[0].NumericAnnotation != 0 {
+		t.Errorf("for move 0 expected 0, got %d", moveHistory[0].NumericAnnotation)
+	}
+	if moveHistory[1].NumericAnnotation != 0 {
+		t.Errorf("for move 1 expected 0, got %d", moveHistory[1].NumericAnnotation)
 	}
 }
 
@@ -518,8 +546,27 @@ func makeGameWithVariation() *Game {
 	}})
 	return g
 }
+
 func TestMakeVariation(t *testing.T) {
-	g := makeGameWithVariation()
+	g := NewGame()
+	g.Move(Move{E2, E4, NoPieceType})
+	g.Move(Move{D7, D5, NoPieceType})
+
+	err := g.MakeVariation(1, []PgnMove{{
+		Move:              Move{B8, C6, NoPieceType},
+		NumericAnnotation: 0,
+		PostCommentary:    []string{},
+		Variations:        [][]PgnMove{},
+	}, {
+		Move:              Move{D2, D4, NoPieceType},
+		NumericAnnotation: 0,
+		PostCommentary:    []string{},
+		Variations:        [][]PgnMove{},
+	}})
+
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	moveHistory := g.MoveHistory()
 	if len(moveHistory[1].Variations) != 1 {
 		t.Errorf("variation not added correctly")
@@ -529,12 +576,77 @@ func TestMakeVariation(t *testing.T) {
 	}
 }
 
+func TestMakeVariationError(t *testing.T) {
+	g := NewGame()
+	g.Move(Move{E2, E4, NoPieceType})
+	g.Move(Move{D7, D5, NoPieceType})
+
+	variationToAdd := []PgnMove{{
+		Move:              Move{B8, C6, NoPieceType},
+		NumericAnnotation: 0,
+		PostCommentary:    []string{},
+		Variations:        [][]PgnMove{},
+	}, {
+		Move:              Move{D2, D4, NoPieceType},
+		NumericAnnotation: 0,
+		PostCommentary:    []string{},
+		Variations:        [][]PgnMove{},
+	}}
+
+	err := g.MakeVariation(0, variationToAdd)
+	if err == nil {
+		t.Error("did not get error")
+	}
+
+	err = g.MakeVariation(2, variationToAdd)
+	if err == nil {
+		t.Error("did not get error")
+	}
+
+	err = g.MakeVariation(-1, variationToAdd)
+	if err == nil {
+		t.Error("did not get error")
+	}
+
+	moveHistory := g.MoveHistory()
+	for i, m := range moveHistory {
+		if len(m.Variations) != 0 {
+			t.Errorf("move %d has a more than 0 variations", i)
+		}
+	}
+}
+
 func TestDeleteVariation(t *testing.T) {
 	g := makeGameWithVariation()
-	g.DeleteVariation(1, 0)
+	if g.DeleteVariation(1, 0) != nil {
+		t.Error("DeleteVariation produced an error.")
+	}
 	moveHistory := g.MoveHistory()
 	if len(moveHistory[1].Variations) != 0 {
 		t.Errorf("variation not deleted correctly")
+	}
+}
+
+func TestDeleteVariationError(t *testing.T) {
+	g := makeGameWithVariation()
+	if g.DeleteVariation(-1, 0) == nil {
+		t.Error("DeleteVariation produced no error.")
+	}
+	if g.DeleteVariation(0, 0) == nil {
+		t.Error("DeleteVariation produced no error.")
+	}
+	if g.DeleteVariation(2, 0) == nil {
+		t.Error("DeleteVariation produced no error.")
+	}
+	if g.DeleteVariation(1, -1) == nil {
+		t.Error("DeleteVariation produced no error.")
+	}
+	if g.DeleteVariation(1, 1) == nil {
+		t.Error("DeleteVariation produced no error.")
+	}
+	moveHistory := g.MoveHistory()
+	if len(moveHistory[1].Variations) != 1 {
+		t.Errorf("variation incorrectly deleted")
 	}
 }
 
@@ -560,7 +672,10 @@ func TestGetVariation(t *testing.T) {
 		Variations:        [][]PgnMove{},
 	}})
 
-	newG := g.GetVariation(1, 0)
+	newG, err := g.GetVariation(1, 0)
+	if err != nil {
+		t.Errorf("returned error when none expected")
+	}
 
 	expectedPosition := "r1bqkbnr/pppppppp/2n5/8/3PP3/8/PPP2PPP/RNBQKBNR b KQkq d3 0 2"
 	actualPosition := newG.Position().String()
@@ -580,6 +695,35 @@ func TestGetVariation(t *testing.T) {
 	}
 	if len(moveHistory[0].Variations) != 1 {
 		t.Errorf("move 0 variation not preserved")
+	}
+}
+
+func TestGetVariationError(t *testing.T) {
+	g := makeGameWithVariation()
+
+	_, err := g.GetVariation(0, 0)
+	if err == nil {
+		t.Error("expected error for 0, 0")
+	}
+
+	_, err = g.GetVariation(-1, 0)
+	if err == nil {
+		t.Error("expected error for -1, 0")
+	}
+
+	_, err = g.GetVariation(2, 0)
+	if err == nil {
+		t.Error("expected error for 2, 0")
+	}
+
+	_, err = g.GetVariation(1, -1)
+	if err == nil {
+		t.Error("expected error for 1, -1")
+	}
+
+	_, err = g.GetVariation(1, 1)
+	if err == nil {
+		t.Error("expected error for 1, 1")
 	}
 }
 

@@ -851,8 +851,12 @@ func (g *Game) MoveHistory() []PgnMove {
 // AnnotateMove applies a numeric annotation glyph (NAG) to the specified move number. NAG's can be found here: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c10
 //
 // plyNum starts at 0 for the first move. Any previous nag is overwritten.
-func (g *Game) AnnotateMove(plyNum int, nag uint8) {
+func (g *Game) AnnotateMove(plyNum int, nag uint8) error {
+	if plyNum < 0 || plyNum >= len(g.moveHistory) {
+		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+	}
 	g.moveHistory[plyNum].NumericAnnotation = nag
+	return nil
 }
 
 // CommentAfterMove appends a comment to the specified move. Returns and error if plyNum is out of range.
@@ -906,17 +910,61 @@ func (g *Game) DeleteCommentBefore(plyNum int, commentNum int) error {
 // MakeVariation adds a set of variation moves to the specified move. The variation should begin with a move that replaces the current move. Variation moves must be legal.
 //
 // plyNum starts at 0 for the first move. moves is not copied, it is simply added to the variations list for the appropriate pgn move.
-func (g *Game) MakeVariation(plyNum int, moves []PgnMove) {
+func (g *Game) MakeVariation(plyNum int, moves []PgnMove) error {
+	if plyNum < 0 || plyNum >= len(g.moveHistory) {
+		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+	}
+	pos := g.PositionPly(plyNum)
+	if !isLegalVariation(pos, moves) {
+		return fmt.Errorf("variation contains illegal moves")
+	}
+
 	g.moveHistory[plyNum].Variations = append(g.moveHistory[plyNum].Variations, moves)
+	return nil
+}
+
+func isLegalVariation(p *Position, variation []PgnMove) bool {
+	for _, m := range variation {
+		for _, v := range m.Variations {
+			if !isLegalVariation(p.Copy(), v) {
+				return false
+			}
+		}
+		if !isLegalMove(p, m.Move) {
+			return false
+		}
+		p.Move(m.Move)
+	}
+	return true
+}
+
+func isLegalMove(p *Position, m Move) bool {
+	return slices.Contains(LegalMoves(p), m)
 }
 
 // DeleteVariation deletes the variation at the plyNum. Give the index you want to delete (starting at 0).
-func (g *Game) DeleteVariation(plyNum int, variationNum int) {
+func (g *Game) DeleteVariation(plyNum int, variationNum int) error {
+	if plyNum < 0 || plyNum >= len(g.moveHistory) {
+		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+	}
+	if variationNum < 0 || variationNum >= len(g.moveHistory[plyNum].Variations) {
+		return fmt.Errorf("variationNum is too large or to small: len(Variations) = %d, variationNum = %d", len(g.moveHistory[plyNum].Variations), variationNum)
+	}
 	g.moveHistory[plyNum].Variations = slices.Delete(g.moveHistory[plyNum].Variations, variationNum, variationNum+1)
+	return nil
 }
 
 // GetVariation returns a new game where the specified variation is followed. All other specified variations are preserved, and the main line is also preserved as a variation.
-func (g *Game) GetVariation(plyNum int, variationNum int) *Game {
+func (g *Game) GetVariation(plyNum int, variationNum int) (*Game, error) {
+	if plyNum < 0 || plyNum >= len(g.moveHistory) {
+		return nil, fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d",
+			len(g.moveHistory), plyNum)
+	}
+	if variationNum < 0 || variationNum >= len(g.moveHistory[plyNum].Variations) {
+		return nil, fmt.Errorf("variationNum is too large or to small: len(Variations) = %d, variationNum = %d",
+			len(g.moveHistory[plyNum].Variations), variationNum)
+	}
+
 	newMoveHistory := g.MoveHistory()[0:plyNum]
 	// Make the specified variation the main move history
 	for _, m := range g.moveHistory[plyNum].Variations[variationNum] {
@@ -952,7 +1000,7 @@ func (g *Game) GetVariation(plyNum int, variationNum int) *Game {
 
 	newGame.moveHistory = newMoveHistory
 
-	return newGame
+	return newGame, nil
 }
 
 // MarshalText implements [encoding.TextMarshaler]. It provides the game as a valid PGN that can be written to a file. Multiple PGNs can be written to the same file. Just be sure to separate them with a new line.
