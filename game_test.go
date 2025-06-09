@@ -42,7 +42,7 @@ func TestNewGameFromFEN(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected err to be nil")
 	}
-	if s := g.Position().String(); s != fen {
+	if s, _ := g.Position().MarshalText(); string(s) != fen {
 		t.Errorf("position does not match: expected %s, got %s", fen, s)
 	}
 	if g.OtherTags["SetUp"] != "1" {
@@ -157,8 +157,8 @@ func TestGameMove(t *testing.T) {
 	if err != nil {
 		t.Errorf("got error")
 	}
-	if g.Position().String() != "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1" {
-		t.Errorf("incorrect position, got %s", g.Position().String())
+	if s, _ := g.Position().MarshalText(); string(s) != "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1" {
+		t.Errorf("incorrect position, got %s", string(s))
 	}
 	if g.Result != NoResult {
 		t.Errorf("incorrect result, got %v", g.Result)
@@ -183,8 +183,8 @@ func TestGameMoveUCI(t *testing.T) {
 	if err != nil {
 		t.Errorf("got error")
 	}
-	if g.Position().String() != "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1" {
-		t.Errorf("incorrect position, got %s", g.Position().String())
+	if s, _ := g.Position().MarshalText(); string(s) != "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1" {
+		t.Errorf("incorrect position, got %s", string(s))
 	}
 	if g.Result != NoResult {
 		t.Errorf("incorrect result, got %v", g.Result)
@@ -248,8 +248,8 @@ func TestMoveSAN(t *testing.T) {
 		t.Fail()
 	}
 
-	if g.Position().String() != "r1bqkbnr/pppppppp/2n5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2" {
-		t.Errorf("MoveSAN did not work correctly, ending position was %q", g.Position().String())
+	if s, _ := g.Position().MarshalText(); string(s) != "r1bqkbnr/pppppppp/2n5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2" {
+		t.Errorf("MoveSAN did not work correctly, ending position was %q", string(s))
 	}
 }
 
@@ -264,22 +264,22 @@ func TestPositionPly(t *testing.T) {
 
 	ply := 0
 	expected := DefaultFEN
-	actual := g.PositionPly(ply).String()
-	if expected != actual {
+	actual, _ := g.PositionPly(ply).MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect position for ply %d: expected %q, got %q", ply, expected, actual)
 	}
 
 	ply = 1
 	expected = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
-	actual = g.PositionPly(ply).String()
-	if expected != actual {
+	actual, _ = g.PositionPly(ply).MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect position for ply %d: expected %q, got %q", ply, expected, actual)
 	}
 
 	ply = 2
 	expected = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2"
-	actual = g.PositionPly(ply).String()
-	if expected != actual {
+	actual, _ = g.PositionPly(ply).MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect position for ply %d: expected %q, got %q", ply, expected, actual)
 	}
 }
@@ -298,22 +298,22 @@ func TestPositionPly_AltStart(t *testing.T) {
 
 	ply := 0
 	expected := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBN1 w Qkq - 0 1"
-	actual := g.PositionPly(ply).String()
-	if expected != actual {
+	actual, _ := g.PositionPly(ply).MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect position for ply %d: expected %q, got %q", ply, expected, actual)
 	}
 
 	ply = 1
 	expected = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBN1 b Qkq e3 0 1"
-	actual = g.PositionPly(ply).String()
-	if expected != actual {
+	actual, _ = g.PositionPly(ply).MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect position for ply %d: expected %q, got %q", ply, expected, actual)
 	}
 
 	ply = 2
 	expected = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBN1 w Qkq d6 0 2"
-	actual = g.PositionPly(ply).String()
-	if expected != actual {
+	actual, _ = g.PositionPly(ply).MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect position for ply %d: expected %q, got %q", ply, expected, actual)
 	}
 }
@@ -678,8 +678,8 @@ func TestGetVariation(t *testing.T) {
 	}
 
 	expectedPosition := "r1bqkbnr/pppppppp/2n5/8/3PP3/8/PPP2PPP/RNBQKBNR b KQkq d3 0 2"
-	actualPosition := newG.Position().String()
-	if expectedPosition != actualPosition {
+	actualPosition, _ := newG.Position().MarshalText()
+	if expectedPosition != string(actualPosition) {
 		t.Errorf("variation does not match expected position: expected %q, got %q", expectedPosition, actualPosition)
 	}
 
@@ -1353,11 +1353,11 @@ func TestGameUnmarshalAltStart(t *testing.T) {
 		t.Errorf("setup != 1")
 	}
 
-	if g.PositionPly(0).String() != "r2q3r/ppp3pp/2n1Nnk1/4p3/2Q5/B7/P4PPP/RN3RK1 b - - 0 16" {
+	if s, _ := g.PositionPly(0).MarshalText(); string(s) != "r2q3r/ppp3pp/2n1Nnk1/4p3/2Q5/B7/P4PPP/RN3RK1 b - - 0 16" {
 		t.Errorf("alt start position not set")
 	}
 
-	if g.PositionPly(1).String() != "r6r/ppp3pp/2n1Nnk1/4p3/2Q5/B2q4/P4PPP/RN3RK1 w - - 1 17" {
+	if s, _ := g.PositionPly(1).MarshalText(); string(s) != "r6r/ppp3pp/2n1Nnk1/4p3/2Q5/B2q4/P4PPP/RN3RK1 w - - 1 17" {
 		t.Errorf("alt ply 1 incorrect")
 	}
 }

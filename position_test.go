@@ -20,8 +20,8 @@ import "testing"
 func TestParseFEN_PositionString(t *testing.T) {
 	pos := &Position{}
 	err := pos.UnmarshalText([]byte(DefaultFEN))
-	fen := pos.String()
-	if fen != DefaultFEN {
+	fen, _ := pos.MarshalText()
+	if string(fen) != DefaultFEN {
 		t.Errorf("incorrect result: expected %q, got %q", DefaultFEN, fen)
 	}
 	if err != nil {
@@ -31,8 +31,8 @@ func TestParseFEN_PositionString(t *testing.T) {
 	input := "1k1r3r/ppq2Rp1/2p1p1p1/4N1b1/Q2P4/2P4P/PP6/R3K3 b Q - 0 23"
 	pos = &Position{}
 	err = pos.UnmarshalText([]byte(input))
-	fen = pos.String()
-	if fen != input {
+	fen, _ = pos.MarshalText()
+	if string(fen) != input {
 		t.Errorf("incorrect result: expected %q, got %q", input, fen)
 	}
 	if err != nil {
@@ -67,11 +67,11 @@ func TestParseFEN_EmptyFields(t *testing.T) {
 	input := "rn1qk2r/pbppppbp/1p3np1/8/4P3/3P1NP1/PPP2PBP/RNBQ1RK1 b - - 24 6"
 	pos := &Position{}
 	err := pos.UnmarshalText([]byte(input))
-	fen := pos.String()
+	fen, _ := pos.MarshalText()
 	if err != nil {
 		t.Errorf("incorrect result: expected error to be nil")
 	}
-	if fen != input {
+	if string(fen) != input {
 		t.Errorf("incorrect result: expected %q, got %q", input, fen)
 	}
 }
@@ -94,13 +94,13 @@ Castle Rights: KQkq
 En Passant Square: -
 Half Move: 0
 Full Move: 1`
-	actual := pos.PrettyString(true, true)
+	actual := pos.String(true, true)
 
 	if actual != expected {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected, actual)
 	}
 
-	actual = pos.PrettyString(false, true)
+	actual = pos.String(false, true)
 	expected = `1RNBKQBNR
 2PPPPPPPP
 3--------
@@ -121,7 +121,7 @@ Full Move: 1`
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected, actual)
 	}
 
-	actual = pos.PrettyString(false, false)
+	actual = pos.String(false, false)
 	expected = `1RNBKQBNR
 2PPPPPPPP
 3--------
@@ -155,7 +155,7 @@ Castle Rights: kq
 En Passant Square: E3
 Half Move: 0
 Full Move: 6`
-	actual := pos.PrettyString(true, true)
+	actual := pos.String(true, true)
 
 	if actual != expected {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected, actual)
@@ -180,7 +180,7 @@ Castle Rights: -
 En Passant Square: -
 Half Move: 24
 Full Move: 6`
-	actual := pos.PrettyString(false, true)
+	actual := pos.String(false, true)
 
 	if actual != expected {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected, actual)
@@ -390,15 +390,15 @@ func TestRandomMove(t *testing.T) {
 	pos.UnmarshalText([]byte(DefaultFEN))
 	pos.Move(Move{B1, D5, NoPieceType})
 	expected := "rnbqkbnr/pppppppp/8/3N4/8/8/PPPPPPPP/R1BQKBNR b KQkq - 1 1"
-	actual := pos.String()
-	if expected != actual {
+	actual, _ := pos.MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 
 	pos.Move(Move{E8, G8, NoPieceType})
 	expected = "rnbq1bkr/pppppppp/8/3N4/8/8/PPPPPPPP/R1BQKBNR w KQ - 0 2"
-	actual = pos.String()
-	if expected != actual {
+	actual, _ = pos.MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 }
@@ -408,15 +408,15 @@ func TestWhiteEnPassantMove(t *testing.T) {
 	pos.UnmarshalText([]byte("rnbqkbnr/ppppp1pp/8/8/5p2/8/PPPPPPPP/RNBQKBNR w KQkq - 53 1"))
 	pos.Move(Move{E2, E4, NoPieceType})
 	expected := "rnbqkbnr/ppppp1pp/8/8/4Pp2/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
-	actual := pos.String()
-	if expected != actual {
+	actual, _ := pos.MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 
 	pos.Move(Move{F4, E3, NoPieceType})
 	expected = "rnbqkbnr/ppppp1pp/8/8/8/4p3/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
-	actual = pos.String()
-	if expected != actual {
+	actual, _ = pos.MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 }
@@ -426,15 +426,15 @@ func TestBlackEnPassantMove(t *testing.T) {
 	pos.UnmarshalText([]byte("rnbqkbnr/pppppppp/8/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 9 1"))
 	pos.Move(Move{F7, F5, NoPieceType})
 	expected := "rnbqkbnr/ppppp1pp/8/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 2"
-	actual := pos.String()
-	if expected != actual {
+	actual, _ := pos.MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 
 	pos.Move(Move{E5, F6, NoPieceType})
 	expected = "rnbqkbnr/ppppp1pp/5P2/8/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2"
-	actual = pos.String()
-	if expected != actual {
+	actual, _ = pos.MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 }
@@ -444,8 +444,8 @@ func TestWhiteKSCastle(t *testing.T) {
 	pos.UnmarshalText([]byte("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQK2R w KQkq - 0 1"))
 	pos.Move(Move{E1, G1, NoPieceType})
 	expected := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQ1RK1 b kq - 1 1"
-	actual := pos.String()
-	if expected != actual {
+	actual, _ := pos.MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 }
@@ -455,8 +455,8 @@ func TestWhiteQSCastle(t *testing.T) {
 	pos.UnmarshalText([]byte("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3KBNR w KQkq - 0 1"))
 	pos.Move(Move{E1, C1, NoPieceType})
 	expected := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/2KR1BNR b kq - 1 1"
-	actual := pos.String()
-	if expected != actual {
+	actual, _ := pos.MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 }
@@ -466,8 +466,8 @@ func TestBlackKSCastle(t *testing.T) {
 	pos.UnmarshalText([]byte("rnbqk2r/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1"))
 	pos.Move(Move{E8, G8, NoPieceType})
 	expected := "rnbq1rk1/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 1 2"
-	actual := pos.String()
-	if expected != actual {
+	actual, _ := pos.MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 }
@@ -477,8 +477,8 @@ func TestBlackQSCastle(t *testing.T) {
 	pos.UnmarshalText([]byte("r3kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1"))
 	pos.Move(Move{E8, C8, NoPieceType})
 	expected := "2kr1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 1 2"
-	actual := pos.String()
-	if expected != actual {
+	actual, _ := pos.MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 }
@@ -488,8 +488,8 @@ func TestPromotion(t *testing.T) {
 	pos.UnmarshalText([]byte(DefaultFEN))
 	pos.Move(Move{E1, F3, Knight})
 	expected := "rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQ1BNR b kq - 1 1"
-	actual := pos.String()
-	if expected != actual {
+	actual, _ := pos.MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 }
@@ -499,8 +499,8 @@ func TestCastleRightsRemoved(t *testing.T) {
 	pos.UnmarshalText([]byte(DefaultFEN))
 	pos.Move(Move{H1, H4, NoPieceType})
 	expected := "rnbqkbnr/pppppppp/8/8/7R/8/PPPPPPPP/RNBQKBN1 b Qkq - 1 1"
-	actual := pos.String()
-	if expected != actual {
+	actual, _ := pos.MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 }
@@ -510,8 +510,8 @@ func TestEnPassantRemoved(t *testing.T) {
 	pos.UnmarshalText([]byte("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"))
 	pos.Move(Move{F8, B3, NoPieceType})
 	expected := "rnbqk1nr/pppppppp/8/8/4P3/1b6/PPPP1PPP/RNBQKBNR w KQkq - 1 2"
-	actual := pos.String()
-	if expected != actual {
+	actual, _ := pos.MarshalText()
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
 }

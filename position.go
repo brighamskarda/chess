@@ -228,13 +228,8 @@ func (pos *Position) parseFullMove(fullMove string) error {
 	return nil
 }
 
-// MarshalText implements [encoding.TextMarshaler]. It provides the FEN representation of the board and err is always nil.
+// MarshalText implements [encoding.TextMarshaler]. It provides the FEN representation of the board and err is always nil. See also [Position.String] for a more human readable form of the position.
 func (pos *Position) MarshalText() (text []byte, err error) {
-	return []byte(pos.String()), nil
-}
-
-// String calls [pos.MarshalText]. See [Position.PrettyString] for getting a board like representation.
-func (pos *Position) String() string {
 	fen := ""
 	fen += pos.boardString() + " "
 	fen += pos.sideToMoveString() + " "
@@ -242,7 +237,7 @@ func (pos *Position) String() string {
 	fen += pos.EnPassant.String() + " "
 	fen += strconv.FormatUint(uint64(pos.HalfMove), 10) + " "
 	fen += strconv.FormatUint(uint64(pos.FullMove), 10)
-	return fen
+	return []byte(fen), nil
 }
 
 func (pos *Position) boardString() string {
@@ -301,10 +296,10 @@ func (pos *Position) sideToMoveString() string {
 	return "-"
 }
 
-// PrettyString returns a board like representation of the current position. Uppercase letters are white and lowercase letters are black.
+// String returns a board like representation of the current position. Uppercase letters are white and lowercase letters are black.
 //
 // Set whitesPerspective to true to see the board from white's side. Set extraInfo to false to just see the board. Set extraInfo to true to see all the other information stored in an FEN.
-func (pos *Position) PrettyString(whitesPerspective bool, extraInfo bool) string {
+func (pos *Position) String(whitesPerspective bool, extraInfo bool) string {
 	s := ""
 	if whitesPerspective {
 		s += pos.prettyBoardStringWhite()
