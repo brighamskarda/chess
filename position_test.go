@@ -152,7 +152,7 @@ func TestPositionPrettyString_NotDefault(t *testing.T) {
 
 Side To Move: Black
 Castle Rights: kq
-En Passant Square: E3
+En Passant Square: e3
 Half Move: 0
 Full Move: 6`
 	actual := pos.String(true, true)

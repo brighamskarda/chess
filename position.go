@@ -234,7 +234,11 @@ func (pos *Position) MarshalText() (text []byte, err error) {
 	fen += pos.boardString() + " "
 	fen += pos.sideToMoveString() + " "
 	fen += pos.castleRightString() + " "
-	fen += pos.EnPassant.String() + " "
+	enPassant, err := pos.EnPassant.MarshalText()
+	if err != nil {
+		enPassant = []byte{'-'}
+	}
+	fen += string(enPassant) + " "
 	fen += strconv.FormatUint(uint64(pos.HalfMove), 10) + " "
 	fen += strconv.FormatUint(uint64(pos.FullMove), 10)
 	return []byte(fen), nil
@@ -357,7 +361,11 @@ func (pos *Position) extraInfo() string {
 	s += pos.castleRightString()
 	s += "\n"
 	s += "En Passant Square: "
-	s += strings.ToUpper(pos.EnPassant.String())
+	enPassant, err := pos.EnPassant.MarshalText()
+	if err != nil {
+		enPassant = []byte{'-'}
+	}
+	s += string(enPassant)
 	s += "\n"
 	s += "Half Move: "
 	s += strconv.FormatUint(uint64(pos.HalfMove), 10)

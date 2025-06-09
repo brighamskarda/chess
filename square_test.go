@@ -19,29 +19,6 @@ import (
 	"testing"
 )
 
-func TestSquareString(t *testing.T) {
-	expected := "a1"
-	actual := Square{FileA, Rank1}.String()
-
-	if expected != actual {
-		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
-	}
-
-	expected = "-"
-	actual = Square{NoFile, NoRank}.String()
-
-	if expected != actual {
-		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
-	}
-
-	expected = "-"
-	actual = Square{28, 255}.String()
-
-	if expected != actual {
-		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
-	}
-}
-
 func TestSquareMarshalText(t *testing.T) {
 	expected := "a1"
 	actual, err := Square{FileA, Rank1}.MarshalText()

@@ -33,16 +33,19 @@ type Move struct {
 
 // String provides a UCI compatible string of the move in the form <FromSquare><ToSquare><OptionalPromotion>
 func (m Move) String() string {
+	// TODO, delete this String method, or add proper error handling to the marshal text calls.
 	promotion := m.Promotion.String()
 	if promotion == "-" {
 		promotion = ""
 	}
-	return m.FromSquare.String() + m.ToSquare.String() + promotion
+	fromSquare, _ := m.FromSquare.MarshalText()
+	toSquare, _ := m.ToSquare.MarshalText()
+	return string(fromSquare) + string(toSquare) + promotion
 }
 
 // StringSAN provides a move in standard algebraic notation as specified here. https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
 //
-// pos is required to converst a move to SAN. pos should be the position before the move. An empty string is returned if an SAN string could not be generated.
+// pos is required to convert a move to SAN. pos should be the position before the move. An empty string is returned if an SAN string could not be generated.
 func (m Move) StringSAN(pos *Position) string {
 	// This is another cry for help, why couldn't the pgn file spec just use UCI notation. This is another set of complex logic that was not necessary.
 	pos = pos.Copy()
@@ -71,7 +74,11 @@ func (m Move) pawnStringSAN(pos *Position) string {
 	if m.FromSquare.File != m.ToSquare.File {
 		returnString += m.FromSquare.File.String() + "x"
 	}
-	returnString += m.ToSquare.String()
+	toSquare, err := m.ToSquare.MarshalText()
+	if err != nil || m.ToSquare == NoSquare {
+		return ""
+	}
+	returnString += string(toSquare)
 	if m.Promotion != NoPieceType {
 		returnString += "=" + strings.ToUpper(m.Promotion.String())
 	}
@@ -87,12 +94,20 @@ func (m Move) normalStringSAN(pos *Position) string {
 	} else if isRankDisambiguation(m.FromSquare, m.ToSquare, pieceToMove, pos) {
 		returnString += m.FromSquare.Rank.String()
 	} else if isSquareDisambiguation(m.ToSquare, pieceToMove, pos) {
-		returnString += m.FromSquare.String()
+		fromSquare, err := m.FromSquare.MarshalText()
+		if err != nil || m.FromSquare == NoSquare {
+			return ""
+		}
+		returnString += string(fromSquare)
 	}
 	if pos.Piece(m.ToSquare) != NoPiece {
 		returnString += "x"
 	}
-	returnString += m.ToSquare.String()
+	toSquare, err := m.ToSquare.MarshalText()
+	if err != nil || m.ToSquare == NoSquare {
+		return ""
+	}
+	returnString += string(toSquare)
 	return returnString
 }
 

@@ -194,15 +194,6 @@ var AllSquares = [64]Square{
 	H1, H2, H3, H4, H5, H6, H7, H8,
 }
 
-// String returns [Square.MarshalText] as a string. If an error is produced a "-" is returned.
-func (s Square) String() string {
-	text, err := s.MarshalText()
-	if err != nil {
-		return "-"
-	}
-	return string(text)
-}
-
 // MarshalText is an implementation of the [encoding.TextMarshaler] interface. It provides the square in the form "a1". An error is returned if the square is not valid. [NoSquare] produces "-". See also [Square.String]
 func (s Square) MarshalText() (text []byte, err error) {
 	if s == NoSquare {
