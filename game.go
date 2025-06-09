@@ -1094,7 +1094,11 @@ func (g *Game) addMoveText(lines *[]string) error {
 			appendToPgnLine(moveNum, &currentLine, lines)
 		}
 
-		sanMove := " " + m.Move.StringSAN(currPos)
+		temp, err := m.Move.StringSAN(currPos)
+		if err != nil {
+			return err
+		}
+		sanMove := " " + temp
 		nag := nagString(m.NumericAnnotation)
 		if m.NumericAnnotation <= 6 {
 			sanMove += nag
@@ -1110,7 +1114,10 @@ func (g *Game) addMoveText(lines *[]string) error {
 		}
 
 		for _, variation := range m.Variations {
-			appendVariation(currPos.Copy(), variation, &currentLine, lines)
+			err := appendVariation(currPos.Copy(), variation, &currentLine, lines)
+			if err != nil {
+				return fmt.Errorf("could not add variations: %w", err)
+			}
 		}
 
 		currPos.Move(m.Move)
@@ -1145,7 +1152,11 @@ func (g *Game) addReducedMoveText(lines *[]string) error {
 			currentLine.WriteString(moveNum)
 			includeBlackMoveNum = false
 		}
-		sanMove := " " + m.Move.StringSAN(currPos)
+		temp, err := m.Move.StringSAN(currPos)
+		if err != nil {
+			return err
+		}
+		sanMove := " " + temp
 		currentLine.WriteString(sanMove)
 		currPos.Move(m.Move)
 	}
@@ -1191,7 +1202,7 @@ func nagString(nag uint8) string {
 	}
 }
 
-func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Builder, lines *[]string) {
+func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Builder, lines *[]string) error {
 	includeBlackMoveNum := currPos.SideToMove == Black
 	for i, m := range moves {
 		if currPos.SideToMove == White {
@@ -1210,8 +1221,11 @@ func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Bu
 			moveNum = " " + moveNum
 			appendToPgnLine(moveNum, currentLine, lines)
 		}
-
-		sanMove := " " + m.Move.StringSAN(currPos)
+		temp, err := m.Move.StringSAN(currPos)
+		if err != nil {
+			return err
+		}
+		sanMove := " " + temp
 		nag := nagString(m.NumericAnnotation)
 		if m.NumericAnnotation <= 6 {
 			sanMove += nag
@@ -1236,7 +1250,10 @@ func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Bu
 		}
 
 		for j, variation := range m.Variations {
-			appendVariation(currPos.Copy(), variation, currentLine, lines)
+			err := appendVariation(currPos.Copy(), variation, currentLine, lines)
+			if err != nil {
+				return err
+			}
 			if i == len(moves)-1 && j == len(m.Variations)-1 {
 				appendToPgnLine(")", currentLine, lines)
 			}
@@ -1249,6 +1266,7 @@ func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Bu
 			includeBlackMoveNum = false
 		}
 	}
+	return nil
 }
 
 // MarshalTextReduced provides the game as a valid PGN following these rules: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c3.2.4

@@ -69,7 +69,10 @@ func TestMoveStringSAN_basicPawnMove(t *testing.T) {
 	pos := &Position{}
 	pos.UnmarshalText([]byte(DefaultFEN))
 	m := Move{E2, E4, NoPieceType}
-	actual := m.StringSAN(pos)
+	actual, err := m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected := "e4"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -77,7 +80,10 @@ func TestMoveStringSAN_basicPawnMove(t *testing.T) {
 
 	pos.Move(m)
 	m = Move{A7, A6, NoPieceType}
-	actual = m.StringSAN(pos)
+	actual, err = m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected = "a6"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -88,7 +94,10 @@ func TestMoveStringSAN_pawnCapture(t *testing.T) {
 	pos := &Position{}
 	pos.UnmarshalText([]byte("rnbqkbnr/ppp1p1pp/8/3p4/4PpP1/8/PPPP1P1P/RNBQKBNR b KQkq g3 0 1"))
 	m := Move{F4, G3, NoPieceType}
-	actual := m.StringSAN(pos)
+	actual, err := m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected := "fxg3"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -96,7 +105,10 @@ func TestMoveStringSAN_pawnCapture(t *testing.T) {
 
 	pos.Move(m)
 	m = Move{E4, D5, NoPieceType}
-	actual = m.StringSAN(pos)
+	actual, err = m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected = "exd5"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -107,7 +119,10 @@ func TestMoveStringSAN_pawnPromotion(t *testing.T) {
 	pos := &Position{}
 	pos.UnmarshalText([]byte("rnbqkbnr/pPpppp1p/8/8/8/8/PPPPP1pP/RNBQKB1R w KQkq - 0 1"))
 	m := Move{B7, A8, Knight}
-	actual := m.StringSAN(pos)
+	actual, err := m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected := "bxa8=N"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -115,7 +130,10 @@ func TestMoveStringSAN_pawnPromotion(t *testing.T) {
 
 	pos.Move(m)
 	m = Move{G2, G1, Queen}
-	actual = m.StringSAN(pos)
+	actual, err = m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected = "g1=Q"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -126,7 +144,10 @@ func TestMoveStringSAN_BasicMove(t *testing.T) {
 	pos := &Position{}
 	pos.UnmarshalText([]byte("rnbqkbnr/1Pp1pp1p/8/8/8/4P3/PPPP2pP/RNBQKB1R w KQkq - 0 1"))
 	m := Move{F1, D3, NoPieceType}
-	actual := m.StringSAN(pos)
+	actual, err := m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected := "Bd3"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -134,7 +155,10 @@ func TestMoveStringSAN_BasicMove(t *testing.T) {
 
 	pos.Move(m)
 	m = Move{D8, D4, NoPieceType}
-	actual = m.StringSAN(pos)
+	actual, err = m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected = "Qd4"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -145,7 +169,10 @@ func TestMoveStringSAN_BasicCapture(t *testing.T) {
 	pos := &Position{}
 	pos.UnmarshalText([]byte("rnbqkbnr/1Pp1pp1p/8/8/8/4P3/PPPP2pP/RNBQKB1R w KQkq - 0 1"))
 	m := Move{F1, G2, NoPieceType}
-	actual := m.StringSAN(pos)
+	actual, err := m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected := "Bxg2"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -153,7 +180,10 @@ func TestMoveStringSAN_BasicCapture(t *testing.T) {
 
 	pos.Move(m)
 	m = Move{A8, A2, NoPieceType}
-	actual = m.StringSAN(pos)
+	actual, err = m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected = "Rxa2"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -164,7 +194,10 @@ func TestMoveStringSAN_FileDisambiguation(t *testing.T) {
 	pos := &Position{}
 	pos.UnmarshalText([]byte("rnbqkbnr/1Pp1pp1p/Pr6/3N4/8/4P3/1PPP2pP/RNBQKB1R w KQkq - 0 1"))
 	m := Move{D5, C3, NoPieceType}
-	actual := m.StringSAN(pos)
+	actual, err := m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected := "Ndc3"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -172,7 +205,10 @@ func TestMoveStringSAN_FileDisambiguation(t *testing.T) {
 
 	pos.Move(m)
 	m = Move{B6, A6, NoPieceType}
-	actual = m.StringSAN(pos)
+	actual, err = m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected = "Rbxa6"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -183,7 +219,10 @@ func TestMoveStringSAN_RankDisambiguation(t *testing.T) {
 	pos := &Position{}
 	pos.UnmarshalText([]byte("rnbqkbnr/1Pp1pp1p/P7/8/r2N4/4P3/1PPN2pP/R1BQKB1R w KQkq - 0 1"))
 	m := Move{D4, B3, NoPieceType}
-	actual := m.StringSAN(pos)
+	actual, err := m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected := "N4b3"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -191,7 +230,10 @@ func TestMoveStringSAN_RankDisambiguation(t *testing.T) {
 
 	pos.Move(m)
 	m = Move{A4, A6, NoPieceType}
-	actual = m.StringSAN(pos)
+	actual, err = m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected = "R4xa6"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -202,7 +244,10 @@ func TestMoveStringSAN_SquareDisambiguation(t *testing.T) {
 	pos := &Position{}
 	pos.UnmarshalText([]byte("qnb1kbnr/1Pp1pp1p/P1q5/8/qBqB4/4P3/1BPB2pP/R1BQKB1R w KQk - 0 1"))
 	m := Move{D2, C3, NoPieceType}
-	actual := m.StringSAN(pos)
+	actual, err := m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected := "Bd2c3"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -210,7 +255,10 @@ func TestMoveStringSAN_SquareDisambiguation(t *testing.T) {
 
 	pos.Move(m)
 	m = Move{A4, A6, NoPieceType}
-	actual = m.StringSAN(pos)
+	actual, err = m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected = "Qa4xa6"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -223,7 +271,10 @@ func TestMoveStringSAN_NoDisambiguation(t *testing.T) {
 	pos := &Position{}
 	pos.UnmarshalText([]byte("3k4/3n1n2/8/8/8/8/3R4/3K4 b - - 0 1"))
 	m := Move{F7, F5, NoPieceType}
-	actual := m.StringSAN(pos)
+	actual, err := m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected := "Nf5"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -234,7 +285,10 @@ func TestMoveStringSAN_CheckSymbol(t *testing.T) {
 	pos := &Position{}
 	pos.UnmarshalText([]byte("3k4/8/8/8/8/3b4/8/3K4 b - - 0 1"))
 	m := Move{D3, E2, NoPieceType}
-	actual := m.StringSAN(pos)
+	actual, err := m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected := "Be2+"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
@@ -245,7 +299,10 @@ func TestMoveStringSAN_CheckmateSymbol(t *testing.T) {
 	pos := &Position{}
 	pos.UnmarshalText([]byte("8/8/8/3p4/8/1K2PN2/p3Q3/7k w - - 0 74"))
 	m := Move{E2, H2, NoPieceType}
-	actual := m.StringSAN(pos)
+	actual, err := m.StringSAN(pos)
+	if err != nil {
+		t.Error("did not expect error")
+	}
 	expected := "Qh2#"
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
