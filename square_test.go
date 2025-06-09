@@ -33,4 +33,117 @@ func TestSquareString(t *testing.T) {
 	if expected != actual {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
+
+	expected = "-"
+	actual = Square{28, 255}.String()
+
+	if expected != actual {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+}
+
+func TestSquareMarshalText(t *testing.T) {
+	expected := "a1"
+	actual, err := Square{FileA, Rank1}.MarshalText()
+
+	if err != nil {
+		t.Errorf("got an error")
+	}
+	if expected != string(actual) {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+
+	expected = "-"
+	actual, err = Square{NoFile, NoRank}.MarshalText()
+
+	if err != nil {
+		t.Errorf("got an error")
+	}
+	if expected != string(actual) {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+
+	_, err = Square{128, 255}.MarshalText()
+
+	if err == nil {
+		t.Errorf("did not get an error")
+	}
+}
+
+func TestSquareUnmarshal(t *testing.T) {
+	s := &Square{}
+	err := s.UnmarshalText([]byte("a1"))
+	if err != nil {
+		t.Errorf("got unexpected error")
+	}
+	if *s != A1 {
+		t.Errorf("unmarshal provided incorrect results")
+	}
+
+	err = s.UnmarshalText([]byte("H8"))
+	if err != nil {
+		t.Errorf("got unexpected error")
+	}
+	if *s != H8 {
+		t.Errorf("unmarshal provided incorrect results")
+	}
+
+	err = s.UnmarshalText([]byte("-"))
+	if err != nil {
+		t.Errorf("got unexpected error")
+	}
+	if *s != NoSquare {
+		t.Errorf("unmarshal provided incorrect results")
+	}
+}
+
+func TestSquareUnmarshalError(t *testing.T) {
+	s := &Square{FileC, Rank5}
+	err := s.UnmarshalText([]byte(""))
+	if err == nil {
+		t.Errorf("did not get error")
+	}
+	if *s != C5 {
+		t.Errorf("unmarshal changed on error")
+	}
+
+	err = s.UnmarshalText([]byte("  "))
+	if err == nil {
+		t.Errorf("did not get error")
+	}
+	if *s != C5 {
+		t.Errorf("unmarshal changed on error")
+	}
+
+	err = s.UnmarshalText([]byte("a1-"))
+	if err == nil {
+		t.Errorf("did not get error")
+	}
+	if *s != C5 {
+		t.Errorf("unmarshal changed on error")
+	}
+
+	err = s.UnmarshalText([]byte("b"))
+	if err == nil {
+		t.Errorf("did not get error")
+	}
+	if *s != C5 {
+		t.Errorf("unmarshal changed on error")
+	}
+
+	err = s.UnmarshalText([]byte("c9"))
+	if err == nil {
+		t.Errorf("did not get error")
+	}
+	if *s != C5 {
+		t.Errorf("unmarshal changed on error")
+	}
+
+	err = s.UnmarshalText([]byte("i2"))
+	if err == nil {
+		t.Errorf("did not get error")
+	}
+	if *s != C5 {
+		t.Errorf("unmarshal changed on error")
+	}
 }

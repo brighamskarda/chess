@@ -201,7 +201,8 @@ func (pos *Position) parseEnPassant(enPassant string) error {
 	if enPassant == "-" {
 		return nil
 	}
-	square, _ := ParseSquare(enPassant)
+	square := Square{}
+	square.UnmarshalText([]byte(enPassant))
 	if square == NoSquare {
 		return fmt.Errorf("could not parse en passant %q", enPassant)
 	}

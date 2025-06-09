@@ -17,7 +17,6 @@ package chess
 
 import (
 	"fmt"
-	"strings"
 )
 
 // File is a vertical column of squares as seen on a chess board. The zero value is [NoFile], and the files A-H can be represented.
@@ -108,14 +107,6 @@ type Square struct {
 	Rank Rank
 }
 
-// String returns pgn compatible square strings (e.g a8). Gives "-" if [NoSquare].
-func (s Square) String() string {
-	if s == NoSquare {
-		return "-"
-	}
-	return s.File.String() + s.Rank.String()
-}
-
 var (
 	NoSquare = Square{File: NoFile, Rank: NoRank}
 
@@ -203,59 +194,92 @@ var AllSquares = [64]Square{
 	H1, H2, H3, H4, H5, H6, H7, H8,
 }
 
-func ParseSquare(s string) (Square, error) {
-	if len(s) != 2 {
-		return NoSquare, fmt.Errorf("could not parse square %q, should have len(s) == 2", s)
+// String returns [Square.MarshalText] as a string. If an error is produced a "-" is returned.
+func (s Square) String() string {
+	text, err := s.MarshalText()
+	if err != nil {
+		return "-"
 	}
-	f, _ := parseFile(s[0:1])
-	r, _ := parseRank(s[1:2])
-	square := Square{f, r}
-	if square.File == NoFile || square.Rank == NoRank {
-		return NoSquare, fmt.Errorf("could not parse square %q", s)
-	}
-	return square, nil
+	return string(text)
 }
 
-func parseFile(f string) (File, error) {
-	switch strings.ToLower(f) {
-	case "a":
+// MarshalText is an implementation of the [encoding.TextMarshaler] interface. It provides the square in the form "a1". An error is returned if the square is not valid. [NoSquare] produces "-". See also [Square.String]
+func (s Square) MarshalText() (text []byte, err error) {
+	if s == NoSquare {
+		return []byte{'-'}, nil
+	}
+	if s.File == NoFile ||
+		s.Rank == NoRank ||
+		s.File > FileH ||
+		s.Rank > Rank8 {
+		return nil, fmt.Errorf("cannot marshal invalid square %#v", s)
+	}
+	return []byte{s.File.String()[0], s.Rank.String()[0]}, nil
+}
+
+// UnmarshalText is an implementation of the [encoding.TextUnmarshaler] interface. It expects text in the form of a two character square like "a1" or "A1". A "-" will provide NoSquare. All other cases result in an error, and s is unmodified.
+func (s *Square) UnmarshalText(text []byte) error {
+	if string(text) == "-" {
+		*s = NoSquare
+		return nil
+	}
+
+	if len(text) != 2 {
+		return fmt.Errorf("could not unmarshal square %q, text should have length 2", text)
+	}
+	f, _ := parseFile(text[0])
+	if f == NoFile {
+		return fmt.Errorf("could not parse square %q, invalid file", text)
+	}
+	r, _ := parseRank(text[1])
+	if r == NoRank {
+		return fmt.Errorf("could not parse square %q, invalid rank", text)
+	}
+	s.File = f
+	s.Rank = r
+	return nil
+}
+
+func parseFile(f byte) (File, error) {
+	switch f {
+	case 'a', 'A':
 		return FileA, nil
-	case "b":
+	case 'b', 'B':
 		return FileB, nil
-	case "c":
+	case 'c', 'C':
 		return FileC, nil
-	case "d":
+	case 'd', 'D':
 		return FileD, nil
-	case "e":
+	case 'e', 'E':
 		return FileE, nil
-	case "f":
+	case 'f', 'F':
 		return FileF, nil
-	case "g":
+	case 'g', 'G':
 		return FileG, nil
-	case "h":
+	case 'h', 'H':
 		return FileH, nil
 	default:
 		return NoFile, fmt.Errorf("could not parse file %q", f)
 	}
 }
 
-func parseRank(r string) (Rank, error) {
+func parseRank(r byte) (Rank, error) {
 	switch r {
-	case "1":
+	case '1':
 		return Rank1, nil
-	case "2":
+	case '2':
 		return Rank2, nil
-	case "3":
+	case '3':
 		return Rank3, nil
-	case "4":
+	case '4':
 		return Rank4, nil
-	case "5":
+	case '5':
 		return Rank5, nil
-	case "6":
+	case '6':
 		return Rank6, nil
-	case "7":
+	case '7':
 		return Rank7, nil
-	case "8":
+	case '8':
 		return Rank8, nil
 	default:
 		return NoRank, fmt.Errorf("could not parse rank %q", r)

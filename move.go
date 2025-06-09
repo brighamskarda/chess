@@ -198,8 +198,10 @@ func ParseUCIMove(uci string) (Move, error) {
 	if len(uci) < 4 || len(uci) > 5 {
 		return Move{}, errors.New("uci move string not 4 or 5 characters long")
 	}
-	fromSquare, _ := ParseSquare(uci[0:2])
-	toSquare, _ := ParseSquare(uci[2:4])
+	fromSquare := &Square{}
+	fromSquare.UnmarshalText([]byte(uci[0:2]))
+	toSquare := &Square{}
+	toSquare.UnmarshalText([]byte(uci[2:4]))
 	promotion := NoPieceType
 	if len(uci) == 5 {
 		prom, err := parsePieceType(uci[4:5])
@@ -208,11 +210,11 @@ func ParseUCIMove(uci string) (Move, error) {
 		}
 		promotion = prom
 	}
-	if fromSquare == NoSquare || toSquare == NoSquare {
+	if *fromSquare == NoSquare || *toSquare == NoSquare {
 		return Move{}, fmt.Errorf("could not parse move square, %q", uci)
 	}
 
-	return Move{fromSquare, toSquare, promotion}, nil
+	return Move{*fromSquare, *toSquare, promotion}, nil
 }
 
 type sanMoveType uint8
@@ -351,14 +353,14 @@ func parseCastleMove(san string, pos *Position) (Move, error) {
 
 func parsePawnCapture(san string, pos *Position) (Move, error) {
 	m := Move{}
-
-	toSquare, err := ParseSquare(string(san[2:4]))
+	toSquare := &Square{}
+	err := toSquare.UnmarshalText([]byte(san[2:4]))
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN pawn capture %q: %w", san, err)
 	}
-	m.ToSquare = toSquare
+	m.ToSquare = *toSquare
 
-	fromFile, err := parseFile(san[0:1])
+	fromFile, err := parseFile(san[0])
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN pawn capture %q: %w", san, err)
 	}
@@ -381,7 +383,8 @@ func parsePawnCapture(san string, pos *Position) (Move, error) {
 }
 
 func parsePawnAdvance(san string, pos *Position) (Move, error) {
-	toSquare, err := ParseSquare(san[0:2])
+	toSquare := Square{}
+	err := toSquare.UnmarshalText([]byte(san[0:2]))
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN pawn move %q", san)
 	}
@@ -427,9 +430,9 @@ func parseNormalMove(san string, pos *Position) (Move, error) {
 	pieceToMove := Piece{pos.SideToMove, pt}
 	var toSquare Square
 	if len(san) == 3 {
-		toSquare, err = ParseSquare(san[1:3])
+		err = toSquare.UnmarshalText([]byte(san[1:3]))
 	} else if len(san) == 4 {
-		toSquare, err = ParseSquare(san[2:4])
+		err = toSquare.UnmarshalText([]byte(san[2:4]))
 	} else {
 		panic("unexpected condition")
 	}
@@ -499,16 +502,17 @@ func getPieceAttacks(bb Bitboard, t PieceType, pos *Position) Bitboard {
 }
 
 func parseSquareDisambiguation(san string, pos *Position) (Move, error) {
-	fromSquare, err := ParseSquare(san[1:3])
+	fromSquare := Square{}
+	err := fromSquare.UnmarshalText([]byte(san[1:3]))
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move %q: could not parse from square", san)
 	}
 
 	var toSquare Square
 	if strings.Contains(san, "x") && len(san) >= 6 {
-		toSquare, err = ParseSquare(san[4:6])
+		err = toSquare.UnmarshalText([]byte(san[4:6]))
 	} else if len(san) >= 5 {
-		toSquare, err = ParseSquare(san[3:5])
+		err = toSquare.UnmarshalText([]byte(san[3:5]))
 	} else {
 		err = fmt.Errorf("could not parse SAN move %q: malformed square disambiguation", san)
 	}
@@ -527,18 +531,18 @@ func parseFileDisambiguation(san string, pos *Position) (Move, error) {
 		if len(san) < 5 {
 			return Move{}, fmt.Errorf("could not parse SAN move %q: could not parse to square", san)
 		}
-		toSquare, err = ParseSquare(san[3:5])
+		err = toSquare.UnmarshalText([]byte(san[3:5]))
 	} else {
 		if len(san) < 4 {
 			return Move{}, fmt.Errorf("could not parse SAN move %q: could not parse to square", san)
 		}
-		toSquare, err = ParseSquare(san[2:4])
+		err = toSquare.UnmarshalText([]byte(san[2:4]))
 	}
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move %q: could not parse to square", san)
 	}
 
-	fromFile, err := parseFile(san[1:2])
+	fromFile, err := parseFile(san[1])
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move %q: could not determine from square", san)
 	}
@@ -597,18 +601,18 @@ func parseRankDisambiguation(san string, pos *Position) (Move, error) {
 		if len(san) < 5 {
 			return Move{}, fmt.Errorf("could not parse SAN move %q: could not parse to square", san)
 		}
-		toSquare, err = ParseSquare(san[3:5])
+		err = toSquare.UnmarshalText([]byte(san[3:5]))
 	} else {
 		if len(san) < 4 {
 			return Move{}, fmt.Errorf("could not parse SAN move %q: could not parse to square", san)
 		}
-		toSquare, err = ParseSquare(san[2:4])
+		err = toSquare.UnmarshalText([]byte(san[2:4]))
 	}
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move %q: could not parse to square", san)
 	}
 
-	fromRank, err := parseRank(san[1:2])
+	fromRank, err := parseRank(san[1])
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move %q: could not determine from square", san)
 	}
