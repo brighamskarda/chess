@@ -1234,10 +1234,10 @@ func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Bu
 	}
 }
 
-// ReducedString provides the game as a valid PGN following these rules: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c3.2.4
+// MarshalTextReduced provides the game as a valid PGN following these rules: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c3.2.4
 //
-// It essentially removes all unnecessary information from the PGN, useful for archival purposes.
-func (g *Game) ReducedString() string {
+// It essentially removes all unnecessary information from the PGN, useful for archival purposes. err is always nil.
+func (g *Game) MarshalTextReduced() (text []byte, err error) {
 	lines := make([]string, 0, 10)
 	g.addReducedTags(&lines)
 	lines = append(lines, "")
@@ -1249,5 +1249,5 @@ func (g *Game) ReducedString() string {
 			pgn.WriteString("\n")
 		}
 	}
-	return pgn.String()
+	return []byte(pgn.String()), nil
 }

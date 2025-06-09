@@ -966,7 +966,7 @@ got
 	}
 }
 
-func TestGameReducedString(t *testing.T) {
+func TestGameMarshalTextReduced(t *testing.T) {
 	g := NewGame()
 	moves := []string{
 		"d4",
@@ -1044,8 +1044,8 @@ func TestGameReducedString(t *testing.T) {
 [Result "0-1"]
 
 1. d4 e6 2. e4 d5 3. exd5 exd5 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7. Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2# 0-1`
-	actual := g.ReducedString()
-	if actual != expected {
+	actual, _ := g.MarshalTextReduced()
+	if string(actual) != expected {
 		t.Errorf(`incorrect result: expected 
 """
 %s
@@ -1058,7 +1058,7 @@ got
 	}
 }
 
-func TestGameReducedString_AltStart(t *testing.T) {
+func TestGameMarshalTextReduced_AltStart(t *testing.T) {
 	g, _ := NewGameFromFEN("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/1NBQKBNR b Kkq - 0 1")
 	moves := []string{
 		"e6",
@@ -1137,8 +1137,8 @@ func TestGameReducedString_AltStart(t *testing.T) {
 [SetUp "1"]
 
 1... e6 2. e4 d5 3. exd5 exd5 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7. Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2# 0-1`
-	actual := g.ReducedString()
-	if actual != expected {
+	actual, _ := g.MarshalTextReduced()
+	if string(actual) != expected {
 		t.Errorf(`incorrect result: expected 
 """
 %s
