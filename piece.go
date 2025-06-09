@@ -56,22 +56,22 @@ func (pt PieceType) String() string {
 	}
 }
 
-func parsePieceType(s string) (PieceType, error) {
-	switch strings.ToLower(s) {
-	case "p":
+func parsePieceType(b byte) (PieceType, error) {
+	switch b {
+	case 'p', 'P':
 		return Pawn, nil
-	case "n":
+	case 'n', 'N':
 		return Knight, nil
-	case "b":
+	case 'b', 'B':
 		return Bishop, nil
-	case "r":
+	case 'r', 'R':
 		return Rook, nil
-	case "q":
+	case 'q', 'Q':
 		return Queen, nil
-	case "k":
+	case 'k', 'K':
 		return King, nil
 	default:
-		return NoPieceType, fmt.Errorf("could not parse piece type %q", s)
+		return NoPieceType, fmt.Errorf("could not parse piece type %q", b)
 	}
 }
 
@@ -113,7 +113,10 @@ func (p Piece) String() string {
 }
 
 func parsePiece(s string) (Piece, error) {
-	pt, err := parsePieceType(s)
+	if len(s) != 1 {
+		return NoPiece, fmt.Errorf("could not parse piece %q", s)
+	}
+	pt, err := parsePieceType(s[0])
 	if err != nil {
 		return NoPiece, fmt.Errorf("could not parse piece %q", s)
 	}

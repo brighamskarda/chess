@@ -796,7 +796,8 @@ func (g *Game) setResult() {
 //
 // Errors are returned if m could not be parsed or the move was illegal.
 func (g *Game) MoveUCI(m string) error {
-	move, err := ParseUCIMove(m)
+	var move Move
+	err := move.UnmarshalText([]byte(m))
 	if err != nil {
 		return err
 	}

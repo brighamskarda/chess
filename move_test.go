@@ -19,16 +19,49 @@ import (
 	"testing"
 )
 
-func TestMoveString(t *testing.T) {
+func TestMoveMarshalText(t *testing.T) {
 	expected := "a1b2"
-	actual := Move{A1, B2, NoPieceType}.String()
-	if expected != actual {
+	actual, err := Move{A1, B2, NoPieceType}.MarshalText()
+	if err != nil {
+		t.Errorf("got unexpected error")
+	}
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
 	}
+
 	expected = "h2c1q"
-	actual = Move{H2, C1, Queen}.String()
-	if expected != actual {
+	actual, err = Move{H2, C1, Queen}.MarshalText()
+	if err != nil {
+		t.Errorf("got unexpected error")
+	}
+	if expected != string(actual) {
 		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+
+	expected = "0000"
+	actual, err = Move{}.MarshalText()
+	if err != nil {
+		t.Errorf("got unexpected error")
+	}
+	if expected != string(actual) {
+		t.Errorf("incorrect result: expected %q, got %q", expected, actual)
+	}
+}
+
+func TestMoveMarshalTextError(t *testing.T) {
+	_, err := Move{NoSquare, B2, Queen}.MarshalText()
+	if err == nil {
+		t.Errorf("did not get error")
+	}
+
+	_, err = Move{B2, NoSquare, Queen}.MarshalText()
+	if err == nil {
+		t.Errorf("did not get error")
+	}
+
+	_, err = Move{B2, B4, 7}.MarshalText()
+	if err == nil {
+		t.Errorf("did not get error")
 	}
 }
 
@@ -219,9 +252,10 @@ func TestMoveStringSAN_CheckmateSymbol(t *testing.T) {
 	}
 }
 
-func TestParseUCIMove(t *testing.T) {
+func TestMoveUnmarshalText(t *testing.T) {
 	expected := Move{A1, A2, NoPieceType}
-	actual, err := ParseUCIMove("a1a2")
+	var actual Move
+	err := actual.UnmarshalText([]byte("a1a2"))
 	if expected != actual {
 		t.Errorf("incorrect result: expected %v, got %v", expected, actual)
 	}
@@ -230,7 +264,7 @@ func TestParseUCIMove(t *testing.T) {
 	}
 
 	expected = Move{H2, C1, Queen}
-	actual, err = ParseUCIMove("h2c1q")
+	err = actual.UnmarshalText([]byte("h2c1q"))
 	if expected != actual {
 		t.Errorf("incorrect result: expected %v, got %v", expected, actual)
 	}
@@ -239,10 +273,11 @@ func TestParseUCIMove(t *testing.T) {
 	}
 }
 
-func TestParseUCIMoveErr(t *testing.T) {
-	_, err := ParseUCIMove("a1c")
+func TestMoveUnmarshalTextError(t *testing.T) {
+	var m Move
+	err := m.UnmarshalText([]byte("a1c"))
 	if err == nil {
-		t.Error("Expected err to be nil.")
+		t.Error("Expected err to not be nil.")
 	}
 }
 
@@ -664,7 +699,8 @@ func FuzzParseSANMove(f *testing.F) {
 	})
 }
 
-func FuzzParseUCIMove(f *testing.F) {
+func FuzzMoveUnmarshalText(f *testing.F) {
+	var move Move
 	uciMoves := []string{
 		"e2e4", "d2d4", "c2c4", "g1f3", "b1c3", "f2f4",
 		"e7e8q", "d7d8r", "c7c8b", "h7h8n", "g7g8q", "f7f8r",
@@ -672,10 +708,10 @@ func FuzzParseUCIMove(f *testing.F) {
 		"e1g1", "d8h5",
 	}
 	for _, m := range uciMoves {
-		f.Add(m)
+		f.Add([]byte(m))
 	}
-	f.Fuzz(func(t *testing.T, uci string) {
+	f.Fuzz(func(t *testing.T, uci []byte) {
 		// Just make sure it doesn't panic
-		ParseUCIMove(uci)
+		move.UnmarshalText(uci)
 	})
 }

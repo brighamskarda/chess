@@ -31,16 +31,31 @@ type Move struct {
 	Promotion  PieceType
 }
 
-// String provides a UCI compatible string of the move in the form <FromSquare><ToSquare><OptionalPromotion>
-func (m Move) String() string {
-	// TODO, delete this String method, or add proper error handling to the marshal text calls.
-	promotion := m.Promotion.String()
-	if promotion == "-" {
-		promotion = ""
+// MarshalText implements the [encoding.TextMarshaler] interface to encode a move into a UCI compatible format. The form is <FromSquare><ToSquare><OptionalPromotion>, ex. "a7a8q". If fromsquare, tosquare, and promotion are all 0 then "0000" is returned as per the UCI spec. Otherwise an error may be returned if a field is missing or malformed.
+func (m Move) MarshalText() (text []byte, err error) {
+	if m.FromSquare == NoSquare && m.ToSquare == NoSquare && m.Promotion == NoPieceType {
+		return []byte{'0', '0', '0', '0'}, nil
 	}
-	fromSquare, _ := m.FromSquare.MarshalText()
-	toSquare, _ := m.ToSquare.MarshalText()
-	return string(fromSquare) + string(toSquare) + promotion
+	if m.FromSquare == NoSquare || m.ToSquare == NoSquare {
+		return nil, errors.New("either FromSquare or ToSquare are NoSquare")
+	}
+	from, err := m.FromSquare.MarshalText()
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal fromSquare %v", m.FromSquare)
+	}
+	to, err := m.ToSquare.MarshalText()
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal fromSquare %v", m.FromSquare)
+	}
+	if m.Promotion > King {
+		return nil, fmt.Errorf("could not marshal promotion %#v", m.Promotion)
+	}
+	text = append(text, from...)
+	text = append(text, to...)
+	if m.Promotion != NoPieceType {
+		text = append(text, m.Promotion.String()[0])
+	}
+	return text, nil
 }
 
 // StringSAN provides a move in standard algebraic notation as specified here. https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
@@ -207,29 +222,34 @@ func isSquareDisambiguation(toSquare Square, pieceToMove Piece, pos *Position) b
 	return len(legalMoves) > 1
 }
 
-// ParseUCI parses a move string of the form <FromSquare><ToSquare><OptionalPromotion>. (e.g. a2c3 or H2H1q. Returns an error if it could not parse.
-func ParseUCIMove(uci string) (Move, error) {
-	uci = strings.ToLower(uci)
-	if len(uci) < 4 || len(uci) > 5 {
-		return Move{}, errors.New("uci move string not 4 or 5 characters long")
+// UnmarshalText implements the [encoding.TextUnmarshaler] interface to read a move from a UCI compatible format. The format is <FromSquare><ToSquare><OptionalPromotion>, ex. a2c3q.
+func (m *Move) UnmarshalText(text []byte) error {
+	if len(text) < 4 || len(text) > 5 {
+		return fmt.Errorf("expected text to be of len 4 or 5, got len(text) = %d", len(text))
 	}
-	fromSquare := &Square{}
-	fromSquare.UnmarshalText([]byte(uci[0:2]))
-	toSquare := &Square{}
-	toSquare.UnmarshalText([]byte(uci[2:4]))
-	promotion := NoPieceType
-	if len(uci) == 5 {
-		prom, err := parsePieceType(uci[4:5])
-		if err != nil {
-			return Move{}, fmt.Errorf("could not parse move promotion, %q", uci)
-		}
-		promotion = prom
-	}
-	if *fromSquare == NoSquare || *toSquare == NoSquare {
-		return Move{}, fmt.Errorf("could not parse move square, %q", uci)
+	var fromSquare Square
+	err := fromSquare.UnmarshalText(text[0:2])
+	if err != nil {
+		return fmt.Errorf("could not parse from square: %w", err)
 	}
 
-	return Move{*fromSquare, *toSquare, promotion}, nil
+	var toSquare Square
+	err = toSquare.UnmarshalText(text[2:4])
+	if err != nil {
+		return fmt.Errorf("could not parse from square: %w", err)
+	}
+
+	var promotion PieceType
+	if len(text) == 5 {
+		promotion, err = parsePieceType(text[4])
+		if err != nil {
+			return fmt.Errorf("could not parse promotion: %w", err)
+		}
+	}
+	m.FromSquare = fromSquare
+	m.ToSquare = toSquare
+	m.Promotion = promotion
+	return nil
 }
 
 type sanMoveType uint8
@@ -388,7 +408,7 @@ func parsePawnCapture(san string, pos *Position) (Move, error) {
 
 	if len(san) == 6 {
 		// Pawn capture with promotion
-		pt, err := parsePieceType(san[5:6])
+		pt, err := parsePieceType(san[5])
 		if err != nil {
 			return Move{}, fmt.Errorf("could not parse SAN pawn capture %q: could not parse promotion", san)
 		}
@@ -424,7 +444,7 @@ func parsePawnAdvance(san string, pos *Position) (Move, error) {
 
 	if len(san) == 4 {
 		// Possible promotion
-		pt, err := parsePieceType(san[3:4])
+		pt, err := parsePieceType(san[3])
 		if err != nil {
 			return Move{}, fmt.Errorf("could not parse SAN pawn move %q: could not parse promotion", san)
 		}
@@ -435,7 +455,7 @@ func parsePawnAdvance(san string, pos *Position) (Move, error) {
 }
 
 func parseNormalMove(san string, pos *Position) (Move, error) {
-	pt, err := parsePieceType(san[0:1])
+	pt, err := parsePieceType(san[0])
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move %q: %w", san, err)
 	}
@@ -561,7 +581,7 @@ func parseFileDisambiguation(san string, pos *Position) (Move, error) {
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move %q: could not determine from square", san)
 	}
-	pt, err := parsePieceType(san[0:1])
+	pt, err := parsePieceType(san[0])
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move %q: could not determine from square", san)
 	}
@@ -631,7 +651,7 @@ func parseRankDisambiguation(san string, pos *Position) (Move, error) {
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move %q: could not determine from square", san)
 	}
-	pt, err := parsePieceType(san[0:1])
+	pt, err := parsePieceType(san[0])
 	if err != nil {
 		return Move{}, fmt.Errorf("could not parse SAN move %q: could not determine from square", san)
 	}
