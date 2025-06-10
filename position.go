@@ -554,15 +554,15 @@ func (pos *Position) getAttackedSquares(side Color) Bitboard {
 
 	occupied := pos.OccupiedBitboard()
 	if side == White {
-		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).whitePawnAttacks()
+		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).WhitePawnAttacks()
 	} else if side == Black {
-		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).blackPawnAttacks()
+		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).BlackPawnAttacks()
 	}
-	attackedSquares |= pos.Bitboard(Piece{side, Rook}).rookAttacks(occupied)
+	attackedSquares |= pos.Bitboard(Piece{side, Rook}).RookAttacks(occupied)
 	attackedSquares |= pos.Bitboard(Piece{side, Knight}).knightAttacks()
-	attackedSquares |= pos.Bitboard(Piece{side, Bishop}).bishopAttacks(occupied)
-	attackedSquares |= pos.Bitboard(Piece{side, Queen}).queenAttacks(occupied)
-	attackedSquares |= pos.Bitboard(Piece{side, King}).kingAttacks()
+	attackedSquares |= pos.Bitboard(Piece{side, Bishop}).BishopAttacks(occupied)
+	attackedSquares |= pos.Bitboard(Piece{side, Queen}).QueenAttacks(occupied)
+	attackedSquares |= pos.Bitboard(Piece{side, King}).KingAttacks()
 	return attackedSquares
 }
 

@@ -234,7 +234,7 @@ func rookMoves(pos *Position) []Move {
 		singleRookIndex := bits.TrailingZeros64(uint64(rooks))
 		singleRookBitboard := Bitboard(1 << singleRookIndex)
 		rooks ^= singleRookBitboard
-		rookAttacks := singleRookBitboard.rookAttacks(occupied)
+		rookAttacks := singleRookBitboard.RookAttacks(occupied)
 		rookAttacks &^= allies
 		singleRookSquare := indexToSquare(singleRookIndex)
 		for rookAttacks != 0 {
@@ -301,7 +301,7 @@ func bishopMoves(pos *Position) []Move {
 		singleBishopIndex := bits.TrailingZeros64(uint64(bishops))
 		singleBishopBitboard := Bitboard(1 << singleBishopIndex)
 		bishops ^= singleBishopBitboard
-		bishopAttacks := singleBishopBitboard.bishopAttacks(occupied)
+		bishopAttacks := singleBishopBitboard.BishopAttacks(occupied)
 		bishopAttacks &^= allies
 		singleBishopSquare := indexToSquare(singleBishopIndex)
 		for bishopAttacks != 0 {
@@ -336,7 +336,7 @@ func queenMoves(pos *Position) []Move {
 		singleQueenBitboard := Bitboard(1 << singleQueenIndex)
 		queens ^= singleQueenBitboard
 		// Combine rook and bishop attacks for queen moves
-		queenAttacks := singleQueenBitboard.rookAttacks(occupied) | singleQueenBitboard.bishopAttacks(occupied)
+		queenAttacks := singleQueenBitboard.RookAttacks(occupied) | singleQueenBitboard.BishopAttacks(occupied)
 		queenAttacks &^= allies
 		singleQueenSquare := indexToSquare(singleQueenIndex)
 		for queenAttacks != 0 {
@@ -369,7 +369,7 @@ func kingMoves(pos *Position) []Move {
 		singleKingIndex := bits.TrailingZeros64(uint64(kings))
 		singleKingBitboard := Bitboard(1 << singleKingIndex)
 		kings ^= singleKingBitboard
-		kingAttacks := singleKingBitboard.kingAttacks()
+		kingAttacks := singleKingBitboard.KingAttacks()
 		kingAttacks &^= allies
 		singleKingSquare := indexToSquare(singleKingIndex)
 		for kingAttacks != 0 {

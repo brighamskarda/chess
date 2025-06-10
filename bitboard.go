@@ -89,8 +89,8 @@ func (bb Bitboard) String() string {
 	return s
 }
 
-// whitePawnAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of white pawns.
-func (bb Bitboard) whitePawnAttacks() Bitboard {
+// WhitePawnAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of white pawns.
+func (bb Bitboard) WhitePawnAttacks() Bitboard {
 	return bb.pawnAttacksNE() | bb.pawnAttacksNW()
 }
 
@@ -102,8 +102,8 @@ func (bb Bitboard) pawnAttacksNW() Bitboard {
 	return (bb << 7) & 0x7F7F7F7F7F7F7F7F
 }
 
-// blackPawnAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of black pawns.
-func (bb Bitboard) blackPawnAttacks() Bitboard {
+// BlackPawnAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of black pawns.
+func (bb Bitboard) BlackPawnAttacks() Bitboard {
 	return bb.pawnAttacksSE() | bb.pawnAttacksSW()
 }
 
@@ -115,8 +115,8 @@ func (bb Bitboard) pawnAttacksSW() Bitboard {
 	return (bb >> 9) & 0x7F7F7F7F7F7F7F7F
 }
 
-// rookAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of rooks. Occupied should indicate all squares on the board occupied by either color, including the rooks that are moving.
-func (bb Bitboard) rookAttacks(occupied Bitboard) Bitboard {
+// RookAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of rooks. Occupied should indicate all squares on the board occupied by either color, including the rooks that are moving.
+func (bb Bitboard) RookAttacks(occupied Bitboard) Bitboard {
 	var movesRight Bitboard = (occupied ^
 		(occupied | 0x101010101010101 - 2*bb)) & ^Bitboard(0x101010101010101)
 
@@ -147,8 +147,8 @@ func (bb Bitboard) knightAttacks() Bitboard {
 		((bb << 15) & 0x7f7f7f7f7f7f7f7f)
 }
 
-// bishopAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of bishops. Occupied should indicate all squares on the board occupied by either color, including the bishops that are moving.
-func (bb Bitboard) bishopAttacks(occupied Bitboard) Bitboard {
+// BishopAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of bishops. Occupied should indicate all squares on the board occupied by either color, including the bishops that are moving.
+func (bb Bitboard) BishopAttacks(occupied Bitboard) Bitboard {
 	var attacks Bitboard = 0
 	for bb != 0 {
 		singleBishop := bb & -bb
@@ -240,16 +240,16 @@ func initializeAntiDiagonalMasks() {
 	}
 }
 
-// queenAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of queens. Occupied should indicate all squares on the board occupied by either color, including the queens that are moving.
-func (bb Bitboard) queenAttacks(occupied Bitboard) Bitboard {
+// QueenAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of queens. Occupied should indicate all squares on the board occupied by either color, including the queens that are moving.
+func (bb Bitboard) QueenAttacks(occupied Bitboard) Bitboard {
 	var attacks Bitboard = 0
-	attacks |= bb.rookAttacks(occupied)
-	attacks |= bb.bishopAttacks(occupied)
+	attacks |= bb.RookAttacks(occupied)
+	attacks |= bb.BishopAttacks(occupied)
 	return attacks
 }
 
-// kingAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of kings.
-func (bb Bitboard) kingAttacks() Bitboard {
+// KingAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of kings.
+func (bb Bitboard) KingAttacks() Bitboard {
 	return ((bb >> 9) & 0x7f7f7f7f7f7f7f7f) |
 		(bb >> 8) |
 		((bb >> 7) & 0xfefefefefefefefe) |

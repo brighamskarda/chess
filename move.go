@@ -543,15 +543,15 @@ func getNormalMoveFromSquare(pieceToMove Piece, toSquare Square, pos *Position) 
 func getPieceAttacks(bb Bitboard, t PieceType, pos *Position) Bitboard {
 	switch t {
 	case Bishop:
-		return bb.bishopAttacks(pos.OccupiedBitboard())
+		return bb.BishopAttacks(pos.OccupiedBitboard())
 	case King:
-		return bb.kingAttacks()
+		return bb.KingAttacks()
 	case Knight:
 		return bb.knightAttacks()
 	case Queen:
-		return bb.queenAttacks(pos.OccupiedBitboard())
+		return bb.QueenAttacks(pos.OccupiedBitboard())
 	case Rook:
-		return bb.rookAttacks(pos.OccupiedBitboard())
+		return bb.RookAttacks(pos.OccupiedBitboard())
 	default:
 		panic(fmt.Sprintf("unexpected chess.PieceType: %#v", t))
 	}
