@@ -45,7 +45,7 @@ func (m Move) MarshalText() (text []byte, err error) {
 	}
 	to, err := m.ToSquare.MarshalText()
 	if err != nil {
-		return nil, fmt.Errorf("could not marshal fromSquare %v", m.FromSquare)
+		return nil, fmt.Errorf("could not marshal toSquare %v", m.FromSquare)
 	}
 	if m.Promotion > King {
 		return nil, fmt.Errorf("could not marshal promotion %#v", m.Promotion)

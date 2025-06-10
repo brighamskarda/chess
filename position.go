@@ -16,6 +16,7 @@
 package chess
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -231,12 +232,20 @@ func (pos *Position) parseFullMove(fullMove string) error {
 // MarshalText implements [encoding.TextMarshaler]. It provides the FEN representation of the board and err is always nil. See also [Position.String] for a more human readable form of the position.
 func (pos *Position) MarshalText() (text []byte, err error) {
 	fen := ""
-	fen += pos.boardString() + " "
-	fen += pos.sideToMoveString() + " "
+	board, err := pos.boardString()
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal position: %w", err)
+	}
+	fen += board + " "
+	stm, err := pos.sideToMoveString()
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal position: %w", err)
+	}
+	fen += stm + " "
 	fen += pos.castleRightString() + " "
 	enPassant, err := pos.EnPassant.MarshalText()
 	if err != nil {
-		enPassant = []byte{'-'}
+		return nil, fmt.Errorf("could not marshal position: could not marshal en passant: %w", err)
 	}
 	fen += string(enPassant) + " "
 	fen += strconv.FormatUint(uint64(pos.HalfMove), 10) + " "
@@ -244,7 +253,7 @@ func (pos *Position) MarshalText() (text []byte, err error) {
 	return []byte(fen), nil
 }
 
-func (pos *Position) boardString() string {
+func (pos *Position) boardString() (string, error) {
 	boardString := ""
 	numEmptySquares := 0
 	for currentRank := Rank8; currentRank != NoRank; currentRank -= 1 {
@@ -255,6 +264,10 @@ func (pos *Position) boardString() string {
 				if numEmptySquares > 0 {
 					boardString += strconv.Itoa(numEmptySquares)
 					numEmptySquares = 0
+				}
+				pstr := piece.String()
+				if pstr == "-" {
+					return "", errors.New("found invalid piece in position")
 				}
 				boardString += piece.String()
 			}
@@ -267,7 +280,7 @@ func (pos *Position) boardString() string {
 			boardString += "/"
 		}
 	}
-	return boardString
+	return boardString, nil
 }
 
 func (pos *Position) castleRightString() string {
@@ -290,14 +303,14 @@ func (pos *Position) castleRightString() string {
 	return castleRights
 }
 
-func (pos *Position) sideToMoveString() string {
+func (pos *Position) sideToMoveString() (string, error) {
 	if pos.SideToMove == White {
-		return "w"
+		return "w", nil
 	}
 	if pos.SideToMove == Black {
-		return "b"
+		return "b", nil
 	}
-	return "-"
+	return "", errors.New("side to move not set")
 }
 
 // String returns a board like representation of the current position. Uppercase letters are white and lowercase letters are black.
