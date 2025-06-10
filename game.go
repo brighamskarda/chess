@@ -976,7 +976,7 @@ func (g *Game) DeleteVariation(plyNum int, variationNum int) error {
 	return nil
 }
 
-// GetVariation returns a new game where the specified variation is followed. All other specified variations are preserved, and the main line is also preserved as a variation.
+// GetVariation returns a new game where the specified variation is followed. All other specified variations are preserved, and the main line is also preserved as a variation. Errors are returned if the variation is illegal (not likely as they are validated when you make them) or the plyNum or variationNum are out of bounds.
 func (g *Game) GetVariation(plyNum int, variationNum int) (*Game, error) {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
 		return nil, fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d",
@@ -1017,7 +1017,10 @@ func (g *Game) GetVariation(plyNum int, variationNum int) (*Game, error) {
 	newGame.moveHistory = []PgnMove{}
 	newGame.moves = nil
 	for _, m := range newMoveHistory {
-		newGame.Move(m.Move)
+		err := newGame.Move(m.Move)
+		if err != nil {
+			return nil, fmt.Errorf("variation contains illegal move %v", m)
+		}
 	}
 
 	newGame.moveHistory = newMoveHistory
