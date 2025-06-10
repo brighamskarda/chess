@@ -28,6 +28,19 @@ const (
 	Black
 )
 
+func (c Color) String() string {
+	switch c {
+	case Black:
+		return "Black"
+	case NoColor:
+		return "NoColor"
+	case White:
+		return "White"
+	default:
+		return "Unknown Color"
+	}
+}
+
 func parseColor(s string) Color {
 	switch strings.ToLower(s) {
 	case "w":

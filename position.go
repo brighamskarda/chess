@@ -93,37 +93,37 @@ func (pos *Position) Equal(other *Position) bool {
 }
 
 // UnmarshalText implements [encoding.TextUnmarshaler]. It returns an error if it could not parse an FEN. It was likely malformed or missing important pieces.
-func (p *Position) UnmarshalText(fen []byte) error {
+func (pos *Position) UnmarshalText(fen []byte) error {
 	words := strings.Fields(string(fen))
 	if len(words) != 6 {
 		return fmt.Errorf("fen %q could not be parsed: fen should contain 6 distinct sections", fen)
 	}
-	pos := &Position{}
-	err := pos.parseFenBody(words[0])
+	p := &Position{}
+	err := p.parseFenBody(words[0])
 	if err != nil {
 		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
-	err = pos.parseSideToMove(words[1])
+	err = p.parseSideToMove(words[1])
 	if err != nil {
 		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
-	err = pos.parseCastleRights(words[2])
+	err = p.parseCastleRights(words[2])
 	if err != nil {
 		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
-	err = pos.parseEnPassant(words[3])
+	err = p.parseEnPassant(words[3])
 	if err != nil {
 		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
-	err = pos.parseHalfMove(words[4])
+	err = p.parseHalfMove(words[4])
 	if err != nil {
 		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
-	err = pos.parseFullMove(words[5])
+	err = p.parseFullMove(words[5])
 	if err != nil {
 		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
 	}
-	*p = *pos
+	*pos = *p
 	return nil
 }
 
