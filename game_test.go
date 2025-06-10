@@ -1520,6 +1520,120 @@ func TestParsePgn_BadGame(t *testing.T) {
 	}
 }
 
+func TestThreeFoldDraw_Basic(t *testing.T) {
+	pgn := []byte(`[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[Link "https://www.chess.com/analysis?tab=analysis"]
+
+1. e4 e5 2. Ke2 Ke7 3. Ke1 Ke8 4. Ke2 Ke7 5. Ke1 Ke8 6. Ke2 Ke7 *`)
+
+	g := Game{}
+	err := g.UnmarshalText(pgn)
+	if err != nil {
+		t.Error("issue unmarshaling game")
+	}
+	if !g.CanClaimDrawThreeFold() {
+		t.Error("could not claim three fold draw")
+	}
+}
+
+func TestThreeFoldDraw_Long(t *testing.T) {
+	pgn := []byte(`[Event "rated blitz game"]
+[Site "https://lichess.org/uI3XYntv"]
+[Date "2025.06.10"]
+[White "pawnbroker222"]
+[Black "Saint-Denis"]
+[Result "*"]
+[GameId "uI3XYntv"]
+[UTCDate "2025.06.10"]
+[UTCTime "17:10:39"]
+[WhiteElo "1730"]
+[BlackElo "1782"]
+[WhiteRatingDiff "+1"]
+[BlackRatingDiff "-1"]
+[Variant "Standard"]
+[TimeControl "180+2"]
+[ECO "A11"]
+[Opening "English Opening: Caro-Kann Defensive System"]
+[Termination "Normal"]
+
+1. c4 c6 2. Nc3 d5 3. cxd5 cxd5 4. d4 Nf6 5. g3 Nc6 6. Bg2 Bg4 7. Nf3 a6 8. O-O e6 9. e3 Bd6 10. a3 Rc8 11. Bd2 O-O 12. Na4 Ne4 13. Nc5 Nxd2 14. Qxd2 Bxc5 15. dxc5 Re8 16. b4 e5 17. h3 Bxf3 18. Bxf3 e4 19. Bg2 Ne5 20. Rfd1 Nd3 21. Bf1 Qd7 22. Kg2 Re6 23. Bxd3 exd3 24. Qxd3 Rh6 25. Rh1 Qc6 26. Qd4 Re8 27. Rad1 Rh5 28. Qf4 h6 29. Rd2 d4+ 30. Kh2 dxe3 31. fxe3 Qe6 32. g4 Rg5 33. Re1 f5 34. gxf5 Rxf5 35. Qd6 Qe4 36. Qd4 Qe5+ 37. Qxe5 Rfxe5 38. Rde2 g5 39. Kg3 Kf7 40. e4 Kf6 41. Kg4 Kg6 42. Re3 h5+ 43. Kg3 R8e7 44. Kf3 Rf7+ 45. Kg3 Rf4 46. R1e2 h4+ 47. Kg2 g4 48. hxg4 Rxg4+ 49. Kh2 Kg5 50. Kh3 Rf4 51. Rg2+ Kh5 52. Rg8 Rfxe4 53. Rh8+ Kg5 54. Rg8+ Kf6 55. Rxe4 Rxe4 56. Rf8+ Ke7 57. Rf3 Kd7 58. Rb3 Kc6 59. Rd3 Kb5 60. Rd7 Kc6 61. Rd3 Rc4 62. Kg2 Kc7 63. Kf2 b6 64. cxb6+ Kxb6 65. Ke2 Kb5 66. Kd2 Ka4 67. Ke2 a5 68. bxa5 Kxa5 69. Kf2 Ka4 70. Kg2 Re4 71. Kh3 Kb5 72. Rf3 Ra4 73. Rc3 Kb6 74. Kh2 Kb5 75. Kh3 Kb6 76. Rd3 Kb5 77. Re3 Kc6 78. Rf3 Kd6 79. Rf6+ Ke5 80. Rf3 Ke6 81. Re3+ Kf5 82. Rf3+ Kg5 83. Rb3 Kh5 84. Rb4 Rxa3+ 85. Kh2 h3 86. Rc4 Kg5 87. Kh1 Rf3 88. Kh2 Re3 89. Ra4 Kh5 90. Rb4 Rf3 91. Ra4 Kg5 92. Rb4 Kf5 93. Rc4 Ke5 94. Rb4 Kf5 95. Rc4 Kg5 96. Rd4 Kh5 97. Re4 Kg5 98. Rd4 Kh5 99. Rc4 Kg5 100. Rb4 Kh5 101. Rc4 Kg5 *`)
+
+	g := Game{}
+	err := g.UnmarshalText(pgn)
+	if err != nil {
+		t.Error("issue unmarshaling game")
+	}
+	if !g.CanClaimDrawThreeFold() {
+		t.Error("could not claim three fold draw")
+	}
+}
+
+func TestThreeFoldDraw_EnPassantDifference(t *testing.T) {
+	pgn := []byte(`[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[Link "https://www.chess.com/analysis?tab=analysis"]
+
+1. e4 e6 2. Ke2 Ke7 3. Ke1 Ke8 4. e5 Ke7 5. Ke2 f5 6. Ke1 Ke8 7. Ke2 Ke7 8. Ke1
+Ke8 9. Ke2 Ke7 *`)
+
+	g := Game{}
+	err := g.UnmarshalText(pgn)
+	if err != nil {
+		t.Error("issue unmarshaling game")
+	}
+	if g.CanClaimDrawThreeFold() {
+		t.Error("could claim three fold draw")
+	}
+
+	if g.Move(Move{E2, E1, NoPieceType}) != nil {
+		t.Error("issue performing move")
+	}
+	if !g.CanClaimDrawThreeFold() {
+		t.Error("could not claim three fold draw")
+	}
+}
+
+func TestThreeFoldDraw_CastleDifference(t *testing.T) {
+	pgn := []byte(`[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[Link "https://www.chess.com/analysis?tab=analysis"]
+
+1. e4 d5 2. Nf3 dxe4 3. Ng5 Nf6 4. Bc4 Nc6 5. Bxf7+ Kd7 6. Be6+ Ke8 7. Bf7+ Kd7
+8. Be6+ Ke8 9. Bf7+ *`)
+
+	g := Game{}
+	err := g.UnmarshalText(pgn)
+	if err != nil {
+		t.Error("issue unmarshaling game")
+	}
+	if g.CanClaimDrawThreeFold() {
+		t.Error("could claim three fold draw")
+	}
+
+	if g.Move(Move{E8, D7, NoPieceType}) != nil {
+		t.Error("issue performing move")
+	}
+	if !g.CanClaimDrawThreeFold() {
+		t.Error("could not claim three fold draw")
+	}
+}
+
 func BenchmarkParsePgn(b *testing.B) {
 	file, err := os.Open("./testdata/SaintLouis2023.pgn")
 	if err != nil {

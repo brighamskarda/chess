@@ -741,20 +741,41 @@ func (g *Game) IsCheckmate() bool {
 
 // IsStalemate returns true if the side to move is not in check and has no legal moves.
 func (g *Game) IsStalemate() bool {
-	if len(g.legalMoves()) == 0 && !g.pos.IsCheck() {
-		return true
-	}
-	return false
+	return len(g.legalMoves()) == 0 && !g.pos.IsCheck()
 }
 
 // CanClaimDraw returns true if the side to move can claim a draw either due to the 50 move rule, or three fold repetition.
 func (g *Game) CanClaimDraw() bool {
-	return true
+	return g.pos.HalfMove >= 100 || g.CanClaimDrawThreeFold()
 }
 
 // CanClaimDrawThreeFold returns true if the side to move can claim a draw due to three fold repetition.
 func (g *Game) CanClaimDrawThreeFold() bool {
-	return true
+	positions := g.makePositionHist()
+	for i := len(positions) - 1; i >= 0; i-- {
+		numEqual := 1
+		for j := i - 1; j >= 0; j-- {
+			if positions[i].Equal(positions[j]) {
+				numEqual++
+			}
+			if numEqual >= 3 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (g *Game) makePositionHist() []*Position {
+	hist := make([]*Position, 0, len(g.moveHistory)+1)
+	pos := g.PositionPly(0)
+	hist = append(hist, pos)
+	for _, pgnMove := range g.moveHistory {
+		pos = pos.Copy()
+		pos.Move(pgnMove.Move)
+		hist = append(hist, pos)
+	}
+	return hist
 }
 
 // Move performs the given move m only if it is legal. Otherwise an error is produced.
