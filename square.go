@@ -200,7 +200,7 @@ func (s Square) MarshalText() (text []byte, err error) {
 		return []byte{'-'}, nil
 	}
 	if !squareOnBoard(s) {
-		return nil, fmt.Errorf("cannot marshal invalid square %#v", s)
+		return nil, fmt.Errorf("cannot marshal invalid square %v", s)
 	}
 	return []byte{s.File.String()[0], s.Rank.String()[0]}, nil
 }
