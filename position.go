@@ -464,7 +464,7 @@ func (pos *Position) SetPiece(p Piece, s Square) {
 	}
 }
 
-// ClearPiece removes any piece from the given square.
+// ClearPiece removes any piece from the given square. Nothing happens if the square is invalid.
 func (pos *Position) ClearPiece(s Square) {
 	pos.whitePawns = pos.whitePawns.ClearSquare(s)
 	pos.whiteRooks = pos.whiteRooks.ClearSquare(s)
@@ -481,7 +481,7 @@ func (pos *Position) ClearPiece(s Square) {
 	pos.blackKings = pos.blackKings.ClearSquare(s)
 }
 
-// Bitboard returns a bitboard for the given piece. See also [Position.OccupiedBitboard] and [Position.ColorBitboard].
+// Bitboard returns a bitboard for the given piece. If p is [NoPiece] then a bitboard with all the unoccupied squares is returned. See also [Position.OccupiedBitboard] and [Position.ColorBitboard].
 func (pos *Position) Bitboard(p Piece) Bitboard {
 	switch p {
 	case WhitePawn:
@@ -510,6 +510,11 @@ func (pos *Position) Bitboard(p Piece) Bitboard {
 	case BlackKing:
 		return pos.blackKings
 
+	case NoPiece:
+		return ^(pos.whitePawns | pos.whiteKnights | pos.whiteBishops | pos.whiteRooks |
+			pos.whiteQueens | pos.whiteKings | pos.blackPawns | pos.blackKnights |
+			pos.blackBishops | pos.blackRooks | pos.blackQueens | pos.blackKings)
+
 	default:
 		return 0
 	}
@@ -521,7 +526,7 @@ func (pos *Position) OccupiedBitboard() Bitboard {
 		pos.blackPawns | pos.blackKnights | pos.blackBishops | pos.blackRooks | pos.blackQueens | pos.blackKings
 }
 
-// ColorBitboard returns a bitboard indicating all the squares occupied by pieces of a certain color.
+// ColorBitboard returns a bitboard indicating all the squares occupied by pieces of a certain color. Returns 0 if NoColor or invalid color.
 func (pos *Position) ColorBitboard(c Color) Bitboard {
 	if c == White {
 		return pos.whitePawns | pos.whiteKnights | pos.whiteBishops | pos.whiteRooks | pos.whiteQueens | pos.whiteKings

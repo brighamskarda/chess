@@ -525,6 +525,17 @@ func TestPositionMarshalers(t *testing.T) {
 	}
 }
 
+func TestBitBoardNoPiece(t *testing.T) {
+	pos := &Position{}
+	pos.UnmarshalText([]byte(DefaultFEN))
+
+	expected := Bitboard(0xFFFFFFFF0000)
+	actual := pos.Bitboard(NoPiece)
+	if expected != actual {
+		t.Errorf("expected and actual differ: expected %x, actual %x", uint64(expected), uint64(actual))
+	}
+}
+
 func FuzzPositionUnmarshal(f *testing.F) {
 	f.Add(DefaultFEN)
 

@@ -25,7 +25,7 @@ import (
 // Most commonly there is a bitboard for each type of piece on the board with positive bits indicating squares occupied by that piece type. Bitboards are also used to represent all occupied squares, and squares that are attacked by certain pieces.
 type Bitboard uint64
 
-// Bit returns 1 if the bit at the specified index is set, otherwise 0.
+// Bit returns 1 if the bit at the specified index is set, otherwise 0. If index is too high 0 is always returned.
 func (bb Bitboard) Bit(index uint8) uint8 {
 	if bb&(1<<index) > 0 {
 		return 1
@@ -34,31 +34,37 @@ func (bb Bitboard) Bit(index uint8) uint8 {
 	}
 }
 
-// SetBit returns a copy of the bitboard with the specified bit set.
+// SetBit returns a copy of the bitboard with the specified bit set. Nothing happens if index is too high.
 func (bb Bitboard) SetBit(index uint8) Bitboard {
 	return bb | 1<<index
 }
 
-// ClearBit returns a copy of the bitboard with the specified bit cleared.
+// ClearBit returns a copy of the bitboard with the specified bit cleared. Nothing happens if index is too high.
 func (bb Bitboard) ClearBit(index uint8) Bitboard {
 	return bb & ^(1 << index)
 }
 
 // Square returns 1 if the bit at the specified square is set, otherwise 0.
 func (bb Bitboard) Square(s Square) uint8 {
-	if s.File > FileH || s.Rank > Rank8 || s.File == NoFile || s.Rank == NoRank {
+	if !squareOnBoard(s) {
 		return 0
 	}
 	return bb.Bit(squareToIndex(s))
 }
 
-// SetSquare returns a copy of the bitboard with the specified square set.
+// SetSquare returns a copy of the bitboard with the specified square set. Nothing is different if the square is invalid.
 func (bb Bitboard) SetSquare(s Square) Bitboard {
+	if !squareOnBoard(s) {
+		return bb
+	}
 	return bb.SetBit(squareToIndex(s))
 }
 
-// ClearSquare returns a copy of the bitboard with the specified square set.
+// ClearSquare returns a copy of the bitboard with the specified square cleared. Nothing is different if the square is invalid.
 func (bb Bitboard) ClearSquare(s Square) Bitboard {
+	if !squareOnBoard(s) {
+		return bb
+	}
 	return bb.ClearBit(squareToIndex(s))
 }
 

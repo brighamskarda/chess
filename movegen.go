@@ -17,7 +17,7 @@ package chess
 
 import "math/bits"
 
-// PseudoLegalMoves are moves that are legal except they leave one's king in check.
+// PseudoLegalMoves are moves that are legal except they leave one's king in check. Returns nil if moves could not be generated (for example if pos.SideToMove was not set). Returns an empty slice if move generation was successful, but no moves were found.
 func PseudoLegalMoves(pos *Position) []Move {
 	if pos.SideToMove != White && pos.SideToMove != Black {
 		return nil
@@ -440,7 +440,7 @@ func castleMoves(pos *Position) []Move {
 	return moves
 }
 
-// LegalMoves for the current chess position.
+// LegalMoves for the current chess position. Returns nil if moves could not be generated (for example if pos.SideToMove was not set). Returns an empty slice if move generation was successful, but no moves were found.
 func LegalMoves(pos *Position) []Move {
 	pseudoLegalMoves := PseudoLegalMoves(pos)
 	legalMoves := make([]Move, 0)

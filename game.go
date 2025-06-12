@@ -872,7 +872,7 @@ func (g *Game) MoveHistory() []PgnMove {
 
 // AnnotateMove applies a numeric annotation glyph (NAG) to the specified move number. NAG's can be found here: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c10
 //
-// plyNum starts at 0 for the first move. Any previous nag is overwritten.
+// plyNum starts at 0 for the first move. Any previous nag is overwritten. An error is returned if plyNum is too big or too small.
 func (g *Game) AnnotateMove(plyNum int, nag uint8) error {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
 		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)

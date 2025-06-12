@@ -276,3 +276,8 @@ func parseRank(r byte) (Rank, error) {
 		return NoRank, fmt.Errorf("could not parse rank %q", r)
 	}
 }
+
+func squareOnBoard(s Square) bool {
+	return s.File > NoFile && s.File <= FileH &&
+		s.Rank > NoRank && s.Rank <= Rank8
+}
