@@ -68,7 +68,7 @@ func (m Move) StringSAN(pos *Position) (string, error) {
 	if pos.Piece(m.FromSquare) == NoPiece {
 		return "", fmt.Errorf("could not convert move %v to SAN, no piece on FromSquare", m)
 	} else if pos.Piece(m.FromSquare).Type == Pawn {
-		returnString = m.pawnStringSAN(pos)
+		returnString = m.pawnStringSAN()
 	} else {
 		returnString = m.normalStringSAN(pos)
 	}
@@ -84,7 +84,7 @@ func (m Move) StringSAN(pos *Position) (string, error) {
 	return returnString, nil
 }
 
-func (m Move) pawnStringSAN(pos *Position) string {
+func (m Move) pawnStringSAN() string {
 	returnString := ""
 	if m.FromSquare.File != m.ToSquare.File {
 		returnString += m.FromSquare.File.String() + "x"

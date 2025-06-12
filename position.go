@@ -233,9 +233,6 @@ func (pos *Position) parseFullMove(fullMove string) error {
 func (pos *Position) MarshalText() (text []byte, err error) {
 	fen := ""
 	board := pos.boardString()
-	if err != nil {
-		return nil, fmt.Errorf("could not marshal position: %w", err)
-	}
 	fen += board + " "
 	stm, err := pos.sideToMoveString()
 	if err != nil {
