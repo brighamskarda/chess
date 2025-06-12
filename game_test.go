@@ -318,6 +318,23 @@ func TestPositionPly_AltStart(t *testing.T) {
 	}
 }
 
+func TestPositionPlyError(t *testing.T) {
+	g := NewGame()
+	if g.Move(Move{E2, E4, NoPieceType}) != nil {
+		t.Fail()
+	}
+	if g.Move(Move{D7, D5, NoPieceType}) != nil {
+		t.Fail()
+	}
+
+	if g.PositionPly(-1) != nil {
+		t.Errorf("did not get nil")
+	}
+	if g.PositionPly(3) != nil {
+		t.Errorf("did not get nil")
+	}
+}
+
 func TestCommentAfterMove(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {

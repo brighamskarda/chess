@@ -199,10 +199,7 @@ func (s Square) MarshalText() (text []byte, err error) {
 	if s == NoSquare {
 		return []byte{'-'}, nil
 	}
-	if s.File == NoFile ||
-		s.Rank == NoRank ||
-		s.File > FileH ||
-		s.Rank > Rank8 {
+	if !squareOnBoard(s) {
 		return nil, fmt.Errorf("cannot marshal invalid square %#v", s)
 	}
 	return []byte{s.File.String()[0], s.Rank.String()[0]}, nil
@@ -218,13 +215,13 @@ func (s *Square) UnmarshalText(text []byte) error {
 	if len(text) != 2 {
 		return fmt.Errorf("could not unmarshal square %q, text should have length 2", text)
 	}
-	f, _ := parseFile(text[0])
-	if f == NoFile {
-		return fmt.Errorf("could not parse square %q, invalid file", text)
+	f, err := parseFile(text[0])
+	if err != nil {
+		return fmt.Errorf("could not parse square %q: %w", text, err)
 	}
-	r, _ := parseRank(text[1])
-	if r == NoRank {
-		return fmt.Errorf("could not parse square %q, invalid rank", text)
+	r, err := parseRank(text[1])
+	if err != nil {
+		return fmt.Errorf("could not parse square %q, %w", text, err)
 	}
 	s.File = f
 	s.Rank = r

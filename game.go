@@ -50,7 +50,7 @@ func (r Result) MarshalText() (text []byte, err error) {
 	case Draw:
 		return []byte("1/2-1/2"), nil
 	default:
-		return nil, fmt.Errorf("invalid Result %#v", r)
+		return nil, fmt.Errorf("could not marshal result %d", r)
 	}
 }
 
@@ -70,7 +70,7 @@ func (r *Result) UnmarshalText(text []byte) error {
 		*r = NoResult
 		return nil
 	default:
-		return fmt.Errorf("could not parse result %q", text)
+		return fmt.Errorf("could not unmarshal result %q", text)
 	}
 }
 
@@ -181,7 +181,7 @@ func NewGameFromFEN(fen string) (*Game, error) {
 	pos := &Position{}
 	err := pos.UnmarshalText([]byte(fen))
 	if err != nil {
-		return nil, fmt.Errorf("could not make game: %w", err)
+		return nil, fmt.Errorf("could not make new game from fen: %w", err)
 	}
 	date := time.Now()
 	return &Game{
@@ -216,18 +216,18 @@ func (g *Game) UnmarshalText(text []byte) error {
 	lines = removeCommentLines(lines)
 	tags, movetext := separateTagsAndMovetext(lines)
 	if len(movetext) == 0 {
-		return fmt.Errorf("expected an empty newline after tags followed by movetext")
+		return fmt.Errorf("could not unmarshal game, expected an empty newline after tags followed by movetext")
 	}
 
 	newG := NewGame()
 	err := newG.parseTags(tags)
 	if err != nil {
-		return fmt.Errorf("could not parse pgn tags: %w", err)
+		return fmt.Errorf("could not unmarshal game: %w", err)
 	}
 
 	err = newG.parseMovetext(movetext)
 	if err != nil {
-		return fmt.Errorf("could not parse movetext: %w", err)
+		return fmt.Errorf("could not unmarshal game: %w", err)
 	}
 
 	*g = *newG
@@ -257,14 +257,14 @@ func (g *Game) parseTags(lines []string) error {
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if len(line) == 0 || line[0] != '[' || line[len(line)-1] != ']' {
-			return fmt.Errorf("tag %q missing square braces", line)
+			return fmt.Errorf("could not parse pgn tags: tag %q missing square braces", line)
 		}
 		if len(line) <= 2 {
 			// empty tag
 			continue
 		}
 		if err := g.parseSingleTag(line[1 : len(line)-1]); err != nil {
-			return err
+			return fmt.Errorf("could not parse pgn tags: %w", err)
 		}
 	}
 	return nil
@@ -277,20 +277,24 @@ func (g *Game) parseSingleTag(tag string) error {
 	name := tag[0:i]
 	i++
 	if i >= len(tag) {
-		return fmt.Errorf("tag missing value after key")
+		return fmt.Errorf("could not parse tag %q, no value after key", tag)
 	}
 	if tag[i] != '"' {
-		return fmt.Errorf("expected a single space in between tag name and opening quote, %q", tag)
+		return fmt.Errorf("could not parse tag %q, expected a single space in between tag name and opening quote", tag)
 	}
 	i++
 	bodyStart := i
 	for ; i < len(tag)-1 && tag[i] != '"'; i++ {
 	}
 	if i >= len(tag) || tag[i] != '"' {
-		return fmt.Errorf("missing closing quote for tag body, %q", tag)
+		return fmt.Errorf("could not parse tag %q, missing closing quote for tag body", tag)
 	}
 	body := tag[bodyStart:i]
-	return g.setTag(name, body)
+	err := g.setTag(name, body)
+	if err != nil {
+		return fmt.Errorf("could not parse tag %q: %w", tag, err)
+	}
+	return nil
 }
 
 // setTag automatically set the 7 tag roster, and the Setup and FEN tags. When setting the FEN tag it will set the position as well.
@@ -311,13 +315,13 @@ func (g *Game) setTag(name string, body string) error {
 	case "Result":
 		err := g.Result.UnmarshalText([]byte(body))
 		if err != nil {
-			return fmt.Errorf("could not parse Result")
+			return fmt.Errorf("could not set tag {%q, %q}: %w", name, body, err)
 		}
 	case "FEN":
 		g.OtherTags["FEN"] = body
 		err := g.pos.UnmarshalText([]byte(body))
 		if err != nil {
-			return fmt.Errorf("could not parse fen: %w", err)
+			return fmt.Errorf("could not set tag {%q, %q}: %w", name, body, err)
 		}
 	default:
 		g.OtherTags[name] = body
@@ -333,27 +337,27 @@ func (g *Game) parseMovetext(lines []string) error {
 	}
 	tokens, err := tokenizeMovetext(text)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not parse move text: %w", err)
 	}
 	if len(tokens) == 0 || tokens[len(tokens)-1].tokenType != result {
-		return fmt.Errorf("there is no result at end of pgn")
+		return errors.New("could not parse move text, there is no result at end of pgn")
 	}
 
 	moveHis, err := createMoveHistory(tokens, g.Position())
 	if err != nil {
-		return err
+		return fmt.Errorf("could not parse move text: %w", err)
 	}
 	for _, m := range moveHis {
 		err := g.Move(m.Move)
 		if err != nil {
-			return fmt.Errorf("found illegal move %s in pgn", m.Move)
+			return fmt.Errorf("could not parse move text: found illegal move %v in pgn", m.Move)
 		}
 	}
 	g.moveHistory = moveHis
 
 	err = g.Result.UnmarshalText([]byte(tokens[len(tokens)-1].body))
 	if err != nil {
-		return fmt.Errorf("could not parse result %q", tokens[len(tokens)-1].body)
+		return fmt.Errorf("could not parse move text: %w", err)
 	}
 	return nil
 }
@@ -375,7 +379,7 @@ func createMoveHistory(tokens []pgnToken, pos *Position) ([]PgnMove, error) {
 			prevPos = pos.Copy()
 			m, err := ParseSANMove(t.body, pos)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("could not create move history: %w", err)
 			}
 			moveHis = append(moveHis, PgnMove{
 				Move:              m,
@@ -385,7 +389,7 @@ func createMoveHistory(tokens []pgnToken, pos *Position) ([]PgnMove, error) {
 				Variations:        [][]PgnMove{},
 			})
 			if !slices.Contains(LegalMoves(pos), m) {
-				return nil, fmt.Errorf("pgn contains illegal move: %s", m)
+				return nil, fmt.Errorf("could not create move history, encountered illegal move %v", m)
 			}
 			pos.Move(m)
 			preCommentary = []string{}
@@ -393,20 +397,20 @@ func createMoveHistory(tokens []pgnToken, pos *Position) ([]PgnMove, error) {
 			// no action needed
 		case numericAnnotation:
 			if len(moveHis) == 0 {
-				return nil, fmt.Errorf("can't apply numeric annotation without a move")
+				return nil, errors.New("could not create move history, attempted to apply numeric annotation before first move")
 			}
 			nag, err := strconv.ParseUint(t.body[1:], 10, 8)
 			if err != nil {
-				return nil, fmt.Errorf("numeric annotation glyph is not between 0 and 255")
+				return nil, fmt.Errorf("could not create move history, could not parse numeric annotation %v: %w", nag, err)
 			}
 			moveHis[len(moveHis)-1].NumericAnnotation = uint8(nag)
 		case numericSuffixAnnotation:
 			if len(moveHis) == 0 {
-				return nil, fmt.Errorf("can't apply numeric suffix annotation without a move")
+				return nil, errors.New("could not create move history, attempted to apply numeric annotation before first move")
 			}
 			nag, err := parseNumericSuffixAnnotation(t.body)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("could not create move history: %w", err)
 			}
 			moveHis[len(moveHis)-1].NumericAnnotation = nag
 		case ravOpen:
@@ -416,7 +420,7 @@ func createMoveHistory(tokens []pgnToken, pos *Position) ([]PgnMove, error) {
 				return nil, err
 			}
 			if len(moveHis) == 0 {
-				return nil, fmt.Errorf("can't have variation without a move first")
+				return nil, errors.New("could not create move history, can't have variation without a first move")
 			}
 			moveHis[len(moveHis)-1].Variations = append(moveHis[len(moveHis)-1].Variations, rav)
 			i = closeToken
@@ -424,7 +428,7 @@ func createMoveHistory(tokens []pgnToken, pos *Position) ([]PgnMove, error) {
 			// no action needed
 		case result:
 			if i != len(tokens)-1 {
-				return nil, fmt.Errorf("encountered a result before the end of the pgn")
+				return nil, errors.New("could not create move history, encountered result before the end of the pgn")
 			}
 		default:
 			panic(fmt.Sprintf("unexpected chess.pgnTokenType: %#v", t.tokenType))
@@ -466,7 +470,7 @@ func parseNumericSuffixAnnotation(nag string) (uint8, error) {
 	case "?!":
 		return 6, nil
 	default:
-		return 0, fmt.Errorf("unrecognized numeric suffix annotation %q", nag)
+		return 0, fmt.Errorf("could not parse numeric suffix annotation %q", nag)
 	}
 }
 
@@ -552,7 +556,7 @@ func tokenizeMovetext(text string) ([]pgnToken, error) {
 				comment += words[i]
 				i++
 				if i >= len(words) {
-					return nil, fmt.Errorf("unmatched { in movetext")
+					return nil, errors.New("could not tokenize move text: unmatched { in movetext")
 				}
 			}
 			braceIndex := strings.Index(words[i], "}")
@@ -561,7 +565,7 @@ func tokenizeMovetext(text string) ([]pgnToken, error) {
 			words[i] = words[i][braceIndex+1:]
 			i--
 		} else if words[i][0] == '}' {
-			return nil, fmt.Errorf("unmatched } in movetext")
+			return nil, errors.New("could not tokenize move text: unmatched } in movetext")
 		} else if !unicode.IsSpace([]rune(words[i])[0]) {
 			// Move
 			endMoveIndex := strings.IndexAny(words[i], "!?{}()$;")
@@ -625,8 +629,8 @@ func ParsePGN(rd io.Reader) ([]*Game, error) {
 	bufReader := bufio.NewReader(rd)
 	games := []*Game{}
 	gameParseErrors := []error{}
-	pgn, err := extractSinglePgn(bufReader)
-	for ; err == nil || (err == io.EOF && len(pgn) > 0); pgn, err = extractSinglePgn(bufReader) {
+	pgn, err := extractSingleGame(bufReader)
+	for ; err == nil || (err == io.EOF && len(pgn) > 0); pgn, err = extractSingleGame(bufReader) {
 		newG := &Game{}
 		gameErr := newG.UnmarshalText(pgn)
 		if gameErr != nil {
@@ -639,7 +643,7 @@ func ParsePGN(rd io.Reader) ([]*Game, error) {
 		}
 	}
 	if err != io.EOF {
-		return games, fmt.Errorf("error parsing entire file: %w", err)
+		return games, fmt.Errorf("error parsing pgn: %w", err)
 	}
 	if len(gameParseErrors) > 0 {
 		errorString := strings.Builder{}
@@ -648,22 +652,18 @@ func ParsePGN(rd io.Reader) ([]*Game, error) {
 			errorString.WriteString("\"" + e.Error() + "\",\n")
 		}
 		errorString.WriteRune(']')
-		return games, fmt.Errorf("error parsing games, here is a list of all encountered errors: %s", errorString.String())
+		return games, fmt.Errorf("error parsing pgn, here is a list of all encountered errors: %v", errorString.String())
 	}
 	return games, nil
 }
 
-func extractSinglePgn(bufrd *bufio.Reader) ([]byte, error) {
+func extractSingleGame(bufrd *bufio.Reader) ([]byte, error) {
 	pgn := []byte{}
 	// get tag section
 	for {
 		buf, err := bufrd.ReadBytes('\n')
 		if err != nil {
-			if len(pgn) == 0 && err == io.EOF {
-				return nil, err
-			} else {
-				return nil, fmt.Errorf("could not parse a complete pgn: %w", err)
-			}
+			return pgn, err
 		}
 
 		pgn = append(pgn, buf...)
@@ -677,7 +677,7 @@ func extractSinglePgn(bufrd *bufio.Reader) ([]byte, error) {
 	for {
 		buf, err := bufrd.ReadBytes('\n')
 		if err != nil && err != io.EOF {
-			return nil, fmt.Errorf("error reading pgn file: %w", err)
+			return pgn, err
 		}
 
 		pgn = append(pgn, buf...)
@@ -783,7 +783,7 @@ func (g *Game) makePositionHist() []*Position {
 // If Result is set then it will be set to [NoResult]. If the game ends (in stalemate or checkmate) then Result will also be set appropriately.
 func (g *Game) Move(m Move) error {
 	if !slices.Contains(g.legalMoves(), m) {
-		return errors.New("illegal move")
+		return errors.New("could not move, illegal move")
 	}
 	g.pos.Move(m)
 	g.moves = nil
@@ -820,7 +820,7 @@ func (g *Game) MoveUCI(m string) error {
 	var move Move
 	err := move.UnmarshalText([]byte(m))
 	if err != nil {
-		return err
+		return fmt.Errorf("could not move: %w", err)
 	}
 	return g.Move(move)
 }
@@ -831,7 +831,7 @@ func (g *Game) MoveUCI(m string) error {
 func (g *Game) MoveSAN(m string) error {
 	move, err := ParseSANMove(m, g.pos)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not move: %w", err)
 	}
 	return g.Move(move)
 }
@@ -845,12 +845,14 @@ func (g *Game) Position() *Position {
 //
 // If a negative number is provided, or ply goes beyond the number of moves played nil is returned. Ply always starts at 0 and increments by 1, even if the game starts at move 16 for example.
 func (g *Game) PositionPly(ply int) *Position {
+	if ply < 0 || ply > len(g.moveHistory) {
+		return nil
+	}
 	pos := &Position{}
 	if g.OtherTags["SetUp"] == "1" {
-
 		err := pos.UnmarshalText([]byte(g.OtherTags["FEN"]))
 		if err != nil {
-			panic("game somehow got invalid FEN starting position, can get position at ply")
+			panic("game somehow got invalid FEN starting position, can't get position at ply")
 		}
 	} else {
 		pos.UnmarshalText([]byte(DefaultFEN))
@@ -875,7 +877,7 @@ func (g *Game) MoveHistory() []PgnMove {
 // plyNum starts at 0 for the first move. Any previous nag is overwritten. An error is returned if plyNum is too big or too small.
 func (g *Game) AnnotateMove(plyNum int, nag uint8) error {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
-		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+		return fmt.Errorf("could not annotate move, ply %d out of range", plyNum)
 	}
 	g.moveHistory[plyNum].NumericAnnotation = nag
 	return nil
@@ -886,7 +888,7 @@ func (g *Game) AnnotateMove(plyNum int, nag uint8) error {
 // plyNum starts at 0 for the first move.
 func (g *Game) CommentAfterMove(plyNum int, comment string) error {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
-		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+		return fmt.Errorf("could not comment after move, ply %d out of range", plyNum)
 	}
 	g.moveHistory[plyNum].PostCommentary = append(g.moveHistory[plyNum].PostCommentary, comment)
 	return nil
@@ -898,7 +900,7 @@ func (g *Game) CommentAfterMove(plyNum int, comment string) error {
 // plyNum starts at 0 for the first move.
 func (g *Game) CommentBeforeMove(plyNum int, comment string) error {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
-		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+		return fmt.Errorf("could not comment before move, ply %d out of range", plyNum)
 	}
 	g.moveHistory[plyNum].PreCommentary = append(g.moveHistory[plyNum].PreCommentary, comment)
 	return nil
@@ -909,10 +911,10 @@ func (g *Game) CommentBeforeMove(plyNum int, comment string) error {
 // plyNum and commentNum start at 0 for the first move.
 func (g *Game) DeleteCommentAfter(plyNum int, commentNum int) error {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
-		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+		return fmt.Errorf("could not delete comment after move, ply %d out of range", plyNum)
 	}
 	if commentNum < 0 || commentNum >= len(g.moveHistory[plyNum].PostCommentary) {
-		return fmt.Errorf("commentNum is too large or to small: len(PostCommentary) = %d, commentNum = %d", len(g.moveHistory[plyNum].PostCommentary), commentNum)
+		return fmt.Errorf("could not delete comment after move, comment %d out of range", commentNum)
 	}
 	g.moveHistory[plyNum].PostCommentary = slices.Delete(g.moveHistory[plyNum].PostCommentary, commentNum, commentNum+1)
 	return nil
@@ -920,44 +922,45 @@ func (g *Game) DeleteCommentAfter(plyNum int, commentNum int) error {
 
 func (g *Game) DeleteCommentBefore(plyNum int, commentNum int) error {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
-		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+		return fmt.Errorf("could not delete comment before move, ply %d out of range", plyNum)
 	}
 	if commentNum < 0 || commentNum >= len(g.moveHistory[plyNum].PreCommentary) {
-		return fmt.Errorf("commentNum is too large or to small: len(PreCommentary) = %d, commentNum = %d", len(g.moveHistory[plyNum].PreCommentary), commentNum)
+		return fmt.Errorf("could not delete comment before move, comment %d out of range", commentNum)
 	}
 	g.moveHistory[plyNum].PreCommentary = slices.Delete(g.moveHistory[plyNum].PreCommentary, commentNum, commentNum+1)
 	return nil
 }
 
-// MakeVariation adds a set of variation moves to the specified move. The variation should begin with a move that replaces the current move. Variation moves must be legal.
+// MakeVariation adds a set of variation moves to the specified move. The variation should begin with a move that replaces the specified ply. Variation moves must be legal.
 //
 // plyNum starts at 0 for the first move. moves is not copied, it is simply added to the variations list for the appropriate pgn move.
 func (g *Game) MakeVariation(plyNum int, moves []PgnMove) error {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
-		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+		return fmt.Errorf("could not make variation, ply %d out of range", plyNum)
 	}
 	pos := g.PositionPly(plyNum)
-	if !isLegalVariation(pos, moves) {
-		return fmt.Errorf("variation contains illegal moves")
+	if err := isLegalVariation(pos, moves); err != nil {
+		return fmt.Errorf("could not make variation: %w", err)
 	}
 
 	g.moveHistory[plyNum].Variations = append(g.moveHistory[plyNum].Variations, moves)
 	return nil
 }
 
-func isLegalVariation(p *Position, variation []PgnMove) bool {
+// isLegalVariation returns nil if the variation is legal. If not returns an error indicating the illegal move.
+func isLegalVariation(p *Position, variation []PgnMove) error {
 	for _, m := range variation {
 		for _, v := range m.Variations {
-			if !isLegalVariation(p.Copy(), v) {
-				return false
+			if err := isLegalVariation(p.Copy(), v); err != nil {
+				return err
 			}
 		}
 		if !isLegalMove(p, m.Move) {
-			return false
+			return fmt.Errorf("variation contains illegal move %v", m.Move)
 		}
 		p.Move(m.Move)
 	}
-	return true
+	return nil
 }
 
 func isLegalMove(p *Position, m Move) bool {
@@ -967,10 +970,10 @@ func isLegalMove(p *Position, m Move) bool {
 // DeleteVariation deletes the variation at the plyNum. Give the index you want to delete (starting at 0).
 func (g *Game) DeleteVariation(plyNum int, variationNum int) error {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
-		return fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d", len(g.moveHistory), plyNum)
+		return fmt.Errorf("could not delete variation, ply %d out of range", plyNum)
 	}
 	if variationNum < 0 || variationNum >= len(g.moveHistory[plyNum].Variations) {
-		return fmt.Errorf("variationNum is too large or to small: len(Variations) = %d, variationNum = %d", len(g.moveHistory[plyNum].Variations), variationNum)
+		return fmt.Errorf("could not delete variation, variation %d out of range", variationNum)
 	}
 	g.moveHistory[plyNum].Variations = slices.Delete(g.moveHistory[plyNum].Variations, variationNum, variationNum+1)
 	return nil
@@ -979,12 +982,10 @@ func (g *Game) DeleteVariation(plyNum int, variationNum int) error {
 // GetVariation returns a new game where the specified variation is followed. All other specified variations are preserved, and the main line is also preserved as a variation. Errors are returned if the variation is illegal (not likely as they are validated when you make them) or the plyNum or variationNum are out of bounds.
 func (g *Game) GetVariation(plyNum int, variationNum int) (*Game, error) {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
-		return nil, fmt.Errorf("plyNum is too large or to small: len(moveHistory) = %d, plyNum = %d",
-			len(g.moveHistory), plyNum)
+		return nil, fmt.Errorf("could not get variation, ply %d out of range", plyNum)
 	}
 	if variationNum < 0 || variationNum >= len(g.moveHistory[plyNum].Variations) {
-		return nil, fmt.Errorf("variationNum is too large or to small: len(Variations) = %d, variationNum = %d",
-			len(g.moveHistory[plyNum].Variations), variationNum)
+		return nil, fmt.Errorf("could not get variation, variation %d out of range", variationNum)
 	}
 
 	newMoveHistory := g.MoveHistory()[0:plyNum]
@@ -1019,7 +1020,7 @@ func (g *Game) GetVariation(plyNum int, variationNum int) (*Game, error) {
 	for _, m := range newMoveHistory {
 		err := newGame.Move(m.Move)
 		if err != nil {
-			return nil, fmt.Errorf("variation contains illegal move %v", m)
+			return nil, fmt.Errorf("could not get variation, variation contains illegal move %v", m.Move)
 		}
 	}
 
@@ -1035,12 +1036,12 @@ func (g *Game) MarshalText() (text []byte, err error) {
 	lines := make([]string, 0, 10)
 	err = g.addTags(&lines)
 	if err != nil {
-		return nil, fmt.Errorf("could not marshal tags: %w", err)
+		return nil, fmt.Errorf("could not marshal game: %w", err)
 	}
 	lines = append(lines, "")
 	err = g.addMoveText(&lines)
 	if err != nil {
-		return nil, fmt.Errorf("could not marshal movetext: %w", err)
+		return nil, fmt.Errorf("could not marshal game: %w", err)
 	}
 	pgn := strings.Builder{}
 	for i, l := range lines {
@@ -1061,7 +1062,7 @@ func (g *Game) addTags(lines *[]string) error {
 	*lines = append(*lines, fmt.Sprintf("[Black %q]", g.Black))
 	rstStr, err := g.Result.MarshalText()
 	if err != nil {
-		return err
+		return fmt.Errorf("could not marshal tags: %w", err)
 	}
 	*lines = append(*lines, fmt.Sprintf("[Result %q]", rstStr))
 	g.addOtherTags(lines)
@@ -1077,7 +1078,7 @@ func (g *Game) addReducedTags(lines *[]string) error {
 	*lines = append(*lines, fmt.Sprintf("[Black %q]", g.Black))
 	rstStr, err := g.Result.MarshalText()
 	if err != nil {
-		return err
+		return fmt.Errorf("could not marshal tags: %w", err)
 	}
 	*lines = append(*lines, fmt.Sprintf("[Result %q]", rstStr))
 	if g.OtherTags["SetUp"] == "1" {
@@ -1120,7 +1121,7 @@ func (g *Game) addMoveText(lines *[]string) error {
 
 		temp, err := m.Move.StringSAN(currPos)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not marshal move text: %w", err)
 		}
 		sanMove := " " + temp
 		nag := nagString(m.NumericAnnotation)
@@ -1140,7 +1141,7 @@ func (g *Game) addMoveText(lines *[]string) error {
 		for _, variation := range m.Variations {
 			err := appendVariation(currPos.Copy(), variation, &currentLine, lines)
 			if err != nil {
-				return fmt.Errorf("could not add variations: %w", err)
+				return fmt.Errorf("could not marshal move text: %w", err)
 			}
 		}
 
@@ -1153,7 +1154,7 @@ func (g *Game) addMoveText(lines *[]string) error {
 	}
 	result, err := g.Result.MarshalText()
 	if err != nil {
-		return err
+		return fmt.Errorf("could not marshal move text: %w", err)
 	}
 	appendToPgnLine(" "+string(result), &currentLine, lines)
 	*lines = append(*lines, currentLine.String())
@@ -1178,7 +1179,7 @@ func (g *Game) addReducedMoveText(lines *[]string) error {
 		}
 		temp, err := m.Move.StringSAN(currPos)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not marshal move text: %w", err)
 		}
 		sanMove := " " + temp
 		currentLine.WriteString(sanMove)
@@ -1186,7 +1187,7 @@ func (g *Game) addReducedMoveText(lines *[]string) error {
 	}
 	result, err := g.Result.MarshalText()
 	if err != nil {
-		return err
+		return fmt.Errorf("could not marshal move text: %w", err)
 	}
 	currentLine.WriteString(" " + string(result))
 	*lines = append(*lines, strings.TrimSpace(currentLine.String()))
@@ -1247,7 +1248,7 @@ func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Bu
 		}
 		temp, err := m.Move.StringSAN(currPos)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not marshal variation: %w", err)
 		}
 		sanMove := " " + temp
 		nag := nagString(m.NumericAnnotation)
@@ -1300,12 +1301,12 @@ func (g *Game) MarshalTextReduced() (text []byte, err error) {
 	lines := make([]string, 0, 10)
 	err = g.addReducedTags(&lines)
 	if err != nil {
-		return nil, fmt.Errorf("could not marshal tags: %w", err)
+		return nil, fmt.Errorf("could not marshal game: %w", err)
 	}
 	lines = append(lines, "")
 	err = g.addReducedMoveText(&lines)
 	if err != nil {
-		return nil, fmt.Errorf("could not marshal movetext: %w", err)
+		return nil, fmt.Errorf("could not marshal game: %w", err)
 	}
 	pgn := strings.Builder{}
 	for i, l := range lines {

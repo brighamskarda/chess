@@ -36,20 +36,14 @@ func (m Move) MarshalText() (text []byte, err error) {
 	if m.FromSquare == NoSquare && m.ToSquare == NoSquare && m.Promotion == NoPieceType {
 		return []byte{'0', '0', '0', '0'}, nil
 	}
-	if m.FromSquare == NoSquare || m.ToSquare == NoSquare {
-		return nil, errors.New("either FromSquare or ToSquare are NoSquare")
-	}
-	from, err := m.FromSquare.MarshalText()
-	if err != nil {
-		return nil, fmt.Errorf("could not marshal fromSquare %v", m.FromSquare)
-	}
-	to, err := m.ToSquare.MarshalText()
-	if err != nil {
-		return nil, fmt.Errorf("could not marshal toSquare %v", m.FromSquare)
+	if !squareOnBoard(m.FromSquare) || !squareOnBoard(m.ToSquare) {
+		return nil, fmt.Errorf("could not marshal move %v, contains squares not on board", m)
 	}
 	if m.Promotion > King {
-		return nil, fmt.Errorf("could not marshal promotion %#v", m.Promotion)
+		return nil, fmt.Errorf("could not marshal move %v: invalid promotion", m)
 	}
+	from, _ := m.FromSquare.MarshalText()
+	to, _ := m.ToSquare.MarshalText()
 	text = append(text, from...)
 	text = append(text, to...)
 	if m.Promotion != NoPieceType {
@@ -60,25 +54,23 @@ func (m Move) MarshalText() (text []byte, err error) {
 
 // StringSAN provides a move in standard algebraic notation as specified here. https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
 //
-// pos is required to convert a move to SAN. pos should be the position before the move. An error is returned if an SAN string could not be generated with the given move and position.
+// pos is required to convert a move to SAN. pos should be the position before the move. An error is returned if an SAN string could not be generated with the given move and position. This does not necessarily test for move legality, should this be an illegal move, unexpected results may occur.
 func (m Move) StringSAN(pos *Position) (string, error) {
 	// This is another cry for help, why couldn't the pgn file spec just use UCI notation. This is another set of complex logic that was not necessary.
+	if !squareOnBoard(m.FromSquare) || !squareOnBoard(m.ToSquare) {
+		return "", fmt.Errorf("could not convert move %v to SAN, contains squares not on board", m)
+	}
+	if m.Promotion > King {
+		return "", fmt.Errorf("could not convert move %v to SAN: invalid promotion", m)
+	}
 	pos = pos.Copy()
 	returnString := ""
 	if pos.Piece(m.FromSquare) == NoPiece {
-		return "", fmt.Errorf("no piece on fromsquare %v", m.FromSquare)
+		return "", fmt.Errorf("could not convert move %v to SAN, no piece on FromSquare", m)
 	} else if pos.Piece(m.FromSquare).Type == Pawn {
-		var err error
-		returnString, err = m.pawnStringSAN(pos)
-		if err != nil {
-			return "", fmt.Errorf("could not generate pawnMove: %w", err)
-		}
+		returnString = m.pawnStringSAN(pos)
 	} else {
-		var err error
-		returnString, err = m.normalStringSAN(pos)
-		if err != nil {
-			return "", fmt.Errorf("could not generate SAN move: %w", err)
-		}
+		returnString = m.normalStringSAN(pos)
 	}
 
 	pos.Move(m)
@@ -92,52 +84,37 @@ func (m Move) StringSAN(pos *Position) (string, error) {
 	return returnString, nil
 }
 
-func (m Move) pawnStringSAN(pos *Position) (string, error) {
+func (m Move) pawnStringSAN(pos *Position) string {
 	returnString := ""
 	if m.FromSquare.File != m.ToSquare.File {
 		returnString += m.FromSquare.File.String() + "x"
 	}
-	toSquare, err := m.ToSquare.MarshalText()
-	if err != nil || m.ToSquare == NoSquare {
-		return "", fmt.Errorf("no piece on toSquare %v", m.ToSquare)
-	}
+	toSquare, _ := m.ToSquare.MarshalText()
 	returnString += string(toSquare)
-	if m.Promotion > King {
-		return "", fmt.Errorf("invalid promotion %v", m.Promotion)
-	}
 	if m.Promotion != NoPieceType {
 		returnString += "=" + strings.ToUpper(m.Promotion.String())
 	}
-	return returnString, nil
+	return returnString
 }
 
-func (m Move) normalStringSAN(pos *Position) (string, error) {
+func (m Move) normalStringSAN(pos *Position) string {
 	returnString := ""
 	pieceToMove := pos.Piece(m.FromSquare)
-	if pieceToMove == NoPiece {
-		return "", fmt.Errorf("no piece on fromSquare %v", m.FromSquare)
-	}
 	returnString += strings.ToUpper(pieceToMove.String())
 	if isFileDisambiguation(m.FromSquare, m.ToSquare, pieceToMove, pos) {
 		returnString += m.FromSquare.File.String()
 	} else if isRankDisambiguation(m.FromSquare, m.ToSquare, pieceToMove, pos) {
 		returnString += m.FromSquare.Rank.String()
 	} else if isSquareDisambiguation(m.ToSquare, pieceToMove, pos) {
-		fromSquare, err := m.FromSquare.MarshalText()
-		if err != nil || m.FromSquare == NoSquare {
-			return "", fmt.Errorf("could not marshal from square %v", m.FromSquare)
-		}
+		fromSquare, _ := m.FromSquare.MarshalText()
 		returnString += string(fromSquare)
 	}
 	if pos.Piece(m.ToSquare) != NoPiece {
 		returnString += "x"
 	}
-	toSquare, err := m.ToSquare.MarshalText()
-	if err != nil || m.ToSquare == NoSquare {
-		return "", fmt.Errorf("could not marshal to square %v", m.ToSquare)
-	}
+	toSquare, _ := m.ToSquare.MarshalText()
 	returnString += string(toSquare)
-	return returnString, nil
+	return returnString
 }
 
 func isFileDisambiguation(fromSquare Square, toSquare Square, pieceToMove Piece, pos *Position) bool {
@@ -239,25 +216,25 @@ func isSquareDisambiguation(toSquare Square, pieceToMove Piece, pos *Position) b
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface to read a move from a UCI compatible format. The format is <FromSquare><ToSquare><OptionalPromotion>, ex. a2c3q.
 func (m *Move) UnmarshalText(text []byte) error {
 	if len(text) < 4 || len(text) > 5 {
-		return fmt.Errorf("expected text to be of len 4 or 5, got len(text) = %d", len(text))
+		return fmt.Errorf("could not unmarshal move, expected text to be of len 4 or 5, got len(text) = %d", len(text))
 	}
 	var fromSquare Square
 	err := fromSquare.UnmarshalText(text[0:2])
 	if err != nil {
-		return fmt.Errorf("could not parse from square: %w", err)
+		return fmt.Errorf("could not unmarshal move: %w", err)
 	}
 
 	var toSquare Square
 	err = toSquare.UnmarshalText(text[2:4])
 	if err != nil {
-		return fmt.Errorf("could not parse from square: %w", err)
+		return fmt.Errorf("could not unmarshal move: %w", err)
 	}
 
 	var promotion PieceType
 	if len(text) == 5 {
 		promotion, err = parsePieceType(text[4])
 		if err != nil {
-			return fmt.Errorf("could not parse promotion: %w", err)
+			return fmt.Errorf("could not unmarshal move: %w", err)
 		}
 	}
 	m.FromSquare = fromSquare
@@ -285,7 +262,7 @@ const (
 func ParseSANMove(san string, pos *Position) (Move, error) {
 	// This comment is a silent cry for help. I only implemented this because the pgn standard uses it. SAN was not designed to be parsed by computers. This was a major effort that could have been easily avoided by the much superior UCI move notation.
 	if pos.SideToMove != White && pos.SideToMove != Black {
-		return Move{}, errors.New("could not parse SAN move: pos.SideToMove not set")
+		return Move{}, fmt.Errorf("could not parse SAN move %q, pos.SideToMove not set", san)
 	}
 
 	// These characters don't matter for this parsing.
@@ -311,7 +288,7 @@ func ParseSANMove(san string, pos *Position) (Move, error) {
 	case pawnCapture:
 		m, err = parsePawnCapture(san, pos)
 	case castleMove:
-		m, err = parseCastleMove(san, pos)
+		m = parseCastleMove(san, pos)
 	case unknown:
 		return Move{}, fmt.Errorf("could not parse SAN move %q: could not determine san move type, the move was likely malformed", san)
 	default:
@@ -386,21 +363,21 @@ func classifySANMove5(san string) sanMoveType {
 	}
 }
 
-func parseCastleMove(san string, pos *Position) (Move, error) {
+func parseCastleMove(san string, pos *Position) Move {
 	switch strings.ToLower(san) {
 	case "o-o":
 		switch pos.SideToMove {
 		case White:
-			return Move{E1, G1, NoPieceType}, nil
+			return Move{E1, G1, NoPieceType}
 		case Black:
-			return Move{E8, G8, NoPieceType}, nil
+			return Move{E8, G8, NoPieceType}
 		}
 	case "o-o-o":
 		switch pos.SideToMove {
 		case White:
-			return Move{E1, C1, NoPieceType}, nil
+			return Move{E1, C1, NoPieceType}
 		case Black:
-			return Move{E8, C8, NoPieceType}, nil
+			return Move{E8, C8, NoPieceType}
 		}
 	}
 	panic("unexpected condition: bad san in parseCastleMove")
@@ -412,13 +389,13 @@ func parsePawnCapture(san string, pos *Position) (Move, error) {
 	toSquare := &Square{}
 	err := toSquare.UnmarshalText([]byte(san[2:4]))
 	if err != nil {
-		return Move{}, err
+		return Move{}, fmt.Errorf("could not parse pawn capture: %w", err)
 	}
 	m.ToSquare = *toSquare
 
 	fromFile, err := parseFile(san[0])
 	if err != nil {
-		return Move{}, err
+		return Move{}, fmt.Errorf("could not parse pawn capture: %w", err)
 	}
 	switch pos.SideToMove {
 	case White:
@@ -431,7 +408,7 @@ func parsePawnCapture(san string, pos *Position) (Move, error) {
 		// Pawn capture with promotion
 		pt, err := parsePieceType(san[5])
 		if err != nil {
-			return Move{}, errors.New("could not parse promotion")
+			return Move{}, fmt.Errorf("could not parse pawn capture: %w", err)
 		}
 		m.Promotion = pt
 	}
@@ -442,7 +419,7 @@ func parsePawnAdvance(san string, pos *Position) (Move, error) {
 	toSquare := Square{}
 	err := toSquare.UnmarshalText([]byte(san[0:2]))
 	if err != nil {
-		return Move{}, err
+		return Move{}, fmt.Errorf("could not parse pawn advance: %w", err)
 	}
 
 	var fromSquare Square
@@ -467,7 +444,7 @@ func parsePawnAdvance(san string, pos *Position) (Move, error) {
 		// Possible promotion
 		pt, err := parsePieceType(san[3])
 		if err != nil {
-			return Move{}, errors.New("could not parse promotion")
+			return Move{}, fmt.Errorf("could not parse pawn advance: %w", err)
 		}
 		m.Promotion = pt
 	}
@@ -478,10 +455,10 @@ func parsePawnAdvance(san string, pos *Position) (Move, error) {
 func parseNormalMove(san string, pos *Position) (Move, error) {
 	pt, err := parsePieceType(san[0])
 	if err != nil {
-		return Move{}, err
+		return Move{}, fmt.Errorf("could not parse normal move: %w", err)
 	}
 	if pt == Pawn || pt == NoPieceType {
-		return Move{}, errors.New("detected piece to move was a pawn or NoPiece, this is illegal")
+		return Move{}, errors.New("could not parse normal move, got Pawn or NoPieceType which should use a different syntax")
 	}
 	pieceToMove := Piece{pos.SideToMove, pt}
 	var toSquare Square
@@ -493,11 +470,11 @@ func parseNormalMove(san string, pos *Position) (Move, error) {
 		panic("unexpected condition")
 	}
 	if err != nil {
-		return Move{}, err
+		return Move{}, fmt.Errorf("could not parse normal move: %w", err)
 	}
 	fromSquare, err := getNormalMoveFromSquare(pieceToMove, toSquare, pos)
 	if err != nil {
-		return Move{}, errors.New("could not determine from square")
+		return Move{}, fmt.Errorf("could not parse normal move: %w", err)
 	}
 	return Move{fromSquare, toSquare, NoPieceType}, nil
 }
@@ -516,7 +493,7 @@ func getNormalMoveFromSquare(pieceToMove Piece, toSquare Square, pos *Position) 
 	}
 
 	if len(possibleFromSquares) == 0 {
-		return NoSquare, errors.New("could not determine from square")
+		return NoSquare, errors.New("could not determine from square, no squares seem adequate")
 	}
 	if len(possibleFromSquares) == 1 {
 		return possibleFromSquares[0], nil
@@ -533,8 +510,10 @@ func getNormalMoveFromSquare(pieceToMove Piece, toSquare Square, pos *Position) 
 		}
 	}
 
-	if len(squaresNoCheck) != 1 {
-		return NoSquare, errors.New("could not determine from square")
+	if len(squaresNoCheck) == 0 {
+		return NoSquare, errors.New("could not determine from square, no squares seem adequate")
+	} else if len(squaresNoCheck) > 1 {
+		return NoSquare, errors.New("could not determine from square, multiple squares seem adequate")
 	} else {
 		return squaresNoCheck[0], nil
 	}
@@ -561,7 +540,7 @@ func parseSquareDisambiguation(san string, pos *Position) (Move, error) {
 	fromSquare := Square{}
 	err := fromSquare.UnmarshalText([]byte(san[1:3]))
 	if err != nil {
-		return Move{}, fmt.Errorf("could not parse from square")
+		return Move{}, fmt.Errorf("could not parse square disambiguation form: %w", err)
 	}
 
 	var toSquare Square
@@ -573,7 +552,7 @@ func parseSquareDisambiguation(san string, pos *Position) (Move, error) {
 		err = fmt.Errorf("malformed square disambiguation")
 	}
 	if err != nil {
-		return Move{}, fmt.Errorf("could not parse to square")
+		return Move{}, fmt.Errorf("could not parse square disambiguation form: %w", err)
 	}
 
 	return Move{fromSquare, toSquare, NoPieceType}, nil
@@ -585,29 +564,29 @@ func parseFileDisambiguation(san string, pos *Position) (Move, error) {
 	var err error
 	if strings.Contains(san, "x") || strings.Contains(san, "X") {
 		if len(san) < 5 {
-			return Move{}, errors.New("could not parse to square")
+			return Move{}, errors.New("could not parse file disambiguation form, san to short")
 		}
 		err = toSquare.UnmarshalText([]byte(san[3:5]))
 	} else {
 		if len(san) < 4 {
-			return Move{}, errors.New("could not parse to square")
+			return Move{}, errors.New("could not parse file disambiguation form, san to short")
 		}
 		err = toSquare.UnmarshalText([]byte(san[2:4]))
 	}
 	if err != nil {
-		return Move{}, errors.New("could not parse to square")
+		return Move{}, fmt.Errorf("could not parse file disambiguation form: %w", err)
 	}
 
 	fromFile, err := parseFile(san[1])
 	if err != nil {
-		return Move{}, errors.New("could not determine from square")
+		return Move{}, fmt.Errorf("could not parse file disambiguation form: %w", err)
 	}
 	pt, err := parsePieceType(san[0])
 	if err != nil {
-		return Move{}, errors.New("could not determine from square")
+		return Move{}, fmt.Errorf("could not parse file disambiguation form: %w", err)
 	}
 	if pt == Pawn || pt == NoPieceType {
-		return Move{}, errors.New("detected piece to move was a pawn or NoPiece, this is illegal")
+		return Move{}, errors.New("could not parse file disambiguation form, got Pawn or NoPieceType which should use a different syntax")
 	}
 	pieceToMove := Piece{pos.SideToMove, pt}
 	possibleFromRanks := []Rank{}
@@ -623,10 +602,9 @@ func parseFileDisambiguation(san string, pos *Position) (Move, error) {
 		possibleFromRanks = append(possibleFromRanks, r)
 	}
 
-	if len(possibleFromRanks) == 0 {
-		return Move{}, errors.New("could not determine from square")
-	}
-	if len(possibleFromRanks) == 1 {
+	if lenRanks := len(possibleFromRanks); lenRanks == 0 {
+		return Move{}, errors.New("could not parse file disambiguation form, no ranks seem adequate")
+	} else if lenRanks == 1 {
 		return Move{Square{fromFile, possibleFromRanks[0]}, toSquare, NoPieceType}, nil
 	}
 
@@ -641,8 +619,10 @@ func parseFileDisambiguation(san string, pos *Position) (Move, error) {
 		}
 	}
 
-	if len(squaresNoCheck) != 1 {
-		return Move{}, errors.New("could not determine from square")
+	if lenSquares := len(squaresNoCheck); lenSquares == 0 {
+		return Move{}, errors.New("could not parse file disambiguation form, no ranks seem adequate")
+	} else if lenSquares > 1 {
+		return Move{}, errors.New("could not parse file disambiguation form, multiple ranks seem adequate")
 	} else {
 		return Move{squaresNoCheck[0], toSquare, NoPieceType}, nil
 	}
@@ -655,29 +635,29 @@ func parseRankDisambiguation(san string, pos *Position) (Move, error) {
 	var err error
 	if strings.Contains(san, "x") || strings.Contains(san, "X") {
 		if len(san) < 5 {
-			return Move{}, errors.New("could not parse to square")
+			return Move{}, errors.New("could not parse rank disambiguation form, san to short")
 		}
 		err = toSquare.UnmarshalText([]byte(san[3:5]))
 	} else {
 		if len(san) < 4 {
-			return Move{}, errors.New("could not parse to square")
+			return Move{}, errors.New("could not parse rank disambiguation form, san to short")
 		}
 		err = toSquare.UnmarshalText([]byte(san[2:4]))
 	}
 	if err != nil {
-		return Move{}, errors.New("could not parse to square")
+		return Move{}, fmt.Errorf("could not parse rank disambiguation form: %w", err)
 	}
 
 	fromRank, err := parseRank(san[1])
 	if err != nil {
-		return Move{}, errors.New("could not determine from square")
+		return Move{}, fmt.Errorf("could not parse rank disambiguation form: %w", err)
 	}
 	pt, err := parsePieceType(san[0])
 	if err != nil {
-		return Move{}, errors.New("could not determine from square")
+		return Move{}, fmt.Errorf("could not parse rank disambiguation form: %w", err)
 	}
 	if pt == Pawn || pt == NoPieceType {
-		return Move{}, errors.New("detected piece to move was a pawn or NoPiece, this is illegal")
+		return Move{}, errors.New("could not parse rank disambiguation form, got Pawn or NoPieceType which should use a different syntax")
 	}
 	pieceToMove := Piece{pos.SideToMove, pt}
 	possibleFromFiles := []File{}
@@ -693,10 +673,9 @@ func parseRankDisambiguation(san string, pos *Position) (Move, error) {
 		possibleFromFiles = append(possibleFromFiles, f)
 	}
 
-	if len(possibleFromFiles) == 0 {
-		return Move{}, errors.New("could not determine from square")
-	}
-	if len(possibleFromFiles) == 1 {
+	if lenFiles := len(possibleFromFiles); lenFiles == 0 {
+		return Move{}, errors.New("could not parse rank disambiguation form, no files seem adequate")
+	} else if lenFiles == 1 {
 		return Move{Square{possibleFromFiles[0], fromRank}, toSquare, NoPieceType}, nil
 	}
 
@@ -711,10 +690,11 @@ func parseRankDisambiguation(san string, pos *Position) (Move, error) {
 		}
 	}
 
-	if len(squaresNoCheck) != 1 {
-		return Move{}, errors.New("could not determine from square")
+	if lenSquares := len(squaresNoCheck); lenSquares == 0 {
+		return Move{}, errors.New("could not parse rank disambiguation form, no files seem adequate")
+	} else if lenSquares > 1 {
+		return Move{}, errors.New("could not parse rank disambiguation form, multiple files seem adequate")
 	} else {
 		return Move{squaresNoCheck[0], toSquare, NoPieceType}, nil
 	}
-
 }

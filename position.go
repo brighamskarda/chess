@@ -96,32 +96,32 @@ func (pos *Position) Equal(other *Position) bool {
 func (pos *Position) UnmarshalText(fen []byte) error {
 	words := strings.Fields(string(fen))
 	if len(words) != 6 {
-		return fmt.Errorf("fen %q could not be parsed: fen should contain 6 distinct sections", fen)
+		return fmt.Errorf("pos %q could not be unmarshaled: fen should contain 6 distinct sections", fen)
 	}
 	p := &Position{}
 	err := p.parseFenBody(words[0])
 	if err != nil {
-		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+		return fmt.Errorf("pos %q could not be unmarshaled: %w", fen, err)
 	}
 	err = p.parseSideToMove(words[1])
 	if err != nil {
-		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+		return fmt.Errorf("pos %q could not be unmarshaled: %w", fen, err)
 	}
 	err = p.parseCastleRights(words[2])
 	if err != nil {
-		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+		return fmt.Errorf("pos %q could not be unmarshaled: %w", fen, err)
 	}
 	err = p.parseEnPassant(words[3])
 	if err != nil {
-		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+		return fmt.Errorf("pos %q could not be unmarshaled: %w", fen, err)
 	}
 	err = p.parseHalfMove(words[4])
 	if err != nil {
-		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+		return fmt.Errorf("pos %q could not be unmarshaled: %w", fen, err)
 	}
 	err = p.parseFullMove(words[5])
 	if err != nil {
-		return fmt.Errorf("fen %q could not be parsed: %w", fen, err)
+		return fmt.Errorf("pos %q could not be unmarshaled: %w", fen, err)
 	}
 	*pos = *p
 	return nil
@@ -134,24 +134,24 @@ func (pos *Position) parseFenBody(body string) error {
 		if unicode.IsLetter(r) {
 			p, err := parsePiece(string(r))
 			if err != nil {
-				return fmt.Errorf("could not parse piece %q", r)
+				return fmt.Errorf("could not parse fen body: %w", err)
 			}
 			pos.SetPiece(p, Square{currentFile, currentRank})
 		} else if unicode.IsNumber(r) {
 			currentFile += File(r - '1') // Note this is 1 because file is automatically incremented in loop.
 		} else if r == '/' {
 			if currentFile != FileH+1 {
-				return fmt.Errorf("invalid number of squares on rank %d, found %d", currentRank, currentFile-1)
+				return fmt.Errorf("could not parse fen body, invalid number of squares on rank %d", currentRank)
 			}
 			currentRank -= 1
 			currentFile = NoFile
 		} else {
-			return fmt.Errorf("encountered unexpected character %q", r)
+			return fmt.Errorf("could not parse fen body, encountered unexpected character %q", r)
 		}
 		currentFile += 1
 	}
 	if currentRank != Rank1 {
-		return fmt.Errorf("invalid number of ranks, ended on rank %d, should be rank 1", currentRank)
+		return fmt.Errorf("could not parse fen body, ended on rank %v, should be Rank1", currentRank)
 	}
 	return nil
 }
@@ -159,7 +159,7 @@ func (pos *Position) parseFenBody(body string) error {
 func (pos *Position) parseSideToMove(sideToMove string) error {
 	color := parseColor(sideToMove)
 	if color == NoColor {
-		return fmt.Errorf("could not parse color %q", sideToMove)
+		return fmt.Errorf("could not parse side to move %q", sideToMove)
 	}
 	pos.SideToMove = color
 	return nil
@@ -173,26 +173,26 @@ func (pos *Position) parseCastleRights(castleRights string) error {
 		switch r {
 		case 'K':
 			if pos.WhiteKsCastle {
-				return fmt.Errorf("white king-side castle set twice")
+				return errors.New("could not parse castle rights, white king-side castle set twice")
 			}
 			pos.WhiteKsCastle = true
 		case 'Q':
 			if pos.WhiteQsCastle {
-				return fmt.Errorf("white queen-side castle set twice")
+				return errors.New("could not parse castle rights, white queen-side castle set twice")
 			}
 			pos.WhiteQsCastle = true
 		case 'k':
 			if pos.BlackKsCastle {
-				return fmt.Errorf("black king-side castle set twice")
+				return errors.New("could not parse castle rights, black king-side castle set twice")
 			}
 			pos.BlackKsCastle = true
 		case 'q':
 			if pos.BlackQsCastle {
-				return fmt.Errorf("black queen-side castle set twice")
+				return errors.New("could not parse castle rights, black queen-side castle set twice")
 			}
 			pos.BlackQsCastle = true
 		default:
-			return fmt.Errorf("could not parse castle rights %q", r)
+			return fmt.Errorf("could not parse castle rights, invalid character %q", r)
 		}
 	}
 	return nil
@@ -203,9 +203,9 @@ func (pos *Position) parseEnPassant(enPassant string) error {
 		return nil
 	}
 	square := Square{}
-	square.UnmarshalText([]byte(enPassant))
-	if square == NoSquare {
-		return fmt.Errorf("could not parse en passant %q", enPassant)
+	err := square.UnmarshalText([]byte(enPassant))
+	if err != nil {
+		return fmt.Errorf("could not parse en passant: %w", err)
 	}
 	pos.EnPassant = square
 	return nil
@@ -214,7 +214,7 @@ func (pos *Position) parseEnPassant(enPassant string) error {
 func (pos *Position) parseHalfMove(halfMove string) error {
 	hm, err := strconv.ParseUint(halfMove, 10, 0)
 	if err != nil {
-		return fmt.Errorf("could not parse half move %q", halfMove)
+		return fmt.Errorf("could not parse half move: %w", err)
 	}
 	pos.HalfMove = uint(hm)
 	return nil
@@ -223,7 +223,7 @@ func (pos *Position) parseHalfMove(halfMove string) error {
 func (pos *Position) parseFullMove(fullMove string) error {
 	fm, err := strconv.ParseUint(fullMove, 10, 0)
 	if err != nil {
-		return fmt.Errorf("could not parse full move %q", fullMove)
+		return fmt.Errorf("could not parse full move %w", err)
 	}
 	pos.FullMove = uint(fm)
 	return nil
@@ -232,7 +232,7 @@ func (pos *Position) parseFullMove(fullMove string) error {
 // MarshalText implements [encoding.TextMarshaler]. It provides the FEN representation of the board and err is always nil. See also [Position.String] for a more human readable form of the position.
 func (pos *Position) MarshalText() (text []byte, err error) {
 	fen := ""
-	board, err := pos.boardString()
+	board := pos.boardString()
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal position: %w", err)
 	}
@@ -245,7 +245,7 @@ func (pos *Position) MarshalText() (text []byte, err error) {
 	fen += pos.castleRightString() + " "
 	enPassant, err := pos.EnPassant.MarshalText()
 	if err != nil {
-		return nil, fmt.Errorf("could not marshal position: could not marshal en passant: %w", err)
+		return nil, fmt.Errorf("could not marshal position, could not marshal en passant: %w", err)
 	}
 	fen += string(enPassant) + " "
 	fen += strconv.FormatUint(uint64(pos.HalfMove), 10) + " "
@@ -253,7 +253,7 @@ func (pos *Position) MarshalText() (text []byte, err error) {
 	return []byte(fen), nil
 }
 
-func (pos *Position) boardString() (string, error) {
+func (pos *Position) boardString() string {
 	boardString := ""
 	numEmptySquares := 0
 	for currentRank := Rank8; currentRank != NoRank; currentRank -= 1 {
@@ -264,10 +264,6 @@ func (pos *Position) boardString() (string, error) {
 				if numEmptySquares > 0 {
 					boardString += strconv.Itoa(numEmptySquares)
 					numEmptySquares = 0
-				}
-				pstr := piece.String()
-				if pstr == "-" {
-					return "", errors.New("found invalid piece in position")
 				}
 				boardString += piece.String()
 			}
@@ -280,7 +276,7 @@ func (pos *Position) boardString() (string, error) {
 			boardString += "/"
 		}
 	}
-	return boardString, nil
+	return boardString
 }
 
 func (pos *Position) castleRightString() string {
