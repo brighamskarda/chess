@@ -34,7 +34,7 @@ const (
 	FileH
 )
 
-// String returns a single lowercase letter if valid, else "-".
+// String returns a single lowercase letter if valid, else an error string.
 func (f File) String() string {
 	switch f {
 	case NoFile:
@@ -56,7 +56,7 @@ func (f File) String() string {
 	case FileH:
 		return "h"
 	default:
-		return "-"
+		return fmt.Sprintf("Unknown File %d", f)
 	}
 }
 
@@ -97,7 +97,7 @@ func (r Rank) String() string {
 	case Rank8:
 		return "8"
 	default:
-		return "-"
+		return fmt.Sprintf("Unknown Rank %d", r)
 	}
 }
 

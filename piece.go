@@ -34,7 +34,7 @@ const (
 	King
 )
 
-// String returns a single lowercase letter representation of the piece type if valid, else "-".
+// String returns a single lowercase letter representation of the piece type if valid, an error indicating an unknown piece type.
 func (pt PieceType) String() string {
 	switch pt {
 	case NoPieceType:
@@ -52,7 +52,7 @@ func (pt PieceType) String() string {
 	case King:
 		return "k"
 	default:
-		return "-"
+		return fmt.Sprintf("Unknown PieceType %d", pt)
 	}
 }
 
@@ -99,7 +99,7 @@ var (
 	BlackKing   = Piece{Type: King, Color: Black}
 )
 
-// String returns a single letter representation of the piece type if valid, else "-".
+// String returns a single letter representation of the piece type if valid, else an error indicating an unknown piece.
 //
 // White pieces are uppercase and black pieces are lowercase.
 func (p Piece) String() string {
@@ -107,8 +107,10 @@ func (p Piece) String() string {
 		return strings.ToUpper(p.Type.String())
 	} else if p.Color == Black {
 		return p.Type.String()
-	} else {
+	} else if p == NoPiece {
 		return "-"
+	} else {
+		return fmt.Sprintf("Unknown Piece {%v, %v}", p.Color, p.Type)
 	}
 }
 

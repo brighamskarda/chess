@@ -16,6 +16,7 @@
 package chess
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -37,7 +38,7 @@ func (c Color) String() string {
 	case White:
 		return "White"
 	default:
-		return "Unknown Color"
+		return fmt.Sprintf("Unknown Color %d", c)
 	}
 }
 
