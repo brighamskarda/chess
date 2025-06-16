@@ -1797,3 +1797,21 @@ func createPgn(games []*Game) (string, error) {
 	}
 	return sb.String(), nil
 }
+
+func TestNewGameFromFEN_missingKing(t *testing.T) {
+	_, err := NewGameFromFEN("rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1")
+	if err == nil {
+		t.Error("did not get error")
+	}
+}
+
+func TestNewGameFromFEN_setResult(t *testing.T) {
+	g, err := NewGameFromFEN("rnbqkbnr/pppppQpp/8/8/2B5/8/PPPPPPPP/RNB1K1NR b KQkq - 0 1")
+	if err != nil {
+		t.Errorf("got error: %v", err)
+	}
+
+	if g.Result != WhiteWins {
+		t.Error("result not set")
+	}
+}

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"math/bits"
 	"slices"
 	"strconv"
 	"strings"
@@ -245,7 +246,7 @@ func NewGame() *Game {
 	}
 }
 
-// NewGameFromFEN starts a game with fen as the starting position. Returns an error if [Position.UnmarshalText] could not parse fen. Tags are set the same as [NewGame] with the additions of the [SetUp] and [FEN] tags.
+// NewGameFromFEN starts a game with fen as the starting position. Returns an error if [Position.UnmarshalText] could not parse fen, or fen does not contain a single king for each side. Tags are set the same as [NewGame] with the additions of the [SetUp] and [FEN] tags. The result tag is also set if the game is in mate.
 //
 // [SetUp]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c9.7.1
 // [FEN]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c9.7.2
@@ -255,8 +256,11 @@ func NewGameFromFEN(fen string) (*Game, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not make new game from fen: %w", err)
 	}
+	if !hasKings(pos) {
+		return nil, fmt.Errorf("could not make new game from fen: %q does not have 1 king from each side", fen)
+	}
 	date := time.Now()
-	return &Game{
+	g := &Game{
 		pos:         pos,
 		moveHistory: []PgnMove{},
 		moves:       nil,
@@ -271,7 +275,15 @@ func NewGameFromFEN(fen string) (*Game, error) {
 			"SetUp": "1",
 			"FEN":   fen,
 		},
-	}, nil
+	}
+	g.setResult()
+	return g, nil
+}
+
+// hasKings returns true if pos has 1 of each king.
+func hasKings(pos *Position) bool {
+	return bits.OnesCount64(uint64(pos.Bitboard(WhiteKing))) == 1 &&
+		bits.OnesCount64(uint64(pos.Bitboard(BlackKing))) == 1
 }
 
 // UnmarshalText is an implementation of the [encoding.TextUnmarshaler] interface. It is capable of unmarshaling a single game in [pgn format].
