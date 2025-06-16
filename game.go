@@ -55,6 +55,15 @@ func (r Result) MarshalText() (text []byte, err error) {
 	}
 }
 
+// String provides a pgn compatible representation of r. It returns "1-0" for [WhiteWins], "0-1" for [BlackWins], "1/2-1/2" for [Draw], and "*" for [NoResult]. If r is invalid and error string is produced.
+func (r Result) String() string {
+	text, err := r.MarshalText()
+	if err != nil {
+		return fmt.Sprintf("Unknown Result %d", r)
+	}
+	return string(text)
+}
+
 // UnmarshalText is an implementation of the [encoding.TextUnmarshaler] interface. It sets r to [WhiteWins] for "1-0", [BlackWins] for "0-1", [Draw] for "1/2-1/2", and [NoResult] for "*". Error is returned if text is not one of these four values.
 func (r *Result) UnmarshalText(text []byte) error {
 	switch string(text) {
@@ -1079,7 +1088,7 @@ func (g *Game) DeleteVariation(plyNum int, variationNum int) error {
 	return nil
 }
 
-// GetVariation returns a new game where the specified variation is followed. All other variations are preserved, and the main line is kept as a variation. Errors are returned if the variation is illegal (not likely as they are validated when you make them) or the plyNum or variationNum are out of bounds. See [ExampleGame_MakeVariation]
+// GetVariation returns a new game where the specified variation is followed. All other variations are preserved, and the main line is kept as a variation. Errors are returned if the variation is illegal (not likely as they are validated when you make them) or the plyNum or variationNum are out of bounds. See example, ExampleGame_MakeVariation
 func (g *Game) GetVariation(plyNum int, variationNum int) (*Game, error) {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
 		return nil, fmt.Errorf("could not get variation, ply %d out of range", plyNum)

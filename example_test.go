@@ -60,9 +60,9 @@ func ExampleResult() {
 	g := chess.NewGame()
 	gameResult := g.Result
 
-	// You can marshal results to a textual representation. A * means no result (game still going).
-	str, _ := gameResult.MarshalText()
-	fmt.Printf("gameResult: %s", str)
+	// You can convert results to a textual representation. A * means no result (game still going).
+	str := gameResult.String()
+	fmt.Printf("gameResult: %v", str)
 	// Output:
 	// gameResult: *
 }
@@ -105,7 +105,7 @@ func ExamplePgnMove() {
 	// PostComment Two: Others may disagree though
 	// Inline Numeric Annotation: 1
 	// Traditional Numeric Annotation: 2
-	// Variation Move: {{c 7} {c 5} -}
+	// Variation Move: c7c5
 	// Even Variations Support Comments: Many people like the Sicilian Defense more.
 }
 
@@ -170,7 +170,7 @@ func ExampleGame_UnmarshalText() {
 	// Output:
 	// White: Gopher 1
 	// Black: Gopher 2
-	// First Move: {{e 2} {e 4} -}
+	// First Move: e2e4
 }
 
 func ExampleGame_AnnotateMove() {
@@ -256,8 +256,8 @@ func ExampleGame_MakeVariation() {
 	myNewGame, _ := game.GetVariation(0, 0)
 	fmt.Println(myNewGame.MoveHistory()[0].Move)
 	// Output:
-	// {{d 2} {d 4} -}
-	// {{d 2} {d 4} -}
+	// d2d4
+	// d2d4
 }
 
 func ExampleGame_MarshalText() {

@@ -41,10 +41,10 @@ func (m Move) MarshalText() (text []byte, err error) {
 		return []byte{'0', '0', '0', '0'}, nil
 	}
 	if !squareOnBoard(m.FromSquare) || !squareOnBoard(m.ToSquare) {
-		return nil, fmt.Errorf("could not marshal move %v, contains squares not on board", m)
+		return nil, fmt.Errorf("could not marshal move %#v, contains squares not on board", m)
 	}
 	if m.Promotion > King {
-		return nil, fmt.Errorf("could not marshal move %v: invalid promotion", m)
+		return nil, fmt.Errorf("could not marshal move %#v: invalid promotion", m)
 	}
 	from, _ := m.FromSquare.MarshalText()
 	to, _ := m.ToSquare.MarshalText()
@@ -54,6 +54,17 @@ func (m Move) MarshalText() (text []byte, err error) {
 		text = append(text, m.Promotion.String()[0])
 	}
 	return text, nil
+}
+
+// String provides a UCI compatible representation of the square in the form <FromSquare><ToSquare><OptionalPromotion>, ex. "a7a8q". If fromsquare, tosquare, and promotion are all 0 then "0000" is returned as per the [UCI specification]. An error string is returned if any of the fields are invalid.
+//
+// [UCI specification]: https://www.wbec-ridderkerk.nl/html/UCIProtocol.html
+func (m Move) String() string {
+	text, err := m.MarshalText()
+	if err != nil {
+		return fmt.Sprintf("Invalid Move %#v", m)
+	}
+	return string(text)
 }
 
 // StringSAN provides a move in standard algebraic notation as specified in the [PGN specification].

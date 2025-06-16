@@ -201,9 +201,18 @@ func (s Square) MarshalText() (text []byte, err error) {
 		return []byte{'-'}, nil
 	}
 	if !squareOnBoard(s) {
-		return nil, fmt.Errorf("cannot marshal invalid square %v", s)
+		return nil, fmt.Errorf("cannot marshal invalid square %#v", s)
 	}
 	return []byte{s.File.String()[0], s.Rank.String()[0]}, nil
+}
+
+// String provides a two letter textual representation of s in the form "a1". [NoSquare] produces "-". If s is invalid and error string is returned.
+func (s Square) String() string {
+	text, err := s.MarshalText()
+	if err != nil {
+		return fmt.Sprintf("Unknown Square %#v", s)
+	}
+	return string(text)
 }
 
 // UnmarshalText is an implementation of the [encoding.TextUnmarshaler] interface. It expects text in the form of a two character square like "a1" or "A1". A "-" will provide [NoSquare]. All other cases result in an error, and s is unmodified.
