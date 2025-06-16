@@ -28,7 +28,7 @@ import (
 	"unicode"
 )
 
-// Result represents the result of a chess [Game].
+// Result represents the result of a chess [Game]. It can be [NoResult], [WhiteWins], [BlackWins], or [Draw].
 type Result uint8
 
 const (
@@ -38,7 +38,7 @@ const (
 	Draw
 )
 
-// MarshalText returns "1-0" for [WhiteWins], "0-1" for [BlackWins], "1/2-1/2" for [Draw], and * otherwise. err is always nil.
+// MarshalText is an implementation of the [encoding.TextMarshaler] interface. It returns "1-0" for [WhiteWins], "0-1" for [BlackWins], "1/2-1/2" for [Draw], and "*" for [NoResult]. If r is invalid an error is returned.
 func (r Result) MarshalText() (text []byte, err error) {
 	switch r {
 	case NoResult:
@@ -54,7 +54,7 @@ func (r Result) MarshalText() (text []byte, err error) {
 	}
 }
 
-// UnmarshalText sets [WhiteWins] for "1-0", [BlackWins] for "0-1", [Draw] for "1/2-1/2", and [NoResult] for "*". Error is returned if text is not one of these four values.
+// UnmarshalText is an implementation of the [encoding.TextUnmarshaler] interface. It sets r to [WhiteWins] for "1-0", [BlackWins] for "0-1", [Draw] for "1/2-1/2", and [NoResult] for "*". Error is returned if text is not one of these four values.
 func (r *Result) UnmarshalText(text []byte) error {
 	switch string(text) {
 	case "1-0":
@@ -74,17 +74,32 @@ func (r *Result) UnmarshalText(text []byte) error {
 	}
 }
 
-// PgnMove is an expanded move struct used in [Game]. It provides fields for Numeric Annotation Glyphs, commentary and Recursive Annotation Variation (RAV - move variations).
+// PgnMove is an expanded move struct used in [Game]. It provides fields for
+// [Numeric Annotation Glyphs], [commentary], and [Recursive Annotation Variations].
+//
+// [Numeric Annotation Glyphs]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c10
+// [commentary]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c5
+// [Recursive Annotation Variations]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.5
 type PgnMove struct {
-	Move              Move
+	Move Move
+	// NumericAnnotation is used to assign an attribute to a move (good move,
+	// bad move, etc.). Each move can only have one.
 	NumericAnnotation uint8
-	PreCommentary     []string
-	PostCommentary    []string
-	// Variations supports multiple variations. Hence it is a 2d slice. The first move in a variation should replace the current move.
+	// PreCommentary is a list of comments made before the current move.
+	// This should only be used on the first move of the game, or the first
+	// move of a variation. In other cases it is preferable to use
+	// PostCommentary.
+	PreCommentary []string
+	// PostCommentary is a list of comments made after the current move.
+	PostCommentary []string
+	// Variations allows multiple variations to be defined. The first
+	// dimension is the variation, and the second dimension is the list of moves
+	// for that variation. The first move in a variation should replace the
+	// current move.
 	Variations [][]PgnMove
 }
 
-// Copy provides a copy of the PgnMove. This is a deep copy so the variations are separate.
+// Copy provides a deep copy of m.
 func (m PgnMove) Copy() PgnMove {
 	newPgnMove := PgnMove{
 		Move:              m.Move,
@@ -103,60 +118,114 @@ func (m PgnMove) Copy() PgnMove {
 	return newPgnMove
 }
 
-// Game represents all parts of the PGN game notation standard found here. https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm.
+// Game represents the PGN game notation standard found [here].
 //
-// It ensures that only legal moves are performed and keeps track of move history. It also provides utilities for determining if a draw can be claimed.
+// Game ensures that only legal moves are performed, and keeps track of move history. It provides various utilities for manipulating a PGN game of chess including: making variations, commenting moves, applying numeric annotations, checking for mate, etc.
 //
-// This library does not support chess 960, largely because special castling rights are not implemented. Otherwise starting games from arbitrary positions is supported.
+// Starting games from arbitrary positions is supported, though chess 960 is not fully supported due to special castling rules.
 //
-// The field descriptions given are pulled from the PGN specification.
+// The [seven tag roster] is provided as public fields, along with a map for other tags. The descriptions provided are pulled from the PGN specification.
+//
+// [here]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm
+// [seven tag roster]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.1.1
 type Game struct {
 	pos         *Position
 	moveHistory []PgnMove
 	// moves are the current legal moves, nil if they haven't been generated. If it is an empty slice then there are no legal moves.
 	moves []Move
 
-	// Event should be reasonably descriptive. Abbreviations are to be avoided unless absolutely necessary. A consistent event naming should be used to help facilitate database scanning. If the name of the event is unknown, a single question mark should appear as the tag value.
+	// Event should be reasonably descriptive. Abbreviations are to be avoided
+	// unless absolutely necessary. A consistent event naming should be used
+	// to help facilitate database scanning. If the name of the event is
+	// unknown, a single question mark should appear as the tag value.
 	Event string
-	// Site should include city and region names along with a standard name for the country. The use of the IOC (International Olympic Committee) three letter names is suggested for those countries where such codes are available. If the site of the event is unknown, a single question mark should appear as the tag value. A comma may be used to separate a city from a region. No comma is needed to separate a city or region from the IOC country code. A later section of this document gives a list of three letter nation codes along with a few additions for "locations" not covered by the IOC.
+	// Site should include city and region names along with a standard name for
+	// the country. The use of the IOC (International Olympic Committee) three
+	// letter names is suggested for those countries where such codes are
+	// available. If the site of the event is unknown, a single question mark
+	// should appear as the tag value. A comma may be used to separate a city
+	// from a region. No comma is needed to separate a city or region from the
+	// IOC country code. A later section of this document gives a list of three
+	// letter nation codes along with a few additions for "locations" not
+	// covered by the IOC.
 	Site string
-	// Date gives the starting date for the game. (Note: this is not necessarily the same as the starting date for the event.) The date is given with respect to the local time of the site given in the Event tag. The Date tag value field always uses a standard ten character format: "YYYY.MM.DD". The first four characters are digits that give the year, the next character is a period, the next two characters are digits that give the month, the next character is a period, and the final two characters are digits that give the day of the month. If the any of the digit fields are not known, then question marks are used in place of the digits.
+	// Date gives the starting date for the game. (Note: this is not necessarily
+	// the same as the starting date for the event.) The date is given with
+	// respect to the local time of the site given in the Event tag. The Date
+	// tag value field always uses a standard ten character format:
+	// "YYYY.MM.DD". The first four characters are digits that give the year,
+	// the next character is a period, the next two characters are digits that
+	// give the month, the next character is a period, and the final two
+	// characters are digits that give the day of the month. If the any of the
+	// digit fields are not known, then question marks are used in place of the
+	// digits.
 	Date string
-	// Round gives the playing round for the game. In a match competition, this value is the number of the game played. If the use of a round number is inappropriate, then the field should be a single hyphen character. If the round is unknown, a single question mark should appear as the tag value.
+	// Round gives the playing round for the game. In a match competition, this
+	// value is the number of the game played. If the use of a round number is
+	// inappropriate, then the field should be a single hyphen character. If
+	// the round is unknown, a single question mark should appear as the tag
+	// value.
 	//
-	// Some organizers employ unusual round designations and have multipart playing rounds and sometimes even have conditional rounds. In these cases, a multipart round identifier can be made from a sequence of integer round numbers separated by periods. The leftmost integer represents the most significant round and succeeding integers represent round numbers in descending hierarchical order.
+	// Some organizers employ unusual round designations and have multipart
+	// playing rounds and sometimes even have conditional rounds. In these
+	// cases, a multipart round identifier can be made from a sequence of
+	// integer round numbers separated by periods. The leftmost integer
+	// represents the most significant round and succeeding integers represent
+	// round numbers in descending hierarchical order.
 	Round string
-	// 	White is the name of the player or players of the white pieces. The names are given as they would appear in a telephone directory. The family or last name appears first. If a first name or first initial is available, it is separated from the family name by a comma and a space. Finally, one or more middle initials may appear. (Wherever a comma appears, the very next character should be a space. Wherever an initial appears, the very next character should be a period.) If the name is unknown, a single question mark should appear as the tag value.
+	// White is the name of the player or players of the white pieces. The names
+	// are given as they would appear in a telephone directory. The family or
+	// last name appears first. If a first name or first initial is available,
+	// it is separated from the family name by a comma and a space. Finally, one
+	// or more middle initials may appear. (Wherever a comma appears, the very
+	// next character should be a space. Wherever an initial appears, the very
+	// next character should be a period.) If the name is unknown, a single
+	// question mark should appear as the tag value.
 	//
-	// The intent is to allow meaningful ASCII sorting of the tag value that is independent of regional name formation customs. If more than one person is playing the white pieces, the names are listed in alphabetical order and are separated by the colon character between adjacent entries. A player who is also a computer program should have appropriate version information listed after the name of the program.
+	// The intent is to allow meaningful ASCII sorting of the tag value that is
+	// independent of regional name formation customs. If more than one person
+	// is playing the white pieces, the names are listed in alphabetical order
+	// and are separated by the colon character between adjacent entries. A
+	// player who is also a computer program should have appropriate version
+	// information listed after the name of the program.
 	//
-	// The format used in the FIDE Rating Lists is appropriate for use for player name tags.
+	// The format used in the FIDE Rating Lists is appropriate for use for
+	// player name tags.
 	White string
-	// Black is the name of the player or players of the black pieces. The names are given here as they are for the White tag value.
+	// Black is the name of the player or players of the black pieces. The
+	// names are given here as they are for the White tag value.
 	Black string
-	// Result field is the result of the game. It is always exactly the same as the game termination marker that concludes the associated movetext. It is always one of four possible values: "1-0" (White wins), "0-1" (Black wins), "1/2-1/2" (drawn game), and "*" (game still in progress, game abandoned, or result otherwise unknown). Note that the digit zero is used in both of the first two cases; not the letter "O".
+	// Result field is the result of the game. It is always exactly the same
+	// as the game termination marker that concludes the associated movetext.
+	// It is always one of four possible values: "1-0" (White wins), "0-1"
+	// (Black wins), "1/2-1/2" (drawn game), and "*" (game still in progress,
+	// game abandoned, or result otherwise unknown). Note that the digit zero
+	// is used in both of the first two cases; not the letter "O".
 	//
-	// Note that this field is not just a string, a type was provided to make it slightly easier to use for computers.
+	// Note that this field is not just a string, a type was provided to make
+	// it slightly easier to use for computers.
 	Result Result
-	// OtherTags is intended for custom PGN game tags. Some examples are provided here: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c9
+	// OtherTags is intended for custom PGN game tags. Some examples are
+	// provided here:
+	// https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c9
 	OtherTags map[string]string
 }
 
-// NewGame returns a fresh game of chess with the starting position initialized. Tags are set as follows:
+// NewGame returns a fresh game of chess with the standard starting position. Tags are set as follows:
 //
-// * Event - ?
+//   - Event - ?
 //
-// * Site - https://github.com/brighamskarda/chess
+//   - Site - https://github.com/brighamskarda/chess
 //
-// * Date - <CurrentDate>
+//   - Date - <CurrentDate>
 //
-// * Round - 1
+//   - Round - 1
 //
-// * White - ?
+//   - White - ?
 //
-// * Black - ?
+//   - Black - ?
 //
-// * Result - NoResult
+//   - Result - NoResult
 func NewGame() *Game {
 	pos := &Position{}
 	pos.UnmarshalText([]byte(DefaultFEN))
@@ -176,7 +245,10 @@ func NewGame() *Game {
 	}
 }
 
-// NewGameFromFEN starts a game specified from the provided fen string. Returns an error if [Position.UnmarshalText] could not parse the FEN. Values are set the same as [NewGame]. The SetUp and FEN tags are also filled into OtherTags.
+// NewGameFromFEN starts a game with fen as the starting position. Returns an error if [Position.UnmarshalText] could not parse fen. Tags are set the same as [NewGame] with the additions of the [SetUp] and [FEN] tags.
+//
+// [SetUp]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c9.7.1
+// [FEN]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c9.7.2
 func NewGameFromFEN(fen string) (*Game, error) {
 	pos := &Position{}
 	err := pos.UnmarshalText([]byte(fen))
@@ -202,11 +274,13 @@ func NewGameFromFEN(fen string) (*Game, error) {
 	}, nil
 }
 
-// UnmarshalText is capable of unmarshaling a single game in pgn format.
+// UnmarshalText is an implementation of the [encoding.TextUnmarshaler] interface. It is capable of unmarshaling a single game in [pgn format].
 //
 // Games can start from any position, but all the moves must be legal.
 //
 // See also [ParsePGN]
+//
+// [pgn format]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm
 func (g *Game) UnmarshalText(text []byte) error {
 	// Be sure to not read lines beginning with %. These are comments.
 	// Semicolons are commentary and go to the end of the line.
@@ -297,7 +371,7 @@ func (g *Game) parseSingleTag(tag string) error {
 	return nil
 }
 
-// setTag automatically set the 7 tag roster, and the Setup and FEN tags. When setting the FEN tag it will set the position as well.
+// setTag automatically sets the 7 tag roster, and the Setup and FEN tags. When setting the FEN tag it will set the position as well.
 func (g *Game) setTag(name string, body string) error {
 	switch name {
 	case "Event":
@@ -621,7 +695,7 @@ func splitWordsPreserveWhitespace(s string) []string {
 	return words
 }
 
-// ParsePGN reads until the provided reader returns [io.EOF] and provides a list of the games parsed from the PGN.
+// ParsePGN reads until rd returns [io.EOF] and provides a list of the games parsed from the PGN.
 // If an error is encountered before reaching EOF, all the games that could be parsed will be returned with the error.
 // For large pgn files this function may take a few seconds.
 // See also [Game.UnmarshalText].
@@ -701,7 +775,7 @@ func isEmptyLine(buf []byte) bool {
 		(len(buf) == 2 && buf[0] == '\r' && buf[1] == '\n')
 }
 
-// Copy returns a copy of the game.
+// Copy returns a deep copy of the game.
 func (g *Game) Copy() *Game {
 	return &Game{
 		pos:         g.pos.Copy(),
@@ -718,7 +792,7 @@ func (g *Game) Copy() *Game {
 	}
 }
 
-// LegalMoves returns a copy the current legal moves, cached for performance.
+// LegalMoves returns a copy the current legal moves, cached for performance. If no moves are legal then an empty slice is returned. If there was an issue generating moves, nil is returned.
 func (g *Game) LegalMoves() []Move {
 	return slices.Clone(g.legalMoves())
 }
@@ -739,17 +813,23 @@ func (g *Game) IsCheckmate() bool {
 	return false
 }
 
-// IsStalemate returns true if the side to move is not in check and has no legal moves.
+// IsStalemate returns true if the side to move is NOT in check and has no legal moves.
 func (g *Game) IsStalemate() bool {
 	return len(g.legalMoves()) == 0 && !g.pos.IsCheck()
 }
 
-// CanClaimDraw returns true if the side to move can claim a draw either due to the 50 move rule, or three fold repetition.
+// CanClaimDraw returns true if the side to move can claim a draw either due to the 50 move rule, or threefold repetition.
+// See [FIDE Laws of Chess] sections 9.2 and 9.3.
+//
+// [FIDE Laws of Chess]: https://handbook.fide.com/chapter/E012023
 func (g *Game) CanClaimDraw() bool {
 	return g.pos.HalfMove >= 100 || g.CanClaimDrawThreeFold()
 }
 
-// CanClaimDrawThreeFold returns true if the side to move can claim a draw due to three fold repetition.
+// CanClaimDrawThreeFold returns true if the side to move can claim a draw due to threefold repetition.
+// Threefold repetition occurs when a position occurs three times in a game. Positions are considered equivalent if the same player is set to move and all the pieces on the board are in identical positions. Positions are not considered equivalent if castling rights, or en passant differ. See more at [FIDE Laws of Chess] section 9.2.
+//
+// [FIDE Laws of Chess]: https://handbook.fide.com/chapter/E012023
 func (g *Game) CanClaimDrawThreeFold() bool {
 	positions := g.makePositionHist()
 	for i := len(positions) - 1; i >= 0; i-- {
@@ -778,9 +858,9 @@ func (g *Game) makePositionHist() []*Position {
 	return hist
 }
 
-// Move performs the given move m only if it is legal. Otherwise an error is produced.
+// Move performs the move m only if it is legal. Otherwise an error is produced.
 //
-// If Result is set then it will be set to [NoResult]. If the game ends (in stalemate or checkmate) then Result will also be set appropriately.
+// g.Result is automatically set to [NoResult]. If the game ends (in stalemate or checkmate) then g.Result will also be set appropriately.
 func (g *Game) Move(m Move) error {
 	if !slices.Contains(g.legalMoves(), m) {
 		return errors.New("could not move, illegal move")
@@ -813,9 +893,8 @@ func (g *Game) setResult() {
 	}
 }
 
-// MoveUCI parses and performs a UCI chess move. https://www.wbec-ridderkerk.nl/html/UCIProtocol.html
-//
-// Errors are returned if m could not be parsed or the move was illegal.
+// MoveUCI parses and performs a chess move provided in UCI format. The format is <fromSquare><toSquare><OptionalPromotion>, see more at https://www.wbec-ridderkerk.nl/html/UCIProtocol.html
+// An error is returned if m could not be parsed or the move was illegal.
 func (g *Game) MoveUCI(m string) error {
 	var move Move
 	err := move.UnmarshalText([]byte(m))
@@ -825,9 +904,11 @@ func (g *Game) MoveUCI(m string) error {
 	return g.Move(move)
 }
 
-// MoveSAN parses and performs a SAN (Standard Algebraic Notation) chess move. https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
+// MoveSAN parses and performs a chess move provided in standard algebraic notation (SAN). See the official pgn specification for SAN [here].
 //
 // Errors are returned if m could not be parsed or the move was illegal.
+//
+// [here]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
 func (g *Game) MoveSAN(m string) error {
 	move, err := ParseSANMove(m, g.pos)
 	if err != nil {
@@ -836,14 +917,14 @@ func (g *Game) MoveSAN(m string) error {
 	return g.Move(move)
 }
 
-// Position returns a copy of the current position.
+// Position returns a copy of the current game position.
 func (g *Game) Position() *Position {
 	return g.pos.Copy()
 }
 
 // PositionPly returns a copy of the position at a certain ply (half move). 0 returns the initial game position.
 //
-// If a negative number is provided, or ply goes beyond the number of moves played nil is returned. Ply always starts at 0 and increments by 1, even if the game starts at move 16 for example.
+// If ply is out of range, nil is returned. Ply always starts at 0 and increments by 1, even if the game starts at move 16 for example.
 func (g *Game) PositionPly(ply int) *Position {
 	if ply < 0 || ply > len(g.moveHistory) {
 		return nil
@@ -863,7 +944,7 @@ func (g *Game) PositionPly(ply int) *Position {
 	return pos
 }
 
-// MoveHistory returns a copy of all the moves played this game with their annotations, commentary and variations. Will not return nil.
+// MoveHistory returns a copy of all the moves played this game with their annotations, commentary and variations. Will not return nil. See also [PgnMove].
 func (g *Game) MoveHistory() []PgnMove {
 	moveHistoryCopy := make([]PgnMove, 0, len(g.moveHistory))
 	for _, move := range g.moveHistory {
@@ -872,9 +953,11 @@ func (g *Game) MoveHistory() []PgnMove {
 	return moveHistoryCopy
 }
 
-// AnnotateMove applies a numeric annotation glyph (NAG) to the specified move number. NAG's can be found here: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c10
+// AnnotateMove applies a numeric annotation glyph (NAG) to the specified move number. NAG meanings can be found [here].
 //
-// plyNum starts at 0 for the first move. Any previous nag is overwritten. An error is returned if plyNum is too big or too small.
+// plyNum starts at 0 for the first move. Any previous nag is overwritten. An error is returned if plyNum is out of range.
+//
+// [here]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c10
 func (g *Game) AnnotateMove(plyNum int, nag uint8) error {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
 		return fmt.Errorf("could not annotate move, ply %d out of range", plyNum)
@@ -883,7 +966,7 @@ func (g *Game) AnnotateMove(plyNum int, nag uint8) error {
 	return nil
 }
 
-// CommentAfterMove appends a comment to the specified move. Returns and error if plyNum is out of range.
+// CommentAfterMove appends a comment after the specified move. Returns an error if plyNum is out of range.
 //
 // plyNum starts at 0 for the first move.
 func (g *Game) CommentAfterMove(plyNum int, comment string) error {
@@ -894,10 +977,10 @@ func (g *Game) CommentAfterMove(plyNum int, comment string) error {
 	return nil
 }
 
-// CommentBeforeMove appends appends a comment to be displayed before a move.
-// Commentary is not well defined in the pgn specification, thus in most situations it is impossible to tell if a comment should be associated with the move right before it, or right after it. By default comments will be associated with the move right before them, but in some cases (such as the start of a game, or start of a variation) it is possible to have a comment that must precede a move. This is to say that if you marshal and then unmarshal a game, most comments will be parsed as being after a move.
+// CommentBeforeMove appends a comment before the specified move.
+// Commentary is not well defined in the pgn specification, thus in most situations it is impossible to tell if a comment should be associated with the move right before it, or right after it. By default comments will be associated with the move right before them, but in some cases (such as the start of a game, or start of a variation) it is possible to have a comment that must precede a move. Use [Game.CommentAfterMove] in most cases.
 //
-// plyNum starts at 0 for the first move.
+// Returns an error if plyNum is out of range. plyNum starts at 0 for the first move.
 func (g *Game) CommentBeforeMove(plyNum int, comment string) error {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
 		return fmt.Errorf("could not comment before move, ply %d out of range", plyNum)
@@ -908,7 +991,7 @@ func (g *Game) CommentBeforeMove(plyNum int, comment string) error {
 
 // DeleteCommentAfter deletes a comment after the specified move.
 //
-// plyNum and commentNum start at 0 for the first move.
+// Returns an error if plyNum or commentNum are out of range.
 func (g *Game) DeleteCommentAfter(plyNum int, commentNum int) error {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
 		return fmt.Errorf("could not delete comment after move, ply %d out of range", plyNum)
@@ -920,6 +1003,9 @@ func (g *Game) DeleteCommentAfter(plyNum int, commentNum int) error {
 	return nil
 }
 
+// DeleteCommentBefore deletes a comment before the specified move.
+//
+// Returns an error if plyNum or commentNum are out of range.
 func (g *Game) DeleteCommentBefore(plyNum int, commentNum int) error {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
 		return fmt.Errorf("could not delete comment before move, ply %d out of range", plyNum)
@@ -931,9 +1017,11 @@ func (g *Game) DeleteCommentBefore(plyNum int, commentNum int) error {
 	return nil
 }
 
-// MakeVariation adds a set of variation moves to the specified move. The variation should begin with a move that replaces the specified ply. Variation moves must be legal.
+// MakeVariation adds a set of variation moves to the specified move. The variation should begin with a move that replaces plyNum.
+// Any PgnMove structure is supported (meaning you can have variations within variations) as long as all moves are legal.
+// moves will not be copied, it will simply be inserted into the move history after it is validated. Modifying moves after it has been passed into this function results in undefined behavior.
 //
-// plyNum starts at 0 for the first move. moves is not copied, it is simply added to the variations list for the appropriate pgn move.
+// An error is returned if plyNum is out of range or moves contains an illegal sequence.
 func (g *Game) MakeVariation(plyNum int, moves []PgnMove) error {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
 		return fmt.Errorf("could not make variation, ply %d out of range", plyNum)
@@ -979,7 +1067,7 @@ func (g *Game) DeleteVariation(plyNum int, variationNum int) error {
 	return nil
 }
 
-// GetVariation returns a new game where the specified variation is followed. All other specified variations are preserved, and the main line is also preserved as a variation. Errors are returned if the variation is illegal (not likely as they are validated when you make them) or the plyNum or variationNum are out of bounds.
+// GetVariation returns a new game where the specified variation is followed. All other variations are preserved, and the main line is kept as a variation. Errors are returned if the variation is illegal (not likely as they are validated when you make them) or the plyNum or variationNum are out of bounds. See [ExampleGame_MakeVariation]
 func (g *Game) GetVariation(plyNum int, variationNum int) (*Game, error) {
 	if plyNum < 0 || plyNum >= len(g.moveHistory) {
 		return nil, fmt.Errorf("could not get variation, ply %d out of range", plyNum)
@@ -1029,9 +1117,9 @@ func (g *Game) GetVariation(plyNum int, variationNum int) (*Game, error) {
 	return newGame, nil
 }
 
-// MarshalText implements [encoding.TextMarshaler]. It provides the game as a valid PGN that can be written to a file. Multiple PGNs can be written to the same file. Just be sure to separate them with a new line.
+// MarshalText is an implementation of the [encoding.TextMarshaler] interface. It provides the game as a valid PGN that can be written to a file. Multiple PGNs can be written to the same file. Just be sure to separate them with a new line.
 //
-// The seven tag roster will appear in order, then all other tags will appear in alphabetical order for consistency. err is always nil.
+// The seven tag roster will appear in order, then all other tags will appear in alphabetical order for consistency.
 func (g *Game) MarshalText() (text []byte, err error) {
 	lines := make([]string, 0, 10)
 	err = g.addTags(&lines)
@@ -1296,7 +1384,7 @@ func appendVariation(currPos *Position, moves []PgnMove, currentLine *strings.Bu
 
 // MarshalTextReduced provides the game as a valid PGN following these rules: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c3.2.4
 //
-// It essentially removes all unnecessary information from the PGN, useful for archival purposes. err is always nil.
+// It essentially removes all unnecessary information from the PGN making it better for archival purposes.
 func (g *Game) MarshalTextReduced() (text []byte, err error) {
 	lines := make([]string, 0, 10)
 	err = g.addReducedTags(&lines)

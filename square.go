@@ -34,7 +34,7 @@ const (
 	FileH
 )
 
-// String returns a single lowercase letter if valid, else an error string.
+// String returns a single lowercase letter representation of f if valid, else an error string. NoFile returns "-".
 func (f File) String() string {
 	switch f {
 	case NoFile:
@@ -75,7 +75,7 @@ const (
 	Rank8
 )
 
-// String returns a single number if valid, else "-".
+// String returns a single number representation of r if valid, else an error string. NoRank returns "-".
 func (r Rank) String() string {
 	switch r {
 	case NoRank:
@@ -183,6 +183,7 @@ var (
 	H8 = Square{File: FileH, Rank: Rank8}
 )
 
+// AllSquares is an array of all the squares on a chess board for convenience.
 var AllSquares = [64]Square{
 	A1, A2, A3, A4, A5, A6, A7, A8,
 	B1, B2, B3, B4, B5, B6, B7, B8,
@@ -205,7 +206,7 @@ func (s Square) MarshalText() (text []byte, err error) {
 	return []byte{s.File.String()[0], s.Rank.String()[0]}, nil
 }
 
-// UnmarshalText is an implementation of the [encoding.TextUnmarshaler] interface. It expects text in the form of a two character square like "a1" or "A1". A "-" will provide NoSquare. All other cases result in an error, and s is unmodified.
+// UnmarshalText is an implementation of the [encoding.TextUnmarshaler] interface. It expects text in the form of a two character square like "a1" or "A1". A "-" will provide [NoSquare]. All other cases result in an error, and s is unmodified.
 func (s *Square) UnmarshalText(text []byte) error {
 	if string(text) == "-" {
 		*s = NoSquare

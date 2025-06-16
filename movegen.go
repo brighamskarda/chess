@@ -267,7 +267,7 @@ func knightMoves(pos *Position) []Move {
 		singleKnightIndex := bits.TrailingZeros64(uint64(knights))
 		singleKnightBitboard := Bitboard(1 << singleKnightIndex)
 		knights ^= singleKnightBitboard
-		knightAttacks := singleKnightBitboard.knightAttacks()
+		knightAttacks := singleKnightBitboard.KnightAttacks()
 		knightAttacks &^= allies
 		singleKnightSquare := indexToSquare(singleKnightIndex)
 		for knightAttacks != 0 {
@@ -440,7 +440,7 @@ func castleMoves(pos *Position) []Move {
 	return moves
 }
 
-// LegalMoves for the current chess position. Returns nil if moves could not be generated (for example if pos.SideToMove was not set). Returns an empty slice if move generation was successful, but no moves were found.
+// LegalMoves returns all legal moves for pos. Returns nil if moves could not be generated (for example if pos.SideToMove was not set). Returns an empty slice if move generation was successful, but no moves were found.
 func LegalMoves(pos *Position) []Move {
 	pseudoLegalMoves := PseudoLegalMoves(pos)
 	legalMoves := make([]Move, 0)

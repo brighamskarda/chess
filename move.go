@@ -24,14 +24,18 @@ import (
 	"unicode"
 )
 
-// Move represents a UCI chess move.
+// Move represents a UCI chess move. UCI chess moves are easily represented by three fields: FromSquare, ToSquare, and an optional Promotion. [UCI Specification]
+//
+// [UCI Specification]: https://www.wbec-ridderkerk.nl/html/UCIProtocol.html
 type Move struct {
 	FromSquare Square
 	ToSquare   Square
 	Promotion  PieceType
 }
 
-// MarshalText implements the [encoding.TextMarshaler] interface to encode a move into a UCI compatible format. The form is <FromSquare><ToSquare><OptionalPromotion>, ex. "a7a8q". If fromsquare, tosquare, and promotion are all 0 then "0000" is returned as per the UCI spec. Otherwise an error may be returned if a field is missing or malformed.
+// MarshalText implements the [encoding.TextMarshaler] interface to encode a move into a UCI compatible format. The form is <FromSquare><ToSquare><OptionalPromotion>, ex. "a7a8q". If fromsquare, tosquare, and promotion are all 0 then "0000" is returned as per the [UCI specification]. An error may be returned if a field is missing or malformed.
+//
+// [UCI specification]: https://www.wbec-ridderkerk.nl/html/UCIProtocol.html
 func (m Move) MarshalText() (text []byte, err error) {
 	if m.FromSquare == NoSquare && m.ToSquare == NoSquare && m.Promotion == NoPieceType {
 		return []byte{'0', '0', '0', '0'}, nil
@@ -52,9 +56,11 @@ func (m Move) MarshalText() (text []byte, err error) {
 	return text, nil
 }
 
-// StringSAN provides a move in standard algebraic notation as specified here. https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
+// StringSAN provides a move in standard algebraic notation as specified in the [PGN specification].
 //
 // pos is required to convert a move to SAN. pos should be the position before the move. An error is returned if an SAN string could not be generated with the given move and position. This does not necessarily test for move legality, should this be an illegal move, unexpected results may occur.
+//
+// [PGN specification]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
 func (m Move) StringSAN(pos *Position) (string, error) {
 	// This is another cry for help, why couldn't the pgn file spec just use UCI notation. This is another set of complex logic that was not necessary.
 	if !squareOnBoard(m.FromSquare) || !squareOnBoard(m.ToSquare) {
@@ -256,9 +262,9 @@ const (
 	castleMove
 )
 
-// ParseSANMove parses a chess move provided in Standard Algebraic Notation. Standard Algebraic notation requires position information to know how moves should be disambiguated.
+// ParseSANMove parses a chess move provided in [Standard Algebraic Notation]. Standard Algebraic notation requires position information to know how moves should be parsed. An error is provided if the move could not be parsed.
 //
-// See the pgn specification to know the exact functionality.
+// [Standard Algebraic Notation]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
 func ParseSANMove(san string, pos *Position) (Move, error) {
 	// This comment is a silent cry for help. I only implemented this because the pgn standard uses it. SAN was not designed to be parsed by computers. This was a major effort that could have been easily avoided by the much superior UCI move notation.
 	if pos.SideToMove != White && pos.SideToMove != Black {
@@ -280,7 +286,7 @@ func ParseSANMove(san string, pos *Position) (Move, error) {
 	case rankDisambiguation:
 		m, err = parseRankDisambiguation(san, pos)
 	case squareDisambiguation:
-		m, err = parseSquareDisambiguation(san, pos)
+		m, err = parseSquareDisambiguation(san)
 	case normalMove:
 		m, err = parseNormalMove(san, pos)
 	case pawnAdvance:
@@ -526,7 +532,7 @@ func getPieceAttacks(bb Bitboard, t PieceType, pos *Position) Bitboard {
 	case King:
 		return bb.KingAttacks()
 	case Knight:
-		return bb.knightAttacks()
+		return bb.KnightAttacks()
 	case Queen:
 		return bb.QueenAttacks(pos.OccupiedBitboard())
 	case Rook:
@@ -536,7 +542,7 @@ func getPieceAttacks(bb Bitboard, t PieceType, pos *Position) Bitboard {
 	}
 }
 
-func parseSquareDisambiguation(san string, pos *Position) (Move, error) {
+func parseSquareDisambiguation(san string) (Move, error) {
 	fromSquare := Square{}
 	err := fromSquare.UnmarshalText([]byte(san[1:3]))
 	if err != nil {

@@ -20,12 +20,12 @@ import (
 	"strconv"
 )
 
-// Bitboard is a 64 bit representation of a chess board. Each bit corresponds to a square with the the least significant bit (rightmost bit if using bit shifts) is A1, then B1, all the way up to H8.
+// Bitboard is a 64 bit representation of a chess board. Each bit corresponds to a square with the the least significant bit (rightmost bit) representing A1, then B1, all the way up to H8.
 //
-// Most commonly there is a bitboard for each type of piece on the board with positive bits indicating squares occupied by that piece type. Bitboards are also used to represent all occupied squares, and squares that are attacked by certain pieces.
+// There is usually a bitboard for each piece type and color on the board with positive bits indicating squares occupied by that kind of piece. Bitboards are also used to represent all occupied squares, and squares that are being attack.
 type Bitboard uint64
 
-// Bit returns 1 if the bit at the specified index is set, otherwise 0. If index is too high 0 is always returned.
+// Bit returns a 1 if the bit at the specified index is set, otherwise 0. If index > 63, 0 is always returned. Index 0 is the rightmost bit.
 func (bb Bitboard) Bit(index uint8) uint8 {
 	if bb&(1<<index) > 0 {
 		return 1
@@ -34,17 +34,17 @@ func (bb Bitboard) Bit(index uint8) uint8 {
 	}
 }
 
-// SetBit returns a copy of the bitboard with the specified bit set. Nothing happens if index is too high.
+// SetBit returns a copy of bb with the specified bit set to 1. If index > 63 or the bit is already set, nothing is different. Index 0 is the rightmost bit.
 func (bb Bitboard) SetBit(index uint8) Bitboard {
 	return bb | 1<<index
 }
 
-// ClearBit returns a copy of the bitboard with the specified bit cleared. Nothing happens if index is too high.
+// ClearBit returns a copy of bb with the specified bit cleared to 0. If index > 63 or the bit is already cleared, nothing is different. Index 0 is the rightmost bit.
 func (bb Bitboard) ClearBit(index uint8) Bitboard {
 	return bb & ^(1 << index)
 }
 
-// Square returns 1 if the bit at the specified square is set, otherwise 0.
+// Square returns a 1 if the bit representing the specified square is set, otherwise 0. If s is not on the board 0 is returned.
 func (bb Bitboard) Square(s Square) uint8 {
 	if !squareOnBoard(s) {
 		return 0
@@ -52,7 +52,7 @@ func (bb Bitboard) Square(s Square) uint8 {
 	return bb.Bit(squareToIndex(s))
 }
 
-// SetSquare returns a copy of the bitboard with the specified square set. Nothing is different if the square is invalid.
+// SetSquare returns a copy of bb with the specified square set to 1. Nothing is different if s is not on the board, or the bit is already set.
 func (bb Bitboard) SetSquare(s Square) Bitboard {
 	if !squareOnBoard(s) {
 		return bb
@@ -60,7 +60,7 @@ func (bb Bitboard) SetSquare(s Square) Bitboard {
 	return bb.SetBit(squareToIndex(s))
 }
 
-// ClearSquare returns a copy of the bitboard with the specified square cleared. Nothing is different if the square is invalid.
+// ClearSquare returns a copy of bb with the specified square cleared to 0. Nothing is different if s is not on the board, or the bit is already cleared.
 func (bb Bitboard) ClearSquare(s Square) Bitboard {
 	if !squareOnBoard(s) {
 		return bb
@@ -73,15 +73,12 @@ func squareToIndex(s Square) uint8 {
 }
 
 func indexToSquare(index int) Square {
-	if index >= 64 || index < 0 {
-		return NoSquare
-	}
 	file := File((index % 8) + 1)
 	rank := Rank((index / 8) + 1)
 	return Square{file, rank}
 }
 
-// String gives a string representing the bitboard as if you were looking at a chess board from white's perspective.
+// String provides a representation of bb as if you were looking at a chess board from white's perspective.
 func (bb Bitboard) String() string {
 	s := ""
 	for r := Rank8; r != NoRank; r -= 1 {
@@ -95,7 +92,7 @@ func (bb Bitboard) String() string {
 	return s
 }
 
-// WhitePawnAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of white pawns.
+// WhitePawnAttacks returns a bitboard indicating all the squares attacked by bb assuming it's a bitboard of white pawns.
 func (bb Bitboard) WhitePawnAttacks() Bitboard {
 	return bb.pawnAttacksNE() | bb.pawnAttacksNW()
 }
@@ -108,7 +105,7 @@ func (bb Bitboard) pawnAttacksNW() Bitboard {
 	return (bb << 7) & 0x7F7F7F7F7F7F7F7F
 }
 
-// BlackPawnAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of black pawns.
+// BlackPawnAttacks returns a bitboard indicating all the squares attacked by bb assuming it's a bitboard of black pawns.
 func (bb Bitboard) BlackPawnAttacks() Bitboard {
 	return bb.pawnAttacksSE() | bb.pawnAttacksSW()
 }
@@ -121,7 +118,7 @@ func (bb Bitboard) pawnAttacksSW() Bitboard {
 	return (bb >> 9) & 0x7F7F7F7F7F7F7F7F
 }
 
-// RookAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of rooks. Occupied should indicate all squares on the board occupied by either color, including the rooks that are moving.
+// RookAttacks returns a bitboard indicating all the squares attacked by bb assuming it's a bitboard of rooks. occupied should indicate all squares on the board occupied by either color, including the rooks that are moving.
 func (bb Bitboard) RookAttacks(occupied Bitboard) Bitboard {
 	var movesRight Bitboard = (occupied ^
 		(occupied | 0x101010101010101 - 2*bb)) & ^Bitboard(0x101010101010101)
@@ -141,8 +138,8 @@ func (bb Bitboard) RookAttacks(occupied Bitboard) Bitboard {
 	return movesLeft | movesRight | movesDown | movesUp
 }
 
-// Knight Attacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of knights.
-func (bb Bitboard) knightAttacks() Bitboard {
+// KnightAttacks returns a bitboard indicating all the squares attacked by bb assuming it's a bitboard of knights.
+func (bb Bitboard) KnightAttacks() Bitboard {
 	return ((bb << 17) & 0xfefefefefefefefe) |
 		((bb << 10) & 0xfcfcfcfcfcfcfcfc) |
 		((bb >> 6) & 0xfcfcfcfcfcfcfcfc) |
@@ -153,7 +150,7 @@ func (bb Bitboard) knightAttacks() Bitboard {
 		((bb << 15) & 0x7f7f7f7f7f7f7f7f)
 }
 
-// BishopAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of bishops. Occupied should indicate all squares on the board occupied by either color, including the bishops that are moving.
+// BishopAttacks returns a bitboard indicating all the squares attacked by bb assuming it's a bitboard of bishops. occupied should indicate all squares on the board occupied by either color, including the bishops that are moving.
 func (bb Bitboard) BishopAttacks(occupied Bitboard) Bitboard {
 	var attacks Bitboard = 0
 	for bb != 0 {
@@ -246,7 +243,7 @@ func initializeAntiDiagonalMasks() {
 	}
 }
 
-// QueenAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of queens. Occupied should indicate all squares on the board occupied by either color, including the queens that are moving.
+// QueenAttacks returns a bitboard indicating all the squares attacked by bb assuming it's a bitboard of queens. occupied should indicate all squares on the board occupied by either color, including the queens that are moving.
 func (bb Bitboard) QueenAttacks(occupied Bitboard) Bitboard {
 	var attacks Bitboard = 0
 	attacks |= bb.RookAttacks(occupied)
@@ -254,7 +251,7 @@ func (bb Bitboard) QueenAttacks(occupied Bitboard) Bitboard {
 	return attacks
 }
 
-// KingAttacks returns a bitboard indicating all the squares attacked by this bitboard assuming its a bitboard of kings.
+// KingAttacks returns a bitboard indicating all the squares attacked by bb assuming it's a bitboard of kings.
 func (bb Bitboard) KingAttacks() Bitboard {
 	return ((bb >> 9) & 0x7f7f7f7f7f7f7f7f) |
 		(bb >> 8) |

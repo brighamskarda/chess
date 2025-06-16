@@ -207,28 +207,28 @@ func TestKnightAttacksCorners(t *testing.T) {
 	var bb Bitboard = 0x100000000000000
 	var expected Bitboard = 0x4020000000000
 
-	actual := bb.knightAttacks()
+	actual := bb.KnightAttacks()
 	if expected != actual {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
 	}
 
 	bb = 0x8000000000000000
 	expected = 0x20400000000000
-	actual = bb.knightAttacks()
+	actual = bb.KnightAttacks()
 	if expected != actual {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
 	}
 
 	bb = 0x80
 	expected = 0x402000
-	actual = bb.knightAttacks()
+	actual = bb.KnightAttacks()
 	if expected != actual {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
 	}
 
 	bb = 0x1
 	expected = 0x20400
-	actual = bb.knightAttacks()
+	actual = bb.KnightAttacks()
 	if expected != actual {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
 	}
@@ -238,28 +238,28 @@ func TestKnightAttacksOneFromCorners(t *testing.T) {
 	var bb Bitboard = 0x2000000000000
 	var expected Bitboard = 0x800080500000000
 
-	actual := bb.knightAttacks()
+	actual := bb.KnightAttacks()
 	if expected != actual {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
 	}
 
 	bb = 0x40000000000000
 	expected = 0x100010a000000000
-	actual = bb.knightAttacks()
+	actual = bb.KnightAttacks()
 	if expected != actual {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
 	}
 
 	bb = 0x4000
 	expected = 0xa0100010
-	actual = bb.knightAttacks()
+	actual = bb.KnightAttacks()
 	if expected != actual {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
 	}
 
 	bb = 0x200
 	expected = 0x5080008
-	actual = bb.knightAttacks()
+	actual = bb.KnightAttacks()
 	if expected != actual {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
 	}
@@ -269,7 +269,7 @@ func TestKnightAttacksCenter(t *testing.T) {
 	var bb Bitboard = 0x200000000000
 	var expected Bitboard = 0x5088008850000000
 
-	actual := bb.knightAttacks()
+	actual := bb.KnightAttacks()
 	if expected != actual {
 		t.Errorf("incorrect result: expected\n%s\n\ngot\n%s", expected.String(), actual.String())
 	}

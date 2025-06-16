@@ -29,6 +29,7 @@ const (
 	Black
 )
 
+// String returns "White", "Black", or "NoColor". If c is invalid an error string is returned.
 func (c Color) String() string {
 	switch c {
 	case Black:

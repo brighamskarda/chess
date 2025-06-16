@@ -21,7 +21,7 @@ import (
 	"unicode"
 )
 
-// PieceType represents the type of a piece like a rook or a queen. See also [Piece]
+// PieceType represents the type of a piece like a rook or a queen. See also [Piece].
 type PieceType uint8
 
 const (
@@ -34,7 +34,7 @@ const (
 	King
 )
 
-// String returns a single lowercase letter representation of the piece type if valid, an error indicating an unknown piece type.
+// String returns a single lowercase letter representation of pt if valid, else an error indicating an unknown piece type.
 func (pt PieceType) String() string {
 	switch pt {
 	case NoPieceType:
@@ -99,7 +99,7 @@ var (
 	BlackKing   = Piece{Type: King, Color: Black}
 )
 
-// String returns a single letter representation of the piece type if valid, else an error indicating an unknown piece.
+// String returns a single letter representation of p if valid, else an error indicating an unknown piece.
 //
 // White pieces are uppercase and black pieces are lowercase.
 func (p Piece) String() string {
