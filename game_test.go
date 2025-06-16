@@ -1815,3 +1815,46 @@ func TestNewGameFromFEN_setResult(t *testing.T) {
 		t.Error("result not set")
 	}
 }
+
+func TestGameUnmarshal_NoMoves(t *testing.T) {
+	g := NewGame()
+	err := g.UnmarshalText([]byte(`[Event "?"]
+[Site "https://github.com/brighamskarda/chess"]
+[Date "2000.01.01"]
+[Round "1"]
+[White "Gopher 1"]
+[Black "Gopher 2"]
+[Result "0-1"]
+
+0-1`))
+	if err != nil {
+		t.Errorf("got unexpected error %v", err)
+	}
+
+	if g.Result != BlackWins || g.White != "Gopher 1" {
+		t.Error("game not modified")
+	}
+}
+
+func TestGameMarshal_NoMoves(t *testing.T) {
+	g := NewGame()
+	g.Date = "2025.04.09"
+	g.Result = Draw
+	actual, err := g.MarshalText()
+	if err != nil {
+		t.Errorf("got unexpected error %v", err)
+	}
+
+	expected := `[Event "?"]
+[Site "https://github.com/brighamskarda/chess"]
+[Date "2025.04.09"]
+[Round "1"]
+[White "?"]
+[Black "?"]
+[Result "1/2-1/2"]
+
+1/2-1/2`
+	if string(actual) != expected {
+		t.Errorf("output did not match expected. Expected:\n%s\n\nActual:\n%s", expected, actual)
+	}
+}
