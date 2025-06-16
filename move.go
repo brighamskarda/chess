@@ -1,1646 +1,717 @@
+// Copyright (C) 2025 Brigham Skarda
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package chess
 
 import (
 	"errors"
 	"fmt"
-	"math"
+	"math/bits"
 	"slices"
 	"strings"
 	"unicode"
 )
 
+// Move represents a UCI chess move. UCI chess moves are easily represented by three fields: FromSquare, ToSquare, and an optional Promotion. [UCI Specification]
+//
+// [UCI Specification]: https://www.wbec-ridderkerk.nl/html/UCIProtocol.html
 type Move struct {
 	FromSquare Square
 	ToSquare   Square
 	Promotion  PieceType
 }
 
-// String returns a UCI-compatible string representation of the move. Format is Square1Square2Promotion
-func (m Move) String() string {
-	returnString := m.FromSquare.String() + m.ToSquare.String()
+// MarshalText implements the [encoding.TextMarshaler] interface to encode a move into a UCI compatible format. The form is <FromSquare><ToSquare><OptionalPromotion>, ex. "a7a8q". If fromsquare, tosquare, and promotion are all 0 then "0000" is returned as per the [UCI specification]. An error may be returned if a field is missing or malformed.
+//
+// [UCI specification]: https://www.wbec-ridderkerk.nl/html/UCIProtocol.html
+func (m Move) MarshalText() (text []byte, err error) {
+	if m.FromSquare == NoSquare && m.ToSquare == NoSquare && m.Promotion == NoPieceType {
+		return []byte{'0', '0', '0', '0'}, nil
+	}
+	if !squareOnBoard(m.FromSquare) || !squareOnBoard(m.ToSquare) {
+		return nil, fmt.Errorf("could not marshal move %#v, contains squares not on board", m)
+	}
+	if m.Promotion > King {
+		return nil, fmt.Errorf("could not marshal move %#v: invalid promotion", m)
+	}
+	from, _ := m.FromSquare.MarshalText()
+	to, _ := m.ToSquare.MarshalText()
+	text = append(text, from...)
+	text = append(text, to...)
 	if m.Promotion != NoPieceType {
-		returnString += m.Promotion.String()
+		text = append(text, m.Promotion.String()[0])
+	}
+	return text, nil
+}
+
+// String provides a UCI compatible representation of the square in the form <FromSquare><ToSquare><OptionalPromotion>, ex. "a7a8q". If fromsquare, tosquare, and promotion are all 0 then "0000" is returned as per the [UCI specification]. An error string is returned if any of the fields are invalid.
+//
+// [UCI specification]: https://www.wbec-ridderkerk.nl/html/UCIProtocol.html
+func (m Move) String() string {
+	text, err := m.MarshalText()
+	if err != nil {
+		return fmt.Sprintf("Invalid Move %#v", m)
+	}
+	return string(text)
+}
+
+// StringSAN provides a move in standard algebraic notation as specified in the [PGN specification].
+//
+// pos is required to convert a move to SAN. pos should be the position before the move. An error is returned if an SAN string could not be generated with the given move and position. This does not necessarily test for move legality, should this be an illegal move, unexpected results may occur.
+//
+// [PGN specification]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
+func (m Move) StringSAN(pos *Position) (string, error) {
+	// This is another cry for help, why couldn't the pgn file spec just use UCI notation. This is another set of complex logic that was not necessary.
+	if !squareOnBoard(m.FromSquare) || !squareOnBoard(m.ToSquare) {
+		return "", fmt.Errorf("could not convert move %v to SAN, contains squares not on board", m)
+	}
+	if m.Promotion > King {
+		return "", fmt.Errorf("could not convert move %v to SAN: invalid promotion", m)
+	}
+	pos = pos.Copy()
+	returnString := ""
+	if pos.Piece(m.FromSquare) == NoPiece {
+		return "", fmt.Errorf("could not convert move %v to SAN, no piece on FromSquare", m)
+	} else if pos.Piece(m.FromSquare).Type == Pawn {
+		returnString = m.pawnStringSAN()
+	} else {
+		returnString = m.normalStringSAN(pos)
+	}
+
+	pos.Move(m)
+	if pos.IsCheck() {
+		if len(LegalMoves(pos)) == 0 {
+			returnString += "#"
+		} else {
+			returnString += "+"
+		}
+	}
+	return returnString, nil
+}
+
+func (m Move) pawnStringSAN() string {
+	returnString := ""
+	if m.FromSquare.File != m.ToSquare.File {
+		returnString += m.FromSquare.File.String() + "x"
+	}
+	toSquare, _ := m.ToSquare.MarshalText()
+	returnString += string(toSquare)
+	if m.Promotion != NoPieceType {
+		returnString += "=" + strings.ToUpper(m.Promotion.String())
 	}
 	return returnString
 }
 
-// SanString converts a move to standard algebraic notation. It needs position information to do this. The position provided should be the position just before the move was made.
-// Expects that move and position are valid. Results are undefined otherwise.
-func (m Move) SanString(p *Position) string {
-	piece := p.PieceAt(m.FromSquare)
-	if piece.Type == Pawn {
-		return sanStringPawn(m, p)
+func (m Move) normalStringSAN(pos *Position) string {
+	returnString := ""
+	pieceToMove := pos.Piece(m.FromSquare)
+	returnString += strings.ToUpper(pieceToMove.String())
+	if isFileDisambiguation(m.FromSquare, m.ToSquare, pieceToMove, pos) {
+		returnString += m.FromSquare.File.String()
+	} else if isRankDisambiguation(m.FromSquare, m.ToSquare, pieceToMove, pos) {
+		returnString += m.FromSquare.Rank.String()
+	} else if isSquareDisambiguation(m.ToSquare, pieceToMove, pos) {
+		fromSquare, _ := m.FromSquare.MarshalText()
+		returnString += string(fromSquare)
 	}
-	if isCastleMove(p, m) {
-		return sanStringCastleMove(m)
+	if pos.Piece(m.ToSquare) != NoPiece {
+		returnString += "x"
 	}
-
-	sanString := piece.Type.String()
-	sanString += resolveSanStringAmbiguity(m, p)
-	if p.PieceAt(m.ToSquare) != NoPiece {
-		sanString += "x"
-	}
-	sanString += strings.ToLower(m.ToSquare.String())
-
-	newPosition := *p
-	newPosition.Move(m)
-
-	if IsCheckMate(&newPosition) {
-		sanString += "#"
-		return sanString
-	}
-
-	if IsCheck(&newPosition) {
-		sanString += "+"
-		return sanString
-	}
-
-	return sanString
+	toSquare, _ := m.ToSquare.MarshalText()
+	returnString += string(toSquare)
+	return returnString
 }
 
-func sanStringPawn(m Move, p *Position) string {
-	sanString := ""
-	if p.PieceAt(m.ToSquare) == NoPiece {
-		if p.EnPassant == m.ToSquare {
-			sanString += strings.ToLower(m.FromSquare.File.String()) + "x" + strings.ToLower(m.ToSquare.String())
+func isFileDisambiguation(fromSquare Square, toSquare Square, pieceToMove Piece, pos *Position) bool {
+	possibleMoves := []Move{}
+	piecesToMove := pos.Bitboard(pieceToMove)
+	for piecesToMove != 0 {
+		singlePiece := 1 << bits.TrailingZeros(uint(piecesToMove))
+		piecesToMove &^= Bitboard(singlePiece)
+		attacks := getPieceAttacks(Bitboard(singlePiece), pieceToMove.Type, pos)
+		if attacks.Square(toSquare) == 1 {
+			fromSquare := indexToSquare(bits.TrailingZeros(uint(singlePiece)))
+			possibleMoves = append(possibleMoves, Move{fromSquare, toSquare, NoPieceType})
+
+		}
+	}
+
+	legalMoves := []Move{}
+	for _, m := range possibleMoves {
+		posCopy := pos.Copy()
+		posCopy.Move(m)
+		posCopy.SideToMove = pos.SideToMove
+		if !posCopy.IsCheck() {
+			legalMoves = append(legalMoves, m)
+		}
+	}
+
+	numMovesFromFile := 0
+
+	for _, m := range legalMoves {
+		if m.FromSquare.File == fromSquare.File {
+			numMovesFromFile++
+		}
+	}
+
+	return numMovesFromFile == 1 && len(legalMoves) > 1
+}
+
+func isRankDisambiguation(fromSquare Square, toSquare Square, pieceToMove Piece, pos *Position) bool {
+	possibleMoves := []Move{}
+	piecesToMove := pos.Bitboard(pieceToMove)
+	for piecesToMove != 0 {
+		singlePiece := 1 << bits.TrailingZeros(uint(piecesToMove))
+		piecesToMove &^= Bitboard(singlePiece)
+		attacks := getPieceAttacks(Bitboard(singlePiece), pieceToMove.Type, pos)
+		if attacks.Square(toSquare) == 1 {
+			fromSquare := indexToSquare(bits.TrailingZeros(uint(singlePiece)))
+			possibleMoves = append(possibleMoves, Move{fromSquare, toSquare, NoPieceType})
+		}
+	}
+
+	legalMoves := []Move{}
+	for _, m := range possibleMoves {
+		posCopy := pos.Copy()
+		posCopy.Move(m)
+		posCopy.SideToMove = pos.SideToMove
+		if !posCopy.IsCheck() {
+			legalMoves = append(legalMoves, m)
+		}
+	}
+
+	numMovesFromRank := 0
+
+	for _, m := range legalMoves {
+		if m.FromSquare.Rank == fromSquare.Rank {
+			numMovesFromRank++
+		}
+	}
+
+	return numMovesFromRank == 1 && len(legalMoves) > 1
+
+}
+
+func isSquareDisambiguation(toSquare Square, pieceToMove Piece, pos *Position) bool {
+	possibleMoves := []Move{}
+	piecesToMove := pos.Bitboard(pieceToMove)
+	for piecesToMove != 0 {
+		singlePiece := 1 << bits.TrailingZeros(uint(piecesToMove))
+		piecesToMove &^= Bitboard(singlePiece)
+		attacks := getPieceAttacks(Bitboard(singlePiece), pieceToMove.Type, pos)
+		if attacks.Square(toSquare) == 1 {
+			fromSquare := indexToSquare(bits.TrailingZeros(uint(singlePiece)))
+			possibleMoves = append(possibleMoves, Move{fromSquare, toSquare, NoPieceType})
+		}
+	}
+
+	legalMoves := []Move{}
+	for _, m := range possibleMoves {
+		posCopy := pos.Copy()
+		posCopy.Move(m)
+		posCopy.SideToMove = pos.SideToMove
+		if !posCopy.IsCheck() {
+			legalMoves = append(legalMoves, m)
+		}
+	}
+
+	return len(legalMoves) > 1
+}
+
+// UnmarshalText implements the [encoding.TextUnmarshaler] interface to read a move from a UCI compatible format. The format is <FromSquare><ToSquare><OptionalPromotion>, ex. a2c3q.
+func (m *Move) UnmarshalText(text []byte) error {
+	if len(text) < 4 || len(text) > 5 {
+		return fmt.Errorf("could not unmarshal move, expected text to be of len 4 or 5, got len(text) = %d", len(text))
+	}
+	var fromSquare Square
+	err := fromSquare.UnmarshalText(text[0:2])
+	if err != nil {
+		return fmt.Errorf("could not unmarshal move: %w", err)
+	}
+
+	var toSquare Square
+	err = toSquare.UnmarshalText(text[2:4])
+	if err != nil {
+		return fmt.Errorf("could not unmarshal move: %w", err)
+	}
+
+	var promotion PieceType
+	if len(text) == 5 {
+		promotion, err = parsePieceType(text[4])
+		if err != nil {
+			return fmt.Errorf("could not unmarshal move: %w", err)
+		}
+	}
+	m.FromSquare = fromSquare
+	m.ToSquare = toSquare
+	m.Promotion = promotion
+	return nil
+}
+
+type sanMoveType uint8
+
+const (
+	unknown sanMoveType = iota
+	pawnAdvance
+	pawnCapture
+	normalMove
+	fileDisambiguation
+	rankDisambiguation
+	squareDisambiguation
+	castleMove
+)
+
+// ParseSANMove parses a chess move provided in [Standard Algebraic Notation]. Standard Algebraic notation requires position information to know how moves should be parsed. An error is provided if the move could not be parsed.
+//
+// [Standard Algebraic Notation]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
+func ParseSANMove(san string, pos *Position) (Move, error) {
+	// This comment is a silent cry for help. I only implemented this because the pgn standard uses it. SAN was not designed to be parsed by computers. This was a major effort that could have been easily avoided by the much superior UCI move notation.
+	if pos.SideToMove != White && pos.SideToMove != Black {
+		return Move{}, fmt.Errorf("could not parse SAN move %q, pos.SideToMove not set", san)
+	}
+
+	// These characters don't matter for this parsing.
+	san = strings.ReplaceAll(san, "+", "")
+	san = strings.ReplaceAll(san, "#", "")
+	san = strings.ReplaceAll(san, "!", "")
+	san = strings.ReplaceAll(san, "?", "")
+
+	var m Move
+	var err error
+
+	switch classifySANMove(san) {
+	case fileDisambiguation:
+		m, err = parseFileDisambiguation(san, pos)
+	case rankDisambiguation:
+		m, err = parseRankDisambiguation(san, pos)
+	case squareDisambiguation:
+		m, err = parseSquareDisambiguation(san)
+	case normalMove:
+		m, err = parseNormalMove(san, pos)
+	case pawnAdvance:
+		m, err = parsePawnAdvance(san, pos)
+	case pawnCapture:
+		m, err = parsePawnCapture(san, pos)
+	case castleMove:
+		m = parseCastleMove(san, pos)
+	case unknown:
+		return Move{}, fmt.Errorf("could not parse SAN move %q: could not determine san move type, the move was likely malformed", san)
+	default:
+		panic("unexpected chess.sanMoveType")
+	}
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse SAN move %q: %w", san, err)
+	}
+	return m, nil
+}
+
+func classifySANMove(san string) sanMoveType {
+	switch len(san) {
+	case 2:
+		return pawnAdvance
+	case 3:
+		if strings.ToLower(san[0:1]) == "o" && san[1] == '-' && strings.ToLower(san[2:3]) == "o" {
+			return castleMove
+		}
+		return normalMove
+	case 4:
+		return classifySANMove4(san)
+	case 5:
+		return classifySANMove5(san)
+	case 6:
+		if san[4] == '=' {
+			return pawnCapture
+		}
+		return squareDisambiguation
+	default:
+		return unknown
+	}
+}
+
+func classifySANMove4(san string) sanMoveType {
+	if san[0] == 'B' || slices.Contains([]rune{'r', 'n', 'q', 'k'}, unicode.ToLower(rune(san[0]))) {
+		if strings.ToLower(san[1:2]) == "x" {
+			return normalMove
+		} else if slices.Contains([]rune{'1', '2', '3', '4', '5', '6', '7', '8'}, rune(san[1])) {
+			return rankDisambiguation
+		} else if slices.Contains([]rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}, unicode.ToLower(rune(san[1]))) {
+			return fileDisambiguation
 		} else {
-			sanString += strings.ToLower(m.ToSquare.String())
+			return unknown
+		}
+	} else if slices.Contains([]rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}, unicode.ToLower(rune(san[0]))) {
+		if san[2] == '=' {
+			return pawnAdvance
+		} else if strings.ToLower(san[1:2]) == "x" {
+			return pawnCapture
+		} else {
+			return unknown
 		}
 	} else {
-		sanString += strings.ToLower(m.FromSquare.File.String()) + "x" + strings.ToLower(m.ToSquare.String())
+		return unknown
 	}
-
-	if m.Promotion != NoPieceType {
-		sanString += "=" + m.Promotion.String()
-	}
-
-	newPosition := *p
-	newPosition.Move(m)
-
-	if IsCheckMate(&newPosition) {
-		sanString += "#"
-		return sanString
-	}
-
-	if IsCheck(&newPosition) {
-		sanString += "+"
-		return sanString
-	}
-
-	return sanString
 }
 
-func sanStringCastleMove(m Move) string {
-	if m.ToSquare.File == FileG {
-		return "O-O"
+func classifySANMove5(san string) sanMoveType {
+	if strings.ToLower(san[0:1]) == "o" && san[1] == '-' && strings.ToLower(san[2:3]) == "o" && san[3] == '-' && strings.ToLower(san[4:5]) == "o" {
+		return castleMove
+	} else if strings.ToLower(san[2:3]) == "x" {
+		if slices.Contains([]rune{'1', '2', '3', '4', '5', '6', '7', '8'}, rune(san[1])) {
+			return rankDisambiguation
+		} else if slices.Contains([]rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}, unicode.ToLower(rune(san[1]))) {
+			return fileDisambiguation
+		} else {
+			return unknown
+		}
+	} else {
+		return squareDisambiguation
 	}
-	if m.ToSquare.File == FileC {
-		return "O-O-O"
-	}
-	return "O?O"
 }
 
-func resolveSanStringAmbiguity(m Move, p *Position) string {
-	piece := p.PieceAt(m.FromSquare)
-	validMoves := GenerateLegalMoves(p)
-	disambiguator := ""
-	hasFile := false
-	hasRank := false
-	for _, move := range validMoves {
-		if move == m {
+func parseCastleMove(san string, pos *Position) Move {
+	switch strings.ToLower(san) {
+	case "o-o":
+		switch pos.SideToMove {
+		case White:
+			return Move{E1, G1, NoPieceType}
+		case Black:
+			return Move{E8, G8, NoPieceType}
+		}
+	case "o-o-o":
+		switch pos.SideToMove {
+		case White:
+			return Move{E1, C1, NoPieceType}
+		case Black:
+			return Move{E8, C8, NoPieceType}
+		}
+	}
+	panic("unexpected condition: bad san in parseCastleMove")
+
+}
+
+func parsePawnCapture(san string, pos *Position) (Move, error) {
+	m := Move{}
+	toSquare := &Square{}
+	err := toSquare.UnmarshalText([]byte(san[2:4]))
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse pawn capture: %w", err)
+	}
+	m.ToSquare = *toSquare
+
+	fromFile, err := parseFile(san[0])
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse pawn capture: %w", err)
+	}
+	switch pos.SideToMove {
+	case White:
+		m.FromSquare = Square{fromFile, toSquare.Rank - 1}
+	case Black:
+		m.FromSquare = Square{fromFile, toSquare.Rank + 1}
+	}
+
+	if len(san) == 6 {
+		// Pawn capture with promotion
+		pt, err := parsePieceType(san[5])
+		if err != nil {
+			return Move{}, fmt.Errorf("could not parse pawn capture: %w", err)
+		}
+		m.Promotion = pt
+	}
+	return m, nil
+}
+
+func parsePawnAdvance(san string, pos *Position) (Move, error) {
+	toSquare := Square{}
+	err := toSquare.UnmarshalText([]byte(san[0:2]))
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse pawn advance: %w", err)
+	}
+
+	var fromSquare Square
+	switch pos.SideToMove {
+	case White:
+		fromSquare = Square{toSquare.File, toSquare.Rank - 1}
+	case Black:
+		fromSquare = Square{toSquare.File, toSquare.Rank + 1}
+	}
+
+	// The following take into account the possibility of a double pawn advance.
+	if fromSquare.Rank == Rank3 && toSquare.Rank == Rank4 && pos.Piece(fromSquare).Type != Pawn {
+		fromSquare.Rank = Rank2
+	}
+	if fromSquare.Rank == Rank6 && toSquare.Rank == Rank5 && pos.Piece(fromSquare).Type != Pawn {
+		fromSquare.Rank = Rank7
+	}
+
+	m := Move{fromSquare, toSquare, NoPieceType}
+
+	if len(san) == 4 {
+		// Possible promotion
+		pt, err := parsePieceType(san[3])
+		if err != nil {
+			return Move{}, fmt.Errorf("could not parse pawn advance: %w", err)
+		}
+		m.Promotion = pt
+	}
+
+	return m, nil
+}
+
+func parseNormalMove(san string, pos *Position) (Move, error) {
+	pt, err := parsePieceType(san[0])
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse normal move: %w", err)
+	}
+	if pt == Pawn || pt == NoPieceType {
+		return Move{}, errors.New("could not parse normal move, got Pawn or NoPieceType which should use a different syntax")
+	}
+	pieceToMove := Piece{pos.SideToMove, pt}
+	var toSquare Square
+	if len(san) == 3 {
+		err = toSquare.UnmarshalText([]byte(san[1:3]))
+	} else if len(san) == 4 {
+		err = toSquare.UnmarshalText([]byte(san[2:4]))
+	} else {
+		panic("unexpected condition")
+	}
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse normal move: %w", err)
+	}
+	fromSquare, err := getNormalMoveFromSquare(pieceToMove, toSquare, pos)
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse normal move: %w", err)
+	}
+	return Move{fromSquare, toSquare, NoPieceType}, nil
+}
+
+func getNormalMoveFromSquare(pieceToMove Piece, toSquare Square, pos *Position) (Square, error) {
+	bb := pos.Bitboard(pieceToMove)
+	possibleFromSquares := []Square{}
+
+	for bb != 0 {
+		singlePieceBB := Bitboard(1 << bits.TrailingZeros(uint(bb)))
+		bb &^= singlePieceBB
+		attacks := getPieceAttacks(singlePieceBB, pieceToMove.Type, pos)
+		if attacks.Square(toSquare) == 1 {
+			possibleFromSquares = append(possibleFromSquares, indexToSquare(bits.TrailingZeros(uint(singlePieceBB))))
+		}
+	}
+
+	if len(possibleFromSquares) == 0 {
+		return NoSquare, errors.New("could not determine from square, no squares seem adequate")
+	}
+	if len(possibleFromSquares) == 1 {
+		return possibleFromSquares[0], nil
+	}
+
+	squaresNoCheck := []Square{}
+	for _, s := range possibleFromSquares {
+		testPosition := pos.Copy()
+		testMove := Move{s, toSquare, NoPieceType}
+		testPosition.Move(testMove)
+		testPosition.SideToMove = pos.SideToMove
+		if !testPosition.IsCheck() {
+			squaresNoCheck = append(squaresNoCheck, s)
+		}
+	}
+
+	if len(squaresNoCheck) == 0 {
+		return NoSquare, errors.New("could not determine from square, no squares seem adequate")
+	} else if len(squaresNoCheck) > 1 {
+		return NoSquare, errors.New("could not determine from square, multiple squares seem adequate")
+	} else {
+		return squaresNoCheck[0], nil
+	}
+}
+
+func getPieceAttacks(bb Bitboard, t PieceType, pos *Position) Bitboard {
+	switch t {
+	case Bishop:
+		return bb.BishopAttacks(pos.OccupiedBitboard())
+	case King:
+		return bb.KingAttacks()
+	case Knight:
+		return bb.KnightAttacks()
+	case Queen:
+		return bb.QueenAttacks(pos.OccupiedBitboard())
+	case Rook:
+		return bb.RookAttacks(pos.OccupiedBitboard())
+	default:
+		panic(fmt.Sprintf("unexpected chess.PieceType: %#v", t))
+	}
+}
+
+func parseSquareDisambiguation(san string) (Move, error) {
+	fromSquare := Square{}
+	err := fromSquare.UnmarshalText([]byte(san[1:3]))
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse square disambiguation form: %w", err)
+	}
+
+	var toSquare Square
+	if strings.Contains(san, "x") && len(san) >= 6 {
+		err = toSquare.UnmarshalText([]byte(san[4:6]))
+	} else if len(san) >= 5 {
+		err = toSquare.UnmarshalText([]byte(san[3:5]))
+	} else {
+		err = fmt.Errorf("malformed square disambiguation")
+	}
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse square disambiguation form: %w", err)
+	}
+
+	return Move{fromSquare, toSquare, NoPieceType}, nil
+}
+
+func parseFileDisambiguation(san string, pos *Position) (Move, error) {
+	// this function should probably be broken down into various sub functions
+	var toSquare Square
+	var err error
+	if strings.Contains(san, "x") || strings.Contains(san, "X") {
+		if len(san) < 5 {
+			return Move{}, errors.New("could not parse file disambiguation form, san to short")
+		}
+		err = toSquare.UnmarshalText([]byte(san[3:5]))
+	} else {
+		if len(san) < 4 {
+			return Move{}, errors.New("could not parse file disambiguation form, san to short")
+		}
+		err = toSquare.UnmarshalText([]byte(san[2:4]))
+	}
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse file disambiguation form: %w", err)
+	}
+
+	fromFile, err := parseFile(san[1])
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse file disambiguation form: %w", err)
+	}
+	pt, err := parsePieceType(san[0])
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse file disambiguation form: %w", err)
+	}
+	if pt == Pawn || pt == NoPieceType {
+		return Move{}, errors.New("could not parse file disambiguation form, got Pawn or NoPieceType which should use a different syntax")
+	}
+	pieceToMove := Piece{pos.SideToMove, pt}
+	possibleFromRanks := []Rank{}
+	for r := Rank1; r <= Rank8; r++ {
+		possibleFromSquare := Square{fromFile, r}
+		if pos.Piece(possibleFromSquare) != pieceToMove {
 			continue
 		}
-		if move.ToSquare == m.ToSquare {
-			possibleAmbiguousPiece := p.PieceAt(move.FromSquare)
-			if possibleAmbiguousPiece == piece {
-				// different files
-				if move.FromSquare.File != m.FromSquare.File && !hasFile {
-					disambiguator = m.FromSquare.File.String() + disambiguator
-					hasFile = true
-				} else if move.FromSquare.Rank != m.FromSquare.Rank && !hasRank {
-					// different rank
-					disambiguator += m.FromSquare.Rank.String()
-					hasRank = true
-				}
-
-				if hasFile && hasRank {
-					break
-				}
-			}
+		attacks := getPieceAttacks(1<<squareToIndex(possibleFromSquare), pt, pos)
+		if attacks.Square(toSquare) != 1 {
+			continue
 		}
+		possibleFromRanks = append(possibleFromRanks, r)
 	}
-	return strings.ToLower(disambiguator)
-}
 
-// ParseUCIMove expects a UCI compatible move string. Format should be Square1Square2Promotion, where promotion is optional.
-func ParseUCIMove(s string) (Move, error) {
-	if len(s) != 4 && len(s) != 5 {
-		return Move{}, fmt.Errorf("invalid move string: string not 4 or 5 characters long: %s", s)
+	if lenRanks := len(possibleFromRanks); lenRanks == 0 {
+		return Move{}, errors.New("could not parse file disambiguation form, no ranks seem adequate")
+	} else if lenRanks == 1 {
+		return Move{Square{fromFile, possibleFromRanks[0]}, toSquare, NoPieceType}, nil
 	}
-	fromSquare, err := ParseSquare(s[0:2])
-	if err != nil {
-		return Move{}, fmt.Errorf("invalid move string: %w", err)
-	}
-	toSquare, err := ParseSquare(s[2:4])
-	if err != nil {
-		return Move{}, fmt.Errorf("invalid move string: %w", err)
-	}
-	promotion := NoPieceType
-	if len(s) == 5 {
-		promotion, err = parsePieceType(rune(s[4]))
-		if err != nil {
-			return Move{}, fmt.Errorf("invalid move string: %w", err)
+
+	squaresNoCheck := []Square{}
+	for _, r := range possibleFromRanks {
+		testPosition := pos.Copy()
+		testMove := Move{Square{fromFile, r}, toSquare, NoPieceType}
+		testPosition.Move(testMove)
+		testPosition.SideToMove = pos.SideToMove
+		if !testPosition.IsCheck() {
+			squaresNoCheck = append(squaresNoCheck, Square{fromFile, r})
 		}
 	}
 
-	return Move{fromSquare, toSquare, promotion}, nil
-}
-
-// ParseSANMove returns a move given a position and an SAN formatted move. SAN format defined here: http://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
-func ParseSANMove(p *Position, s string) (Move, error) {
-	cleanedString := strings.ReplaceAll(s, "+", "")
-	cleanedString = strings.ReplaceAll(cleanedString, "#", "")
-
-	if p.Turn != White && p.Turn != Black {
-		return Move{}, errors.New("could not parse SAN move: position turn is not set to white or black")
-	}
-
-	if s == "O-O" || s == "O-O-O" {
-		return parseSANCastleMove(p, cleanedString)
-	}
-	if isSANBasicPawnMove(p, cleanedString) {
-		return parseSANBasicPawnMove(p, cleanedString)
-	}
-	if isSANPawnCapture(p, cleanedString) {
-		return parseSANPawnCapture(p, cleanedString)
-	}
-	if strings.ContainsRune(cleanedString, '=') {
-		return parseSANPromotion(p, cleanedString)
-	}
-	if len(cleanedString) == 3 {
-		return parseSANPieceMove(p, cleanedString)
-	}
-	if !strings.ContainsRune(cleanedString, 'x') && len(cleanedString) > 2 {
-		return parseSANAmbiguousPieceMove(p, cleanedString)
-	}
-	if strings.ContainsRune(cleanedString, 'x') && len(cleanedString) > 2 {
-		return parseSANPieceCapture(p, cleanedString)
-	}
-
-	return Move{}, errors.New("could not parse SAN move: input, " + s)
-}
-
-func isSANBasicPawnMove(p *Position, s string) bool {
-	return len(s) == 2 &&
-		!(rune(s[1]) == '8' && p.Turn == White) &&
-		!(rune(s[1]) == '1' && p.Turn == Black)
-}
-
-func isSANPawnCapture(p *Position, s string) bool {
-	return len(s) == 4 &&
-		unicode.IsLower(rune(s[0])) &&
-		rune(s[1]) == 'x' &&
-		!(rune(s[3]) == '8' && p.Turn == White) &&
-		!(rune(s[3]) == '1' && p.Turn == Black)
-}
-
-func parseSANCastleMove(p *Position, s string) (Move, error) {
-	if p.Turn == White && s == "O-O" {
-		return Move{E1, G1, NoPieceType}, nil
-	}
-	if p.Turn == White && s == "O-O-O" {
-		return Move{E1, C1, NoPieceType}, nil
-	}
-	if p.Turn == Black && s == "O-O" {
-		return Move{E8, G8, NoPieceType}, nil
-	}
-	if p.Turn == Black && s == "O-O-O" {
-		return Move{E8, C8, NoPieceType}, nil
-	}
-	return Move{}, fmt.Errorf("could not parse SAN castle move: input %s", s)
-}
-
-func parseSANBasicPawnMove(p *Position, s string) (Move, error) {
-	square, err := ParseSquare(s)
-	if err != nil {
-		return Move{}, fmt.Errorf("could not parse SAN basic pawn move: input %s: %w", s, err)
-	}
-	if p.Turn == White {
-		return parseSANBasicPawnMoveWhite(p, square)
-	}
-	return parseSANBasicPawnMoveBlack(p, square)
-}
-
-func parseSANBasicPawnMoveWhite(p *Position, s Square) (Move, error) {
-	if p.PieceAt(squareBelow(s)) == WhitePawn {
-		return Move{FromSquare: squareBelow(s), ToSquare: s, Promotion: NoPieceType}, nil
-	}
-	if s.Rank == 4 && p.PieceAt(squareBelow(s)) == NoPiece && p.PieceAt(squareBelow(squareBelow(s))) == WhitePawn {
-		return Move{FromSquare: squareBelow(squareBelow(s)), ToSquare: s, Promotion: NoPieceType}, nil
-	}
-	return Move{}, fmt.Errorf("could not parse SAN basic pawn move: input %s", s)
-}
-
-func parseSANBasicPawnMoveBlack(p *Position, s Square) (Move, error) {
-	if p.PieceAt(squareAbove(s)) == BlackPawn {
-		return Move{FromSquare: squareAbove(s), ToSquare: s, Promotion: NoPieceType}, nil
-	}
-	if s.Rank == 5 && p.PieceAt(squareAbove(s)) == NoPiece && p.PieceAt(squareAbove(squareAbove(s))) == BlackPawn {
-		return Move{FromSquare: squareAbove(squareAbove(s)), ToSquare: s, Promotion: NoPieceType}, nil
-	}
-	return Move{}, fmt.Errorf("could not parse SAN basic pawn move: input %s", s)
-}
-
-func parseSANPawnCapture(p *Position, s string) (Move, error) {
-	toSquare, err := ParseSquare(s[2:])
-	if err != nil {
-		return Move{}, fmt.Errorf("could not parse SAN pawn capture move: input %s: %w", s, err)
-	}
-	file, err := parseFile(rune(s[0]))
-	if err != nil {
-		return Move{}, fmt.Errorf("could not parse SAN pawn capture move: input %s: %w", s, err)
-	}
-	diff := file - toSquare.File
-	if diff == 0 || (diff > 1 && diff < math.MaxUint8) {
-		return Move{}, fmt.Errorf("could not parse SAN pawn capture move: pawn capture square invalid: input, %s", s)
-	}
-	var fromSquare Square
-	if p.Turn == White {
-		fromSquare = Square{File: file, Rank: toSquare.Rank - 1}
-	}
-	if p.Turn == Black {
-		fromSquare = Square{File: file, Rank: toSquare.Rank + 1}
-	}
-
-	pieceAtFromSquare := p.PieceAt(fromSquare)
-	if pieceAtFromSquare == NoPiece || pieceAtFromSquare.Type != Pawn || pieceAtFromSquare.Color != p.Turn {
-		return Move{}, fmt.Errorf("invalid SAN pawn capture move: piece at %v is not %v", fromSquare, Piece{p.Turn, Pawn})
-	}
-
-	pieceAtToSquare := p.PieceAt(toSquare)
-	if pieceAtToSquare.Color == p.Turn || (pieceAtToSquare.Color == NoColor && toSquare != p.EnPassant) {
-		return Move{}, fmt.Errorf("invalid SAN pawn capture move: invalid piece to capture: square, %v piece, %v, en passant %v",
-			toSquare, pieceAtToSquare, p.EnPassant)
-	}
-
-	return Move{FromSquare: fromSquare, ToSquare: toSquare, Promotion: NoPieceType}, nil
-}
-
-func parseSANPromotion(p *Position, s string) (Move, error) {
-	sNoPromotion := s[:strings.IndexRune(s, '=')]
-	move := Move{}
-	var err error = nil
-	if len(sNoPromotion) == 2 {
-		move, err = parseSANBasicPawnMove(p, sNoPromotion)
-	} else if len(sNoPromotion) == 4 && unicode.IsLower(rune(sNoPromotion[0])) && rune(sNoPromotion[1]) == 'x' {
-		move, err = parseSANPawnCapture(p, sNoPromotion)
+	if lenSquares := len(squaresNoCheck); lenSquares == 0 {
+		return Move{}, errors.New("could not parse file disambiguation form, no ranks seem adequate")
+	} else if lenSquares > 1 {
+		return Move{}, errors.New("could not parse file disambiguation form, multiple ranks seem adequate")
 	} else {
-		return Move{}, fmt.Errorf("could not parse move before promotion: num of chars before '=' is not 2 or 4: input %s", s)
-	}
-	if err != nil {
-		return Move{}, fmt.Errorf("could not parse move before promotion: %w", err)
+		return Move{squaresNoCheck[0], toSquare, NoPieceType}, nil
 	}
 
-	promotion, err := parsePieceType(rune(s[len(s)-1]))
-	if err != nil {
-		return Move{}, fmt.Errorf("could not parse SAN promotion: input %s: %w", s, err)
-	}
-	if promotion == King || promotion == Pawn {
-		return Move{}, fmt.Errorf("invalid promotion: can't promote to king or pawn: input %s", s)
-	}
-
-	move.Promotion = promotion
-
-	return move, nil
 }
 
-func parseSANPieceMove(p *Position, s string) (Move, error) {
-	pieceType, err := parsePieceType(rune(s[0]))
-	if err != nil {
-		return Move{}, fmt.Errorf("could not parse SAN move: invalid piece type: input, %s: %w", s, err)
-	}
-	square, err := ParseSquare(s[1:])
-	if err != nil {
-		return Move{}, fmt.Errorf("could not parse SAN move: could not parse destination square: input, %s: %w", s, err)
-	}
-	var move Move
-	switch pieceType {
-	case Pawn:
-		return Move{}, fmt.Errorf("invalid SAN format: should not specify p for pawn: input %s", s)
-	case Rook:
-		move, err = parseSANRookMove(p, square)
-	case Knight:
-		move, err = parseSANKnightMove(p, square)
-	case Bishop:
-		move, err = parseSANBishopMove(p, square)
-	case Queen:
-		move, err = parseSANQueenMove(p, square)
-	case King:
-		move, err = parseSANKingMove(p, square)
-	default:
-		return Move{}, fmt.Errorf("could not parse SAN move: input, %s", s)
-	}
-	piece := p.PieceAt(move.ToSquare)
-	if err != nil {
-		return Move{}, fmt.Errorf("could not parse SAN move: input, %s: %w", s, err)
-	}
-	if piece != NoPiece {
-		return Move{}, fmt.Errorf("invalid SAN move: take piece without x: input, %s", s)
-	}
-	return move, err
-}
-
-// TODO reduce repetition
-func parseSANRookMove(p *Position, toSquare Square) (Move, error) {
-	isAmbiguous := false
-	ambiguousMoves := []Move{}
-	fromSquare := NoSquare
-	for currentSquare := squareToLeft(toSquare); currentSquare != NoSquare; currentSquare = squareToLeft(currentSquare) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Rook && piece.Color == p.Turn {
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
+func parseRankDisambiguation(san string, pos *Position) (Move, error) {
+	// this function should probably be broken down into various sub functions
+	var toSquare Square
+	var err error
+	if strings.Contains(san, "x") || strings.Contains(san, "X") {
+		if len(san) < 5 {
+			return Move{}, errors.New("could not parse rank disambiguation form, san to short")
 		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	for currentSquare := squareAbove(toSquare); currentSquare != NoSquare; currentSquare = squareAbove(currentSquare) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Rook && piece.Color == p.Turn {
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	for currentSquare := squareToRight(toSquare); currentSquare != NoSquare; currentSquare = squareToRight(currentSquare) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Rook && piece.Color == p.Turn {
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	for currentSquare := squareBelow(toSquare); currentSquare != NoSquare; currentSquare = squareBelow(currentSquare) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Rook && piece.Color == p.Turn {
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	if isAmbiguous {
-		legalMoves := GenerateLegalMoves(p)
-		moveIWant := Move{}
-		for _, move := range legalMoves {
-			if moveIWant.FromSquare == NoSquare && slices.Contains(ambiguousMoves, move) {
-				moveIWant = move
-			} else if moveIWant.FromSquare != NoSquare && slices.Contains(ambiguousMoves, move) {
-				return Move{}, fmt.Errorf("invalid SAN rook move: ambiguous move (multiple possible pieces)")
-			}
-		}
-		return moveIWant, nil
-	}
-	if fromSquare == NoSquare {
-		return Move{}, fmt.Errorf("invalid SAN rook move: could not find piece to move")
-	}
-	return Move{FromSquare: fromSquare, ToSquare: toSquare}, nil
-}
-
-func parseSANKnightMove(p *Position, toSquare Square) (Move, error) {
-	isAmbiguous := false
-	ambiguousMoves := []Move{}
-	fromSquare := NoSquare
-	currentSquare := squareAbove(squareAbove(squareToRight(toSquare)))
-	piece := p.PieceAt(currentSquare)
-	if piece.Type == Knight && piece.Color == p.Turn {
-		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-		fromSquare = currentSquare
-	}
-	currentSquare = squareAbove(squareToRight(squareToRight(toSquare)))
-	piece = p.PieceAt(currentSquare)
-	if piece.Type == Knight && piece.Color == p.Turn {
-		if fromSquare != NoSquare {
-			isAmbiguous = true
-		}
-		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-		fromSquare = currentSquare
-	}
-	currentSquare = squareBelow(squareToRight(squareToRight(toSquare)))
-	piece = p.PieceAt(currentSquare)
-	if piece.Type == Knight && piece.Color == p.Turn {
-		if fromSquare != NoSquare {
-			isAmbiguous = true
-		}
-		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-		fromSquare = currentSquare
-	}
-	currentSquare = squareBelow(squareBelow(squareToRight(toSquare)))
-	piece = p.PieceAt(currentSquare)
-	if piece.Type == Knight && piece.Color == p.Turn {
-		if fromSquare != NoSquare {
-			isAmbiguous = true
-		}
-		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-		fromSquare = currentSquare
-	}
-	currentSquare = squareBelow(squareBelow(squareToLeft(toSquare)))
-	piece = p.PieceAt(currentSquare)
-	if piece.Type == Knight && piece.Color == p.Turn {
-		if fromSquare != NoSquare {
-			isAmbiguous = true
-		}
-		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-		fromSquare = currentSquare
-	}
-	currentSquare = squareBelow(squareToLeft(squareToLeft(toSquare)))
-	piece = p.PieceAt(currentSquare)
-	if piece.Type == Knight && piece.Color == p.Turn {
-		if fromSquare != NoSquare {
-			isAmbiguous = true
-		}
-		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-		fromSquare = currentSquare
-	}
-	currentSquare = squareAbove(squareToLeft(squareToLeft(toSquare)))
-	piece = p.PieceAt(currentSquare)
-	if piece.Type == Knight && piece.Color == p.Turn {
-		if fromSquare != NoSquare {
-			isAmbiguous = true
-		}
-		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-		fromSquare = currentSquare
-	}
-	currentSquare = squareAbove(squareAbove(squareToLeft(toSquare)))
-	piece = p.PieceAt(currentSquare)
-	if piece.Type == Knight && piece.Color == p.Turn {
-		if fromSquare != NoSquare {
-			isAmbiguous = true
-		}
-		ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-		fromSquare = currentSquare
-	}
-	if isAmbiguous {
-		legalMoves := GenerateLegalMoves(p)
-		moveIWant := Move{}
-		for _, move := range legalMoves {
-			if moveIWant.FromSquare == NoSquare && slices.Contains(ambiguousMoves, move) {
-				moveIWant = move
-			} else if moveIWant.FromSquare != NoSquare && slices.Contains(ambiguousMoves, move) {
-				return Move{}, fmt.Errorf("invalid SAN knight move: ambiguous move (multiple possible pieces)")
-			}
-		}
-		return moveIWant, nil
-	}
-	if fromSquare == NoSquare {
-		return Move{}, fmt.Errorf("invalid SAN knight move: could not find piece to move")
-	}
-	return Move{FromSquare: fromSquare, ToSquare: toSquare}, nil
-}
-
-// TODO reduce repetition
-func parseSANBishopMove(p *Position, toSquare Square) (Move, error) {
-	isAmbiguous := false
-	ambiguousMoves := []Move{}
-	fromSquare := NoSquare
-	for currentSquare := squareAbove(squareToLeft(toSquare)); currentSquare != NoSquare; currentSquare = squareAbove(squareToLeft(currentSquare)) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Bishop && piece.Color == p.Turn {
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	for currentSquare := squareToRight(squareAbove(toSquare)); currentSquare != NoSquare; currentSquare = squareToRight(squareAbove(currentSquare)) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Bishop && piece.Color == p.Turn {
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	for currentSquare := squareBelow(squareToRight(toSquare)); currentSquare != NoSquare; currentSquare = squareBelow(squareToRight(currentSquare)) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Bishop && piece.Color == p.Turn {
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	for currentSquare := squareToLeft(squareBelow(toSquare)); currentSquare != NoSquare; currentSquare = squareToLeft(squareBelow(currentSquare)) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Bishop && piece.Color == p.Turn {
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	if isAmbiguous {
-		legalMoves := GenerateLegalMoves(p)
-		moveIWant := Move{}
-		for _, move := range legalMoves {
-			if moveIWant.FromSquare == NoSquare && slices.Contains(ambiguousMoves, move) {
-				moveIWant = move
-			} else if moveIWant.FromSquare != NoSquare && slices.Contains(ambiguousMoves, move) {
-				return Move{}, fmt.Errorf("invalid SAN bishop move: ambiguous move (multiple possible pieces)")
-			}
-		}
-		return moveIWant, nil
-	}
-	if fromSquare == NoSquare {
-		return Move{}, fmt.Errorf("invalid SAN bishop move: could not find piece to move")
-	}
-	return Move{FromSquare: fromSquare, ToSquare: toSquare}, nil
-}
-
-// TODO reduce repetition
-func parseSANQueenMove(p *Position, toSquare Square) (Move, error) {
-	isAmbiguous := false
-	ambiguousMoves := []Move{}
-	fromSquare := NoSquare
-	for currentSquare := squareToLeft(toSquare); currentSquare != NoSquare; currentSquare = squareToLeft(currentSquare) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Queen && piece.Color == p.Turn {
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	for currentSquare := squareAbove(toSquare); currentSquare != NoSquare; currentSquare = squareAbove(currentSquare) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Queen && piece.Color == p.Turn {
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	for currentSquare := squareToRight(toSquare); currentSquare != NoSquare; currentSquare = squareToRight(currentSquare) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Queen && piece.Color == p.Turn {
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	for currentSquare := squareBelow(toSquare); currentSquare != NoSquare; currentSquare = squareBelow(currentSquare) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Queen && piece.Color == p.Turn {
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	for currentSquare := squareAbove(squareToLeft(toSquare)); currentSquare != NoSquare; currentSquare = squareAbove(squareToLeft(currentSquare)) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Queen && piece.Color == p.Turn {
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	for currentSquare := squareToRight(squareAbove(toSquare)); currentSquare != NoSquare; currentSquare = squareToRight(squareAbove(currentSquare)) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Queen && piece.Color == p.Turn {
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	for currentSquare := squareBelow(squareToRight(toSquare)); currentSquare != NoSquare; currentSquare = squareBelow(squareToRight(currentSquare)) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Queen && piece.Color == p.Turn {
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	for currentSquare := squareToLeft(squareBelow(toSquare)); currentSquare != NoSquare; currentSquare = squareToLeft(squareBelow(currentSquare)) {
-		piece := p.PieceAt(currentSquare)
-		if piece.Type == Queen && piece.Color == p.Turn {
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			ambiguousMoves = append(ambiguousMoves, Move{currentSquare, toSquare, NoPieceType})
-			fromSquare = currentSquare
-			break
-		}
-		if piece != NoPiece {
-			break
-		}
-	}
-	if isAmbiguous {
-		legalMoves := GenerateLegalMoves(p)
-		moveIWant := Move{}
-		for _, move := range legalMoves {
-			if moveIWant.FromSquare == NoSquare && slices.Contains(ambiguousMoves, move) {
-				moveIWant = move
-			} else if moveIWant.FromSquare != NoSquare && slices.Contains(ambiguousMoves, move) {
-				return Move{}, fmt.Errorf("invalid SAN queen move: ambiguous move (multiple possible pieces)")
-			}
-		}
-		return moveIWant, nil
-	}
-	if fromSquare == NoSquare {
-		return Move{}, fmt.Errorf("invalid SAN Queen move: could not find piece to move")
-	}
-	return Move{FromSquare: fromSquare, ToSquare: toSquare}, nil
-}
-
-func parseSANKingMove(p *Position, toSquare Square) (Move, error) {
-	isAmbiguous := false
-	fromSquare := NoSquare
-	currentSquare := squareAbove(toSquare)
-	piece := p.PieceAt(currentSquare)
-	if piece.Type == King && piece.Color == p.Turn {
-		fromSquare = currentSquare
-	}
-	currentSquare = squareAbove(squareToRight(toSquare))
-	piece = p.PieceAt(currentSquare)
-	if piece.Type == King && piece.Color == p.Turn {
-		if fromSquare != NoSquare {
-			isAmbiguous = true
-		}
-		fromSquare = currentSquare
-	}
-	currentSquare = squareToRight(toSquare)
-	piece = p.PieceAt(currentSquare)
-	if piece.Type == King && piece.Color == p.Turn {
-		if fromSquare != NoSquare {
-			isAmbiguous = true
-		}
-		fromSquare = currentSquare
-	}
-	currentSquare = squareBelow(squareToRight(toSquare))
-	piece = p.PieceAt(currentSquare)
-	if piece.Type == King && piece.Color == p.Turn {
-		if fromSquare != NoSquare {
-			isAmbiguous = true
-		}
-		fromSquare = currentSquare
-	}
-	currentSquare = squareBelow(toSquare)
-	piece = p.PieceAt(currentSquare)
-	if piece.Type == King && piece.Color == p.Turn {
-		if fromSquare != NoSquare {
-			isAmbiguous = true
-		}
-		fromSquare = currentSquare
-	}
-	currentSquare = squareBelow(squareToLeft(toSquare))
-	piece = p.PieceAt(currentSquare)
-	if piece.Type == King && piece.Color == p.Turn {
-		if fromSquare != NoSquare {
-			isAmbiguous = true
-		}
-		fromSquare = currentSquare
-	}
-	currentSquare = squareToLeft(toSquare)
-	piece = p.PieceAt(currentSquare)
-	if piece.Type == King && piece.Color == p.Turn {
-		if fromSquare != NoSquare {
-			isAmbiguous = true
-		}
-		fromSquare = currentSquare
-	}
-	currentSquare = squareAbove(squareToLeft(toSquare))
-	piece = p.PieceAt(currentSquare)
-	if piece.Type == King && piece.Color == p.Turn {
-		if fromSquare != NoSquare {
-			isAmbiguous = true
-		}
-		fromSquare = currentSquare
-	}
-	if isAmbiguous {
-		return Move{}, errors.New("")
-	}
-	if isAmbiguous {
-		return Move{}, fmt.Errorf("invalid SAN King move: ambiguous move (multiple possible pieces)")
-	}
-	if fromSquare == NoSquare {
-		return Move{}, fmt.Errorf("invalid SAN King move: could not find piece to move")
-	}
-	return Move{FromSquare: fromSquare, ToSquare: toSquare}, nil
-}
-
-func parseSANAmbiguousPieceMove(p *Position, s string) (Move, error) {
-
-	if len(s) == 5 {
-		move, err := parseSANAmbiguousPieceMoveFirstSquareKnown(p, s)
-		piece := p.PieceAt(move.ToSquare)
-		if err != nil {
-			return Move{}, err
-		}
-		if piece != NoPiece {
-			return Move{}, fmt.Errorf("invalid SAN move: take piece without x: input, %s", s)
-		}
-		return move, nil
-	}
-	file, err := parseFile(rune(s[1]))
-	if err == nil {
-		move, err := parseSANAmbiguousPieceMoveFileKnown(p, s, file)
-		piece := p.PieceAt(move.ToSquare)
-		if err != nil {
-			return Move{}, err
-		}
-		if piece != NoPiece {
-			return Move{}, fmt.Errorf("invalid SAN move: take piece without x: input, %s", s)
-		}
-		return move, nil
-	}
-	rank, err := parseRank(rune(s[1]))
-	if err == nil {
-		move, err := parseSANAmbiguousPieceMoveRankKnown(p, s, rank)
-		piece := p.PieceAt(move.ToSquare)
-		if err != nil {
-			return Move{}, err
-		}
-		if piece != NoPiece {
-			return Move{}, fmt.Errorf("invalid SAN move: take piece without x: input, %s", s)
-		}
-		return move, nil
-	}
-	return Move{}, fmt.Errorf("could not parse SAN move: failed to disambiguate rank or file: input %s", s)
-}
-
-func parseSANAmbiguousPieceMoveFirstSquareKnown(p *Position, s string) (Move, error) {
-	fromSquare, err := ParseSquare(s[1:3])
-	if err != nil {
-		return Move{}, fmt.Errorf("could not parse SAN move: input, %s: %w", s, err)
-	}
-	toSquare, err := ParseSquare(s[3:5])
-	if err != nil {
-		return Move{}, fmt.Errorf("could not parse SAN move: input, %s: %w", s, err)
-	}
-	return Move{fromSquare, toSquare, NoPieceType}, nil
-}
-
-func parseSANAmbiguousPieceMoveFileKnown(p *Position, s string, f File) (Move, error) {
-	pieceType, err := parsePieceType(rune(s[0]))
-	if err != nil {
-		return Move{}, fmt.Errorf("could not parse SAN move: input, %s: %w", s, err)
-	}
-	toSquare, err := ParseSquare(s[2:4])
-	if err != nil {
-		return Move{}, fmt.Errorf("could not parse SAN move: input, %s: %w", s, err)
-	}
-	var fromSquare Square
-	switch pieceType {
-	case Pawn:
-		return Move{}, fmt.Errorf("invalid SAN format: should not specify p for pawn: input %s", s)
-	case Rook:
-		fromSquare = findRookFromSquareFile(p, toSquare, f)
-	case Knight:
-		fromSquare = findKnightFromSquareFile(p, toSquare, f)
-	case Bishop:
-		fromSquare = findBishopFromSquareFile(p, toSquare, f)
-	case Queen:
-		fromSquare = findQueenFromSquareFile(p, toSquare, f)
-	case King:
-		fromSquare = findKingFromSquareFile(p, toSquare, f)
-	default:
-		return Move{}, fmt.Errorf("could not parse SAN move: input, %s", s)
-	}
-
-	if fromSquare == NoSquare {
-		return Move{}, fmt.Errorf("invalid SAN move: could not find piece to move: input, %s", s)
-	}
-	return Move{fromSquare, toSquare, NoPieceType}, nil
-}
-
-func parseSANAmbiguousPieceMoveRankKnown(p *Position, s string, r Rank) (Move, error) {
-	pieceType, err := parsePieceType(rune(s[0]))
-	if err != nil {
-		return Move{}, fmt.Errorf("could not parse SAN move: input, %s: %w", s, err)
-	}
-	toSquare, err := ParseSquare(s[2:4])
-	if err != nil {
-		return Move{}, fmt.Errorf("could not parse SAN move: input, %s: %w", s, err)
-	}
-	var fromSquare Square
-	switch pieceType {
-	case Pawn:
-		return Move{}, fmt.Errorf("invalid SAN format: should not specify p for pawn: input %s", s)
-	case Rook:
-		fromSquare = findRookFromSquareRank(p, toSquare, r)
-	case Knight:
-		fromSquare = findKnightFromSquareRank(p, toSquare, r)
-	case Bishop:
-		fromSquare = findBishopFromSquareRank(p, toSquare, r)
-	case Queen:
-		fromSquare = findQueenFromSquareRank(p, toSquare, r)
-	case King:
-		fromSquare = findKingFromSquareRank(p, toSquare, r)
-	default:
-		return Move{}, fmt.Errorf("could not parse SAN move: input, %s", s)
-	}
-
-	if fromSquare == NoSquare {
-		return Move{}, fmt.Errorf("invalid SAN move: could not find piece to move: input, %s", s)
-	}
-	return Move{fromSquare, toSquare, NoPieceType}, nil
-}
-
-func findRookFromSquareFile(p *Position, toSquare Square, f File) Square {
-	isAmbiguous := false
-	fromSquare := NoSquare
-
-	piece := p.PieceAt(Square{File: f, Rank: toSquare.Rank})
-	if piece.Type == Rook && piece.Color == p.Turn {
-		fromSquare = Square{File: f, Rank: toSquare.Rank}
-	}
-
-	if f == toSquare.File {
-		for currentSquare := squareAbove(toSquare); currentSquare != NoSquare; currentSquare = squareAbove(currentSquare) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Rook || piece.Color != p.Turn {
-				break
-			}
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			fromSquare = currentSquare
-			break
-		}
-		for currentSquare := squareBelow(toSquare); currentSquare != NoSquare; currentSquare = squareBelow(currentSquare) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Rook || piece.Color != p.Turn {
-				break
-			}
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			fromSquare = currentSquare
-			break
-		}
-	}
-
-	if isAmbiguous {
-		return NoSquare
-	}
-	return fromSquare
-}
-
-func findKnightFromSquareFile(p *Position, toSquare Square, f File) Square {
-	diff := math.Abs(float64(toSquare.File) - float64(f))
-	if diff != 1 && diff != 2 {
-		return NoSquare
-	}
-	if diff == 1 {
-		isAmbiguous := false
-		square := NoSquare
-		option1 := Square{f, toSquare.Rank + 2}
-		option2 := Square{f, toSquare.Rank - 2}
-		piece := p.PieceAt(option1)
-		if piece.Type == Knight && piece.Color == p.Turn {
-			square = option1
-		}
-		piece = p.PieceAt(option2)
-		if piece.Type == Knight && piece.Color == p.Turn {
-			if square != NoSquare {
-				isAmbiguous = true
-			}
-			square = option2
-		}
-		if isAmbiguous {
-			return NoSquare
-		}
-		return square
+		err = toSquare.UnmarshalText([]byte(san[3:5]))
 	} else {
-		isAmbiguous := false
-		square := NoSquare
-		option1 := Square{f, toSquare.Rank + 1}
-		option2 := Square{f, toSquare.Rank - 1}
-		piece := p.PieceAt(option1)
-		if piece.Type == Knight && piece.Color == p.Turn {
-			square = option1
+		if len(san) < 4 {
+			return Move{}, errors.New("could not parse rank disambiguation form, san to short")
 		}
-		piece = p.PieceAt(option2)
-		if piece.Type == Knight && piece.Color == p.Turn {
-			if square != NoSquare {
-				isAmbiguous = true
-			}
-			square = option2
-		}
-		if isAmbiguous {
-			return NoSquare
-		}
-		return square
+		err = toSquare.UnmarshalText([]byte(san[2:4]))
 	}
-}
-
-func findBishopFromSquareFile(p *Position, toSquare Square, f File) Square {
-	isAmbiguous := false
-	fromSquare := NoSquare
-
-	diff := toSquare.File - f
-	if diff <= FileH {
-		for currentSquare := squareToLeft(squareAbove(toSquare)); currentSquare != NoSquare; currentSquare = squareToLeft(squareAbove(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Bishop || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.File == f {
-				fromSquare = currentSquare
-			}
-			break
-		}
-		for currentSquare := squareToLeft(squareBelow(toSquare)); currentSquare != NoSquare; currentSquare = squareToLeft(squareBelow(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Bishop || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.File == f {
-				if fromSquare != NoSquare {
-					isAmbiguous = true
-				}
-				fromSquare = currentSquare
-			}
-			break
-		}
-	} else if diff > FileH {
-		for currentSquare := squareToRight(squareAbove(toSquare)); currentSquare != NoSquare; currentSquare = squareToRight(squareAbove(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Bishop || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.File == f {
-				fromSquare = currentSquare
-			}
-			break
-		}
-		for currentSquare := squareToRight(squareBelow(toSquare)); currentSquare != NoSquare; currentSquare = squareToRight(squareBelow(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Bishop || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.File == f {
-				if fromSquare != NoSquare {
-					isAmbiguous = true
-				}
-				fromSquare = currentSquare
-			}
-			break
-		}
-	}
-
-	if isAmbiguous {
-		return NoSquare
-	}
-	return fromSquare
-}
-
-func findQueenFromSquareFile(p *Position, toSquare Square, f File) Square {
-	isAmbiguous := false
-	fromSquare := NoSquare
-
-	piece := p.PieceAt(Square{File: f, Rank: toSquare.Rank})
-	if piece.Type == Queen && piece.Color == p.Turn {
-		fromSquare = Square{File: f, Rank: toSquare.Rank}
-	}
-
-	if f == toSquare.File {
-		for currentSquare := squareAbove(toSquare); currentSquare != NoSquare; currentSquare = squareAbove(currentSquare) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Queen || piece.Color != p.Turn {
-				break
-			}
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			fromSquare = currentSquare
-			break
-		}
-		for currentSquare := squareBelow(toSquare); currentSquare != NoSquare; currentSquare = squareBelow(currentSquare) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Queen || piece.Color != p.Turn {
-				break
-			}
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			fromSquare = currentSquare
-			break
-		}
-	}
-
-	diff := toSquare.File - f
-	if diff <= FileH && diff > 0 {
-		for currentSquare := squareToLeft(squareAbove(toSquare)); currentSquare != NoSquare; currentSquare = squareToLeft(squareAbove(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Queen || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.File == f {
-				if fromSquare != NoSquare {
-					isAmbiguous = true
-				}
-				fromSquare = currentSquare
-			}
-			break
-		}
-		for currentSquare := squareToLeft(squareBelow(toSquare)); currentSquare != NoSquare; currentSquare = squareToLeft(squareBelow(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Queen || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.File == f {
-				if fromSquare != NoSquare {
-					isAmbiguous = true
-				}
-				fromSquare = currentSquare
-			}
-			break
-		}
-	} else if diff > FileH {
-		for currentSquare := squareToRight(squareAbove(toSquare)); currentSquare != NoSquare; currentSquare = squareToRight(squareAbove(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Queen || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.File == f {
-				if fromSquare != NoSquare {
-					isAmbiguous = true
-				}
-				fromSquare = currentSquare
-			}
-			break
-		}
-		for currentSquare := squareToRight(squareBelow(toSquare)); currentSquare != NoSquare; currentSquare = squareToRight(squareBelow(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Queen || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.File == f {
-				if fromSquare != NoSquare {
-					isAmbiguous = true
-				}
-				fromSquare = currentSquare
-			}
-			break
-		}
-	}
-
-	if isAmbiguous {
-		return NoSquare
-	}
-	return fromSquare
-}
-
-func findKingFromSquareFile(p *Position, toSquare Square, f File) Square {
-	diff := math.Abs(float64(toSquare.File) - float64(f))
-	if diff != 1 {
-		return NoSquare
-	}
-
-	isAmbiguous := false
-	square := NoSquare
-	option1 := Square{f, toSquare.Rank + 1}
-	option2 := Square{f, toSquare.Rank}
-	option3 := Square{f, toSquare.Rank - 1}
-	piece := p.PieceAt(option1)
-	if piece.Type == King && piece.Color == p.Turn {
-		square = option1
-	}
-	piece = p.PieceAt(option2)
-	if piece.Type == King && piece.Color == p.Turn {
-		if square != NoSquare {
-			isAmbiguous = true
-		}
-		square = option2
-	}
-	piece = p.PieceAt(option3)
-	if piece.Type == King && piece.Color == p.Turn {
-		if square != NoSquare {
-			isAmbiguous = true
-		}
-		square = option3
-	}
-	if isAmbiguous {
-		return NoSquare
-	}
-	return square
-}
-
-func findRookFromSquareRank(p *Position, toSquare Square, r Rank) Square {
-	isAmbiguous := false
-	fromSquare := NoSquare
-
-	piece := p.PieceAt(Square{File: toSquare.File, Rank: r})
-	if piece.Type == Rook && piece.Color == p.Turn {
-		fromSquare = Square{File: toSquare.File, Rank: r}
-	}
-
-	if r == toSquare.Rank {
-		for currentSquare := squareToLeft(toSquare); currentSquare != NoSquare; currentSquare = squareToLeft(currentSquare) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Rook || piece.Color != p.Turn {
-				break
-			}
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			fromSquare = currentSquare
-			break
-		}
-		for currentSquare := squareToRight(toSquare); currentSquare != NoSquare; currentSquare = squareToRight(currentSquare) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Rook || piece.Color != p.Turn {
-				break
-			}
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			fromSquare = currentSquare
-			break
-		}
-	}
-
-	if isAmbiguous {
-		return NoSquare
-	}
-	return fromSquare
-}
-
-func findKnightFromSquareRank(p *Position, toSquare Square, r Rank) Square {
-	diff := math.Abs(float64(toSquare.Rank) - float64(r))
-	if diff != 1 && diff != 2 {
-		return NoSquare
-	}
-	if diff == 1 {
-		isAmbiguous := false
-		square := NoSquare
-		option1 := Square{toSquare.File + 2, r}
-		option2 := Square{toSquare.File - 2, r}
-		piece := p.PieceAt(option1)
-		if piece.Type == Knight && piece.Color == p.Turn {
-			square = option1
-		}
-		piece = p.PieceAt(option2)
-		if piece.Type == Knight && piece.Color == p.Turn {
-			if square != NoSquare {
-				isAmbiguous = true
-			}
-			square = option2
-		}
-		if isAmbiguous {
-			return NoSquare
-		}
-		return square
-	} else {
-		isAmbiguous := false
-		square := NoSquare
-		option1 := Square{toSquare.File + 1, r}
-		option2 := Square{toSquare.File - 1, r}
-		piece := p.PieceAt(option1)
-		if piece.Type == Knight && piece.Color == p.Turn {
-			square = option1
-		}
-		piece = p.PieceAt(option2)
-		if piece.Type == Knight && piece.Color == p.Turn {
-			if square != NoSquare {
-				isAmbiguous = true
-			}
-			square = option2
-		}
-		if isAmbiguous {
-			return NoSquare
-		}
-		return square
-	}
-}
-
-func findBishopFromSquareRank(p *Position, toSquare Square, r Rank) Square {
-	isAmbiguous := false
-	fromSquare := NoSquare
-
-	diff := r - toSquare.Rank
-	if diff <= Rank8 {
-		for currentSquare := squareToLeft(squareAbove(toSquare)); currentSquare != NoSquare; currentSquare = squareToLeft(squareAbove(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Bishop || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.Rank == r {
-				fromSquare = currentSquare
-			}
-			break
-		}
-		for currentSquare := squareToLeft(squareBelow(toSquare)); currentSquare != NoSquare; currentSquare = squareToLeft(squareBelow(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Bishop || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.Rank == r {
-				if fromSquare != NoSquare {
-					isAmbiguous = true
-				}
-				fromSquare = currentSquare
-			}
-			break
-		}
-	} else if diff > Rank8 {
-		for currentSquare := squareToRight(squareAbove(toSquare)); currentSquare != NoSquare; currentSquare = squareToRight(squareAbove(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Bishop || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.Rank == r {
-				fromSquare = currentSquare
-			}
-			break
-		}
-		for currentSquare := squareToRight(squareBelow(toSquare)); currentSquare != NoSquare; currentSquare = squareToRight(squareBelow(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Bishop || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.Rank == r {
-				if fromSquare != NoSquare {
-					isAmbiguous = true
-				}
-				fromSquare = currentSquare
-			}
-			break
-		}
-	}
-
-	if isAmbiguous {
-		return NoSquare
-	}
-	return fromSquare
-}
-
-func findQueenFromSquareRank(p *Position, toSquare Square, r Rank) Square {
-	isAmbiguous := false
-	fromSquare := NoSquare
-
-	piece := p.PieceAt(Square{File: toSquare.File, Rank: r})
-	if piece.Type == Queen && piece.Color == p.Turn {
-		fromSquare = Square{File: toSquare.File, Rank: r}
-	}
-
-	if r == toSquare.Rank {
-		for currentSquare := squareToLeft(toSquare); currentSquare != NoSquare; currentSquare = squareToLeft(currentSquare) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Queen || piece.Color != p.Turn {
-				break
-			}
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			fromSquare = currentSquare
-			break
-		}
-		for currentSquare := squareToRight(toSquare); currentSquare != NoSquare; currentSquare = squareToRight(currentSquare) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Queen || piece.Color != p.Turn {
-				break
-			}
-			if fromSquare != NoSquare {
-				isAmbiguous = true
-			}
-			fromSquare = currentSquare
-			break
-		}
-	}
-
-	diff := r - toSquare.Rank
-	if diff <= Rank8 && diff > 0 {
-		for currentSquare := squareToLeft(squareAbove(toSquare)); currentSquare != NoSquare; currentSquare = squareToLeft(squareAbove(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Queen || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.Rank == r {
-				if fromSquare != NoSquare {
-					isAmbiguous = true
-				}
-				fromSquare = currentSquare
-			}
-			break
-		}
-		for currentSquare := squareToLeft(squareBelow(toSquare)); currentSquare != NoSquare; currentSquare = squareToLeft(squareBelow(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Queen || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.Rank == r {
-				if fromSquare != NoSquare {
-					isAmbiguous = true
-				}
-				fromSquare = currentSquare
-			}
-			break
-		}
-	} else if diff > Rank8 {
-		for currentSquare := squareToRight(squareAbove(toSquare)); currentSquare != NoSquare; currentSquare = squareToRight(squareAbove(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Queen || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.Rank == r {
-				if fromSquare != NoSquare {
-					isAmbiguous = true
-				}
-				fromSquare = currentSquare
-			}
-			break
-		}
-		for currentSquare := squareToRight(squareBelow(toSquare)); currentSquare != NoSquare; currentSquare = squareToRight(squareBelow(currentSquare)) {
-			piece := p.PieceAt(currentSquare)
-			if piece == NoPiece {
-				continue
-			}
-			if piece.Type != Queen || piece.Color != p.Turn {
-				break
-			}
-			if currentSquare.Rank == r {
-				if fromSquare != NoSquare {
-					isAmbiguous = true
-				}
-				fromSquare = currentSquare
-			}
-			break
-		}
-	}
-
-	if isAmbiguous {
-		return NoSquare
-	}
-	return fromSquare
-}
-
-func findKingFromSquareRank(p *Position, toSquare Square, r Rank) Square {
-	diff := math.Abs(float64(toSquare.Rank) - float64(r))
-	if diff != 1 {
-		return NoSquare
-	}
-
-	isAmbiguous := false
-	square := NoSquare
-	option1 := Square{toSquare.File + 1, r}
-	option2 := Square{toSquare.File, r}
-	option3 := Square{toSquare.File - 1, r}
-	piece := p.PieceAt(option1)
-	if piece.Type == King && piece.Color == p.Turn {
-		square = option1
-	}
-	piece = p.PieceAt(option2)
-	if piece.Type == King && piece.Color == p.Turn {
-		if square != NoSquare {
-			isAmbiguous = true
-		}
-		square = option2
-	}
-	piece = p.PieceAt(option3)
-	if piece.Type == King && piece.Color == p.Turn {
-		if square != NoSquare {
-			isAmbiguous = true
-		}
-		square = option3
-	}
-	if isAmbiguous {
-		return NoSquare
-	}
-	return square
-}
-
-func parseSANPieceCapture(p *Position, s string) (Move, error) {
-	toSquare, err := ParseSquare(s[len(s)-2:])
 	if err != nil {
-		return Move{}, fmt.Errorf("could not parse SAN move: input, %s: %w", s, err)
+		return Move{}, fmt.Errorf("could not parse rank disambiguation form: %w", err)
 	}
-	piece := p.PieceAt(toSquare)
-	if piece.Color == p.Turn || toSquare == NoSquare {
-		return Move{}, fmt.Errorf("could not parse SAN move: attempting to capture an invalid piece: input, %s: %w", s, err)
-	}
-	if len(s) == 4 {
-		s = strings.Replace(s, "x", "", 1)
-		pieceType, err := parsePieceType(rune(s[0]))
-		if err != nil {
-			return Move{}, fmt.Errorf("could not parse SAN move: invalid piece type: input, %s: %w", s, err)
-		}
-		square, err := ParseSquare(s[1:])
-		if err != nil {
-			return Move{}, fmt.Errorf("could not parse SAN move: could not parse destination square: input, %s: %w", s, err)
-		}
-		var move Move
-		switch pieceType {
-		case Pawn:
-			return Move{}, fmt.Errorf("invalid SAN format: should not specify p for pawn: input %s", s)
-		case Rook:
-			move, err = parseSANRookMove(p, square)
-		case Knight:
-			move, err = parseSANKnightMove(p, square)
-		case Bishop:
-			move, err = parseSANBishopMove(p, square)
-		case Queen:
-			move, err = parseSANQueenMove(p, square)
-		case King:
-			move, err = parseSANKingMove(p, square)
-		default:
-			return Move{}, fmt.Errorf("could not parse SAN move: input, %s", s)
-		}
-		piece := p.PieceAt(move.ToSquare)
-		if err != nil {
-			return Move{}, err
-		}
-		if piece == NoPiece || piece.Color == p.Turn {
-			return Move{}, fmt.Errorf("invalid SAN move: taking invalid piece: input, %s", s)
-		}
-		return move, err
-	}
-	s = strings.Replace(s, "x", "", 1)
 
-	if len(s) == 5 {
-		move, err := parseSANAmbiguousPieceMoveFirstSquareKnown(p, s)
-		piece := p.PieceAt(move.ToSquare)
-		if err != nil {
-			return Move{}, err
-		}
-		if piece == NoPiece || piece.Color == p.Turn {
-			return Move{}, fmt.Errorf("invalid SAN move: take piece without x: input, %s", s)
-		}
-		return move, nil
+	fromRank, err := parseRank(san[1])
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse rank disambiguation form: %w", err)
 	}
-	file, err := parseFile(rune(s[1]))
-	if err == nil {
-		move, err := parseSANAmbiguousPieceMoveFileKnown(p, s, file)
-		piece := p.PieceAt(move.ToSquare)
-		if err != nil {
-			return Move{}, err
-		}
-		if piece == NoPiece || piece.Color == p.Turn {
-			return Move{}, fmt.Errorf("invalid SAN move: take piece without x: input, %s", s)
-		}
-		return move, nil
+	pt, err := parsePieceType(san[0])
+	if err != nil {
+		return Move{}, fmt.Errorf("could not parse rank disambiguation form: %w", err)
 	}
-	rank, err := parseRank(rune(s[1]))
-	if err == nil {
-		move, err := parseSANAmbiguousPieceMoveRankKnown(p, s, rank)
-		piece := p.PieceAt(move.ToSquare)
-		if err != nil {
-			return Move{}, err
-		}
-		if piece == NoPiece || piece.Color == p.Turn {
-			return Move{}, fmt.Errorf("invalid SAN move: take piece without x: input, %s", s)
-		}
-		return move, nil
+	if pt == Pawn || pt == NoPieceType {
+		return Move{}, errors.New("could not parse rank disambiguation form, got Pawn or NoPieceType which should use a different syntax")
 	}
-	return Move{}, fmt.Errorf("could not parse SAN move: failed to disambiguate rank or file: input %s", s)
-}
+	pieceToMove := Piece{pos.SideToMove, pt}
+	possibleFromFiles := []File{}
+	for f := FileA; f <= FileH; f++ {
+		possibleFromSquare := Square{f, fromRank}
+		if pos.Piece(possibleFromSquare) != pieceToMove {
+			continue
+		}
+		attacks := getPieceAttacks(1<<squareToIndex(possibleFromSquare), pt, pos)
+		if attacks.Square(toSquare) != 1 {
+			continue
+		}
+		possibleFromFiles = append(possibleFromFiles, f)
+	}
 
-// IsValidMove makes sure each of the elements in Move m are logical. Namely that the squares can be found on a chess board.
-func isValidMove(m Move) bool {
-	return isValidSquare(m.FromSquare) && m.FromSquare != NoSquare &&
-		isValidSquare(m.ToSquare) && m.ToSquare != NoSquare &&
-		isValidPieceType(m.Promotion)
+	if lenFiles := len(possibleFromFiles); lenFiles == 0 {
+		return Move{}, errors.New("could not parse rank disambiguation form, no files seem adequate")
+	} else if lenFiles == 1 {
+		return Move{Square{possibleFromFiles[0], fromRank}, toSquare, NoPieceType}, nil
+	}
+
+	squaresNoCheck := []Square{}
+	for _, f := range possibleFromFiles {
+		testPosition := pos.Copy()
+		testMove := Move{Square{f, fromRank}, toSquare, NoPieceType}
+		testPosition.Move(testMove)
+		testPosition.SideToMove = pos.SideToMove
+		if !testPosition.IsCheck() {
+			squaresNoCheck = append(squaresNoCheck, Square{f, fromRank})
+		}
+	}
+
+	if lenSquares := len(squaresNoCheck); lenSquares == 0 {
+		return Move{}, errors.New("could not parse rank disambiguation form, no files seem adequate")
+	} else if lenSquares > 1 {
+		return Move{}, errors.New("could not parse rank disambiguation form, multiple files seem adequate")
+	} else {
+		return Move{squaresNoCheck[0], toSquare, NoPieceType}, nil
+	}
 }

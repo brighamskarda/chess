@@ -1,0 +1,2533 @@
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.1"]
+[White "Aronian,L"]
+[Black "Sevian,Samuel"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2745"]
+[BlackElo "2687"]
+[ECO "C77"]
+[Opening "Ruy Lopez"]
+[Variation "Anderssen variation"]
+[WhiteFideId "13300474"]
+[BlackFideId "2040506"]
+[EventDate "2023.03.19"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. d3 Bc5 6. c3 b5 7. Bb3 d6 8. Bg5 h6
+9. Bh4 Bd7 10. Nbd2 Qe7 11. O-O g5 12. Bg3 Bb6 13. a4 Rb8 14. axb5 axb5 15. Re1
+h5 16. h4 g4 17. Nh2 Nh7 18. Nhf1 Nf8 19. Ne3 Bxe3 20. fxe3 Ng6 21. Rf1 Be6 22.
+Bd5 Nd8 23. Ra7 Nxh4 24. Rxc7 Nf3+ 25. Nxf3 Qxc7 26. Nh4 Nc6 27. Nf5 Bxf5 28.
+Rxf5 h4 29. Rxf7 Qxf7 30. Bxf7+ Kxf7 31. Be1 h3 32. Bg3 Ne7 33. d4 hxg2 34. Kxg2
+Rh5 35. Qb3+ Kf6 36. c4 Ng6 37. Qb4 Ke6 38. c5 exd4 39. Qb3+ Kf6 40. exd4 Re8
+41. cxd6 Rxe4 42. Qc2 Nf4+ 43. Bxf4 Rxf4 44. d7 Rh8 45. Qc8 1-0
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.2"]
+[White "Sevian,Samuel"]
+[Black "Aronian,L"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2687"]
+[BlackElo "2745"]
+[ECO "E32"]
+[Opening "Nimzo-Indian"]
+[Variation "classical variation"]
+[WhiteFideId "2040506"]
+[BlackFideId "13300474"]
+[EventDate "2023.03.19"]
+[EventType "k.o."]
+
+1. c4 Nf6 2. d4 e6 3. Nc3 Bb4 4. Qc2 O-O 5. a3 Bxc3+ 6. Qxc3 b6 7. Bg5 Bb7 8. e3
+d5 9. Nf3 Nbd7 10. cxd5 Bxd5 11. Ne5 Nxe5 12. dxe5 Ne4 13. Bxd8 Nxc3 14. Be7
+Rfe8 15. Bh4 Na4 16. Bb5 Nxb2 17. Bxe8 Rxe8 18. f3 c5 19. e4 Bc6 20. Ke2 c4 21.
+Kd2 b5 22. Kc3 Nd3 23. a4 a6 24. axb5 Bxb5 25. Bg3 Rc8 26. h4 h5 27. Bh2 Kf8 28.
+Rhg1 Ke7 29. g4 hxg4 30. Rxg4 g6 31. Rg5 Rh8 32. Bg3 Kd7 33. h5 gxh5 34. Rh1 Kc6
+35. Rg7 Rd8 36. Rd1 Rd7 37. f4 Ba4 38. Rd2 Bb3 39. f5 a5 40. fxe6 fxe6 41. Rg6
+Kb5 42. Rxe6 Rg7 43. Bh2 Ka4 44. Rc6 Nb4 45. Rb6 Rg4 46. Re2 Na2+ 47. Kd4 c3 48.
+Rc6 Rg8 49. e6 Re8 50. Bf4 Rxe6 51. Rc5 Rb6 52. Bc7 Rb4+ 53. Kd3 Bc4+ 54. Rxc4
+Nc1+ 55. Kxc3 Nxe2+ 56. Kd3 Rxc4 57. Kxc4 h4 58. Bh2 Ng3 59. e5 Nf5 60. e6 h3
+61. Be5 Ka3 62. Kd5 Ne7+ 63. Ke4 Nc6 64. Bd6+ Kb3 65. Ke3 Ne7 66. Kf3 Nf5 67.
+Bc5 a4 68. e7 Nxe7 69. Bxe7 a3 70. Bxa3 Kxa3 71. Kg3 h2 72. Kxh2 1/2-1/2
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.1"]
+[White "Shankland,S"]
+[Black "Robson,R"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2710"]
+[BlackElo "2702"]
+[ECO "C67"]
+[Opening "Ruy Lopez"]
+[Variation "Berlin defence, open variation"]
+[WhiteFideId "2004887"]
+[BlackFideId "2023970"]
+[EventDate "2023.03.19"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. d4 Nd6 6. Bxc6 dxc6 7. dxe5 Nf5 8.
+Qxd8+ Kxd8 9. Nc3 Bd7 10. h3 h6 11. b3 c5 12. Bb2 Nd4 13. Nxd4 cxd4 14. Ne4 c5
+15. c3 dxc3 16. Bxc3 Kc7 17. Rad1 a5 18. f4 a4 19. f5 axb3 20. axb3 Bc6 21. Rfe1
+Ra2 22. g4 Rc2 23. e6 fxe6 24. fxe6 Kb6 25. Rd3 Be7 26. Nd2 Ra8 27. Bxg7 Bg5 28.
+Nc4+ Kb5 29. e7 Raa2 30. Bb2 Rg2+ 31. Kf1 Rgxb2 32. Nxb2 Rxb2 33. e8=Q Bxe8 34.
+Rxe8 Kb4 35. Re4+ Kb5 36. Re2 Rb1+ 37. Kg2 Kb4 38. Re4+ Kb5 39. Re6 Ka5 40. h4
+Bxh4 41. Rxh6 Rb2+ 42. Kf3 Be1 43. g5 Rf2+ 44. Ke4 Bd2 45. Rf6 Re2+ 46. Kf5 Rf2+
+47. Kg6 Rg2 48. Rd5 b6 49. Re6 Bc3 50. Kf7 Bd4 51. g6 b5 52. Rf5 Kb4 53. Rf3 Rg4
+54. Rd6 Bc3 55. Rdd3 Be5 56. Rd5 Bd4 57. Rxd4+ Rxd4 58. g7 Rg4 59. g8=Q Rxg8 60.
+Kxg8 c4 61. bxc4 bxc4 62. Kf7 c3 63. Ke6 c2 64. Rf1 Kc3 65. Kd5 Kb2 66. Rf2 Kb1
+67. Rxc2 Kxc2 1/2-1/2
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.2"]
+[White "Robson,R"]
+[Black "Shankland,S"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2702"]
+[BlackElo "2710"]
+[ECO "C55"]
+[Opening "Two knights defence (Modern bishop's opening)"]
+[WhiteFideId "2023970"]
+[BlackFideId "2004887"]
+[EventDate "2023.03.19"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. d3 Be7 5. O-O O-O 6. Nc3 d6 7. a3 Bg4 8. h3
+Bh5 9. Be3 Kh8 10. Kh1 Qc8 11. Rg1 Nd4 12. g4 Nxf3 13. Qxf3 Bg6 14. Bb3 c6 15.
+Ne2 h6 16. Ng3 Nh7 17. Nf5 Qd8 18. Qg3 Bg5 19. h4 Bxe3 20. Nxe3 f6 21. f4 exf4
+22. Qxf4 Qd7 23. Nf5 Rad8 24. Rae1 Bf7 25. Bxf7 Qxf7 26. d4 Qe6 27. Re3 Rd7 28.
+Kh2 Kg8 29. Rge1 c5 30. c3 cxd4 31. cxd4 Rc8 32. R1e2 a5 33. e5 dxe5 34. dxe5
+Rc4 35. Qg3 Nf8 36. exf6 Qxf6 37. Ne7+ Kh7 38. Rf3 Qa6 39. Rxf8 Rcc7 40. Qe5
+Rxe7 41. Qf5+ g6 42. Rxe7+ Rxe7 43. Rh8+ Kxh8 44. Qf8+ Kh7 45. Qxe7+ Kg8 46.
+Qe8+ Kg7 47. Qe7+ Kg8 48. Qe8+ Kg7 49. Qe7+ Kg8 50. Qe8+ 1/2-1/2
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.3"]
+[White "Robson,R"]
+[Black "Shankland,S"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2702"]
+[BlackElo "2710"]
+[ECO "C50"]
+[Opening "Giuoco Pianissimo"]
+[Variation "Italian four knights variation"]
+[WhiteFideId "2023970"]
+[BlackFideId "2004887"]
+[EventDate "2023.03.19"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. d3 Bc5 5. Nc3 a6 6. O-O d6 7. a4 h6 8. Be3 O-O
+9. Bxc5 dxc5 10. h3 Qd6 11. Nd2 b6 12. Nd5 Rb8 13. Nxf6+ Qxf6 14. Qf3 Qxf3 15.
+Nxf3 Re8 16. c3 Na5 17. Bd5 Be6 18. Bxe6 Rxe6 19. b4 cxb4 20. cxb4 Nc6 21. b5
+Nb4 22. Rfc1 Rb7 23. Ra3 f6 24. Kf1 a5 25. Ke2 c6 26. bxc6 Rc7 27. Nd2 Kf8 28.
+g3 Ke7 29. f4 exf4 30. gxf4 g5 31. f5 Rexc6 32. Rxc6 Rxc6 33. Nc4 h5 34. Ra1 Rc5
+35. Kd2 Kd8 36. Rb1 Kc7 37. Rb2 Kc6 38. Rb3 h4 39. Rb2 Kc7 40. Rb1 Kd8 41. Rb3
+Ke7 42. Rc3 Rc6 43. Ne3 Rd6 44. Ng4 Na6 45. Ke3 Nc5 46. Ra3 Rc6 47. d4 Nd7 48.
+e5 Rc4 49. Kd3 Rb4 50. e6 Nb8 51. Rc3 Na6 52. Rc8 Rxa4 53. Rh8 b5 54. Rh7+ Kd6
+55. Rd7+ Kc6 56. d5+ Kb6 57. Rd6+ Kb7 58. Rxa6 1-0
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.4"]
+[White "Shankland,S"]
+[Black "Robson,R"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2710"]
+[BlackElo "2702"]
+[ECO "C67"]
+[Opening "Ruy Lopez"]
+[Variation "Berlin defence, open variation"]
+[WhiteFideId "2004887"]
+[BlackFideId "2023970"]
+[EventDate "2023.03.19"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. d4 Nd6 6. Bxc6 dxc6 7. dxe5 Nf5 8.
+Qxd8+ Kxd8 9. Nc3 Bd7 10. h3 h6 11. b3 c5 12. Nd5 Nd4 13. Nxd4 cxd4 14. Rd1 c6
+15. Nf4 g5 16. Nh5 Kc7 17. Rxd4 Bc5 18. Rc4 Be7 19. Bb2 Rhd8 20. Re4 Bf5 21. Re2
+Rd5 22. g4 Bg6 23. Ng3 Rad8 24. Nf5 Bf8 25. Rae1 a5 26. Kg2 a4 27. Bc3 R8d7 28.
+Re3 b5 29. R1e2 b4 30. Be1 a3 31. Nd6 Rd4 32. c3 bxc3 33. Bxc3 Rd1 34. Bb4 Bg7
+35. Ne8+ Kb6 36. Nxg7 c5 37. Bxa3 Ra7 38. b4 Bd3 39. bxc5+ Kc6 40. Bb4 Bxe2 41.
+Rxe2 Ra1 42. a3 Rd7 43. e6 fxe6 44. Rxe6+ Kb5 45. Nf5 Rdd1 46. c6 Rac1 47. Rxh6
+Rh1 48. Ng3 Rhg1+ 49. Kf3 Kc4 50. Bd2 Rc2 51. Bxg5 Rb1 52. Be3 Rb8 53. c7 Rf8+
+54. Nf5 Ra2 55. c8=Q+ Rxc8 56. Nd6+ Kd3 57. Nxc8 Rc2 58. Rd6+ 1-0
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.5"]
+[White "Robson,R"]
+[Black "Shankland,S"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2702"]
+[BlackElo "2710"]
+[ECO "B92"]
+[Opening "Sicilian"]
+[Variation "Najdorf, Opovcensky variation"]
+[WhiteFideId "2023970"]
+[BlackFideId "2004887"]
+[EventDate "2023.03.19"]
+[EventType "k.o."]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Be2 e5 7. Nb3 Be6 8. O-O
+Be7 9. Re1 O-O 10. Bf3 Nbd7 11. a4 Qb8 12. a5 Rc8 13. h3 Bd8 14. Be3 b5 15. axb6
+Bxb3 16. cxb3 Bxb6 17. Bg4 Bxe3 18. Rxe3 Rd8 19. Bxd7 Rxd7 20. Rf3 Qd8 21. b4 d5
+22. exd5 Nxd5 23. Nxd5 Rxd5 24. Qe2 g6 25. Rxa6 Rxa6 26. Qxa6 e4 27. Rf4 Rd1+
+28. Kh2 f5 29. Qe6+ Kg7 30. g4 Qc7 31. Kg2 Qxf4 32. Qe7+ Kg8 33. Qe8+ Kg7 34.
+Qe7+ Kg8 35. Qe8+ Kg7 36. Qe7+ Kg8 37. Qe8+ 1/2-1/2
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.6"]
+[White "Shankland,S"]
+[Black "Robson,R"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2710"]
+[BlackElo "2702"]
+[ECO "C69"]
+[Opening "Ruy Lopez"]
+[Variation "exchange variation, Alapin gambit"]
+[WhiteFideId "2004887"]
+[BlackFideId "2023970"]
+[EventDate "2023.03.19"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Bxc6 dxc6 5. O-O Bg4 6. h3 h5 7. d3 Qf6 8. Nbd2
+Ne7 9. Re1 Ng6 10. d4 Nf4 11. dxe5 Qg6 12. Nh4 Bxd1 13. Nxg6 Nxg6 14. Rxd1 O-O-O
+15. e6 fxe6 16. Re1 Bb4 17. c3 Be7 18. Nf3 e5 19. Be3 Kd7 20. g3 Ke6 21. Kg2 Rd7
+22. Rad1 Rhd8 23. Rxd7 Rxd7 24. Bg5 Bf8 25. Kf1 b5 26. Ke2 c5 27. Rd1 Bd6 28.
+Be3 c4 29. h4 Rd8 30. Ng5+ Ke7 31. Nh3 Rf8 32. Rf1 b4 33. cxb4 Rb8 34. Rc1 Rxb4
+35. Rc2 c3 36. b3 a5 37. f3 Nf8 38. Rxc3 a4 39. Nf2 axb3 40. axb3 Ne6 41. Nd3
+Rb5 42. f4 exf4 43. gxf4 Kd7 44. e5 Be7 45. f5 Nd8 46. Bg5 c6 47. Kf3 Ra5 48.
+Ke4 Ra2 49. e6+ Ke8 50. Nf4 Ra1 51. Nxh5 Re1+ 52. Re3 Rg1 53. Nxg7+ Kf8 54. f6
+Bxf6 55. Bxf6 Nxe6 56. Nxe6+ 1-0
+
+[Event "American Cup Elim w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.1"]
+[White "Zatonskih,A"]
+[Black "Pourkashiyan,A"]
+[Result "1/2-1/2"]
+[WhiteTitle "IM"]
+[BlackTitle "WGM"]
+[WhiteElo "2337"]
+[BlackElo "2313"]
+[ECO "E36"]
+[Opening "Nimzo-Indian"]
+[Variation "classical, Noa variation, 5.a3"]
+[WhiteFideId "14101572"]
+[BlackFideId "12502014"]
+[EventDate "2023.03.19"]
+[EventType "k.o."]
+
+1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. Qc2 d5 5. a3 Bxc3+ 6. Qxc3 O-O 7. Nf3 dxc4 8.
+Qxc4 b6 9. Bg5 Ba6 10. Qc2 Nbd7 11. Ne5 c5 12. Nxd7 Qxd7 13. Bxf6 gxf6 14. dxc5
+bxc5 15. h4 Rfd8 16. Rh3 Rab8 17. Rg3+ Kh8 18. Rc3 c4 19. e3 Qb7 20. Rb1 Rd6 21.
+b4 cxb3 22. Rcxb3 Rb6 23. Rxb6 axb6 24. Qc3 e5 25. Rc1 Kg7 26. Qc7 Qxc7 27. Rxc7
+Bxf1 28. Kxf1 Ra8 29. Rb7 Rxa3 30. Rxb6 h5 31. g3 Ra4 32. Ke2 Ra3 33. Kf3 Kg6
+34. Rb4 Ra2 35. Rb8 Rc2 36. Rg8+ Kh7 37. Rf8 Kg6 38. Ra8 Rb2 39. Ra3 Rc2 40. Ra4
+Kf5 41. e4+ Kg6 42. Ra3 Rb2 43. Rc3 Ra2 44. Rd3 Rb2 45. Rc3 Ra2 46. Rd3 Rb2 47.
+Rc3 Ra2 1/2-1/2
+
+[Event "American Cup Elim w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.2"]
+[White "Pourkashiyan,A"]
+[Black "Zatonskih,A"]
+[Result "1-0"]
+[WhiteTitle "WGM"]
+[BlackTitle "IM"]
+[WhiteElo "2313"]
+[BlackElo "2337"]
+[ECO "C10"]
+[Opening "French"]
+[Variation "Rubinstein variation"]
+[WhiteFideId "12502014"]
+[BlackFideId "14101572"]
+[EventDate "2023.03.19"]
+[EventType "k.o."]
+
+1. e4 e6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Nf3 Ngf6 6. Nxf6+ Nxf6 7. Be3 Bd6
+8. Bd3 O-O 9. Qe2 b6 10. O-O-O Bb7 11. Ne5 Nd5 12. Bd2 Nb4 13. Be4 Bxe4 14. Qxe4
+a5 15. a3 Bxe5 16. Qxe5 Nc6 17. Qe4 Qd5 18. Qxd5 exd5 19. Bf4 Rac8 20. Rhe1 Nd8
+21. g4 Ne6 22. Bg3 Rfd8 23. f4 Rd7 24. Re5 c6 25. h4 Kf8 26. f5 Nc7 27. f6 gxf6
+28. Rf5 Ne8 29. Rdf1 c5 30. Bf2 Rc6 31. Be3 Re6 32. Bh6+ Kg8 33. dxc5 bxc5 34.
+b3 Re5 35. R5f3 Re6 36. Bd2 Ra6 37. a4 Kg7 38. g5 fxg5 39. hxg5 d4 40. Rh1 Kg8
+41. Rfh3 f6 42. g6 Raa7 43. gxh7+ Kh8 44. Re1 Ng7 45. Rh6 Rf7 46. Rg1 Ra8 47.
+Rf1 Ne8 48. Rh5 Rc7 49. Rg1 Ng7 50. Rh6 Rf7 51. Rhg6 Raa7 52. Rh1 Ra8 53. Rg2
+Ne6 54. Rh5 Rxh7 55. Rf5 Rg7 56. Rh2+ Kg8 57. Rxf6 Ng5 58. Rfh6 Kf7 59. Rf2+ Kg8
+60. Rfh2 Kf7 61. Rc6 Ne4 62. Re2 Rg1+ 63. Kb2 Re8 64. Bxa5 Nc3 65. Rf2+ Kg7 66.
+Bxc3 dxc3+ 67. Kxc3 Re5 68. Rd2 Rg3+ 69. Kb2 Kf7 70. Rd7+ Ke8 71. Rh7 Kd8 72.
+Ra6 1-0
+
+[Event "American Cup Elim w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.1"]
+[White "Nemcova,Kat"]
+[Black "Abrahamyan,T"]
+[Result "0-1"]
+[WhiteTitle "WGM"]
+[BlackTitle "WGM"]
+[WhiteElo "2325"]
+[BlackElo "2294"]
+[ECO "A18"]
+[Opening "English"]
+[Variation "Mikenas-Carls variation"]
+[WhiteFideId "322750"]
+[BlackFideId "13301918"]
+[EventDate "2023.03.19"]
+[EventType "k.o."]
+
+1. c4 Nf6 2. Nc3 e6 3. e4 d5 4. cxd5 exd5 5. e5 Ne4 6. Nf3 Be7 7. d4 c5 8. Bd3
+Nxc3 9. bxc3 Bg4 10. O-O Nc6 11. Be3 O-O 12. h3 Bh5 13. Qb1 Bxf3 14. gxf3 g6 15.
+f4 cxd4 16. cxd4 f5 17. a3 Qd7 18. Kh2 Rac8 19. Qa2 Na5 20. Rac1 b5 21. Rg1 Nc4
+22. a4 a6 23. axb5 axb5 24. Qb3 Rc7 25. Ra1 b4 26. Ra6 Qc8 27. Qa4 Nb2 28. Qb3
+Nxd3 29. Qxd3 Qd7 30. Bd2 Rc4 31. Rga1 Rfc8 32. Ra7 R8c7 33. Ra8+ Kg7 34. Rb8
+Rb7 35. Rxb7 Qxb7 36. Rb1 Qb6 37. Be3 Qa7 38. Rg1 Kf7 39. Qd1 Qa2 40. Qf3 Rc3
+41. Qg2 Ke6 42. h4 Bxh4 43. Qh3 Rxe3 44. Qxh4 Rf3 45. Qf6+ Kd7 46. e6+ Kc7 47.
+Rc1+ Rc3 48. Qe7+ Kc6 49. Qd7+ Kb6 50. Qd6+ Kb5 51. Qb8+ Kc4 52. Qc7+ Kd3 53.
+Rxc3+ bxc3 54. Kg2 Qe2 55. e7 c2 56. Qe5 Qg4+ 57. Kh2 c1=Q 0-1
+
+[Event "American Cup Elim w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.2"]
+[White "Abrahamyan,T"]
+[Black "Nemcova,Kat"]
+[Result "1-0"]
+[WhiteTitle "WGM"]
+[BlackTitle "WGM"]
+[WhiteElo "2294"]
+[BlackElo "2325"]
+[ECO "B01"]
+[Opening "Scandinavian defence"]
+[WhiteFideId "13301918"]
+[BlackFideId "322750"]
+[EventDate "2023.03.19"]
+[EventType "k.o."]
+
+1. e4 d5 2. exd5 Qxd5 3. Nc3 Qa5 4. d4 Nf6 5. Nf3 Bf5 6. Bc4 e6 7. Bd2 Bb4 8. a3
+Bxc3 9. Bxc3 Qb6 10. Ne5 Nc6 11. O-O O-O 12. Nxc6 Qxc6 13. Bd3 Be4 14. f3 Bg6
+15. Bxg6 hxg6 16. Qd3 Rfd8 17. Rfe1 Rd5 18. Re5 Rxe5 19. dxe5 Nd5 20. Bd4 Rd8
+21. Bf2 Rd7 22. Rd1 a5 23. b3 a4 24. h3 Kf8 25. Kh2 Ke8 26. h4 Nb6 27. Qe2 Rxd1
+28. Qxd1 Nd7 29. Bg3 Qc5 30. bxa4 Qxa3 31. Qb1 b6 32. Qb5 Qc5 33. c4 Qxb5 34.
+axb5 Nc5 35. Be1 Na4 36. Bf2 Nb2 37. c5 Nc4 38. cxb6 cxb6 39. f4 Kd7 40. g4 Kc7
+41. Be1 Na3 42. Bb4 Nxb5 43. Bf8 Nd4 44. Bxg7 b5 45. Bf8 Ne2 46. f5 exf5 47.
+gxf5 Nd4 48. e6 fxe6 49. fxg6 Nf5 50. h5 Kd7 51. h6 Nxh6 52. Bxh6 Ke7 53. Bg5+
+Kf8 54. Bf6 1-0
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.21"]
+[Round "2.1"]
+[White "Caruana,F"]
+[Black "Aronian,L"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2766"]
+[BlackElo "2745"]
+[ECO "A18"]
+[Opening "English"]
+[Variation "Mikenas-Carls variation"]
+[WhiteFideId "2020009"]
+[BlackFideId "13300474"]
+[EventDate "2023.03.19"]
+
+1. c4 Nf6 2. Nc3 e6 3. e4 d5 4. cxd5 exd5 5. e5 Ne4 6. Nf3 Bf5 7. Be2 d4 8. Nxe4
+Bxe4 9. d3 Bd5 10. O-O Nc6 11. Bf4 h6 12. Bg3 g5 13. Qa4 Bg7 14. Nxd4 Bxg2 15.
+Ne6 fxe6 16. Bh5+ Ke7 17. Qa3+ Kd7 18. Kxg2 Bxe5 19. Bxe5 Nxe5 20. d4 Nc6 21. d5
+exd5 22. Bg4+ Ke8 23. Qf3 Rf8 24. Rae1+ Ne7 25. Bh5+ Kd7 26. Qh3+ Nf5 27. Re5 c6
+28. Rxf5 Kc7 29. Re1 Qd6 30. Bf7 Rad8 31. Re6 Qc5 32. Qg3+ Kb6 33. Rxh6 a5 34.
+Qxg5 Qc2 35. Rf3 Ka7 36. Qe5 Qa4 37. Rg6 Qe4 38. Qxe4 dxe4 39. Rf5 Rd2 40. Re6
+a4 41. Rxe4 b5 42. b3 Rxa2 43. bxa4 Rxa4 44. Rxa4+ bxa4 45. h4 Kb6 46. Rf3 c5
+47. h5 Ka5 48. h6 Rh8 49. Rh3 1-0
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.21"]
+[Round "2.2"]
+[White "Aronian,L"]
+[Black "Caruana,F"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2745"]
+[BlackElo "2766"]
+[ECO "C77"]
+[Opening "Ruy Lopez"]
+[Variation "Anderssen variation"]
+[WhiteFideId "13300474"]
+[BlackFideId "2020009"]
+[EventDate "2023.03.19"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. d3 Bc5 6. O-O b5 7. Bb3 O-O 8. c3 d6
+9. Bg5 h6 10. Bh4 g5 11. Bg3 Bb6 12. a4 Rb8 13. Nbd2 Nh7 14. Re1 Kh8 15. axb5
+axb5 16. Nf1 f5 17. exf5 Bxf5 18. Ne3 Bg6 19. Nd5 Nf6 20. Nxb6 Rxb6 21. d4 exd4
+22. Nxd4 Nxd4 23. Qxd4 c5 24. Qd1 b4 25. Bc2 Bxc2 26. Qxc2 Qd7 27. cxb4 cxb4 28.
+Qd3 Kg7 29. f3 Rf7 30. Ra5 Rc6 31. Bf2 Re7 32. Rd1 Qe6 33. h4 gxh4 34. Bxh4 Qe3+
+35. Qxe3 Rxe3 36. Rd4 b3 37. Rf4 d5 38. Bf2 Rd3 39. Bd4 Kg6 40. Ra8 Kg5 41. Be5
+Re6 42. Rd4 Rxd4 43. Bxd4 Re2 44. Rd8 h5 45. Rd6 Nh7 46. Rxd5+ Kg6 47. Rd6+ Kf5
+48. Rh6 Re7 49. Rxh5+ Ng5 50. f4 Kxf4 51. Bf6 Rf7 52. Bxg5+ Kg4 53. Rh3 Kxg5 54.
+Rg3+ Kh4 55. Rxb3 Rd7 56. Kf2 Rd2+ 57. Ke3 Rxg2 58. Rb5 Rg4 59. b4 Kg3 60. Kd3
+Rf4 61. Kc3 Kf3 62. Re5 1-0
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.21"]
+[Round "2.3"]
+[White "Aronian,L"]
+[Black "Caruana,F"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2745"]
+[BlackElo "2766"]
+[ECO "C77"]
+[Opening "Ruy Lopez"]
+[Variation "Anderssen variation"]
+[WhiteFideId "13300474"]
+[BlackFideId "2020009"]
+[EventDate "2023.03.19"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. d3 d6 6. c3 g6 7. O-O Bg7 8. Be3 O-O
+9. Nbd2 h6 10. h3 Nd7 11. d4 f5 12. exf5 gxf5 13. dxe5 dxe5 14. Bxc6 bxc6 15.
+Nb3 Qf6 16. Re1 Re8 17. Qc2 Qf7 18. Rad1 e4 19. Nfd4 f4 20. Bc1 c5 21. Ne2 e3
+22. fxe3 f3 23. Nf4 Bb7 24. Qg6 Qxg6 25. Nxg6 Rad8 26. Nf4 Ba8 27. gxf3 Ne5 28.
+Kf2 Nxf3 29. Rf1 c4 30. Nc5 Bf6 31. Rxd8 Rxd8 32. Ke2 Rd6 33. Rxf3 Bxf3+ 34.
+Kxf3 Rd1 35. Ne2 Rf1+ 36. Kg4 Re1 37. Kf3 Rf1+ 38. Kg2 Re1 39. Kf2 Bh4+ 40. Kf3
+Kf7 41. e4 Rf1+ 42. Kg4 Be7 43. Nxa6 Re1 44. Kf3 Rf1+ 45. Kg2 Re1 46. Kf2 Rh1
+47. Bxh6 Rxh3 48. Bf4 c5 49. Nc7 Rh1 50. Nd5 Bh4+ 51. Kf3 Rf1+ 52. Kg4 Bd8 53.
+Be3 Re1 54. Kf3 Rf1+ 55. Kg2 Re1 56. Kf2 Bh4+ 57. Kf3 Rf1+ 58. Kg4 Re1 59. Kxh4
+Rxe2 60. Kg4 Rxb2 61. Bxc5 Rxa2 62. Bd4 Ra1 63. Kf5 1-0
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.22"]
+[Round "2.4"]
+[White "Caruana,F"]
+[Black "Aronian,L"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2766"]
+[BlackElo "2745"]
+[ECO "C65"]
+[Opening "Ruy Lopez"]
+[Variation "Berlin defence"]
+[WhiteFideId "2020009"]
+[BlackFideId "13300474"]
+[EventDate "2023.03.19"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. d3 Bc5 5. Bxc6 dxc6 6. Nbd2 Be6 7. O-O Bd6 8.
+Nb3 b6 9. Bg5 Qd7 10. Bh4 c5 11. Nbd2 Nh5 12. Ng5 Nf4 13. Nxe6 Nxe6 14. Nc4 f6
+15. f3 a5 16. a4 h5 17. Bf2 h4 18. h3 Be7 19. Qe1 g5 20. Ne3 O-O-O 21. Nf5 Nd4
+22. Ne3 Ne6 23. Kh2 Kb7 24. Qc3 Nd4 25. Nc4 Rhf8 26. Rfe1 Qc6 27. Qd2 Qd7 28.
+Be3 Qe6 29. Qf2 Qc6 30. Reb1 Kc8 31. Rd1 Qe6 32. Kh1 Rd7 33. c3 Nc6 34. Qc2 Rfd8
+35. Rd2 Kb8 36. Rad1 Bf8 37. Qb3 Qe8 38. Qb5 Qe6 39. Qa6 Rf7 40. Bf2 Rfd7 41.
+Na3 Na7 42. Ra1 Qc6 43. Qc4 Rd6 44. Nb5 Nxb5 45. axb5 Qd7 46. d4 exd4 47. cxd4
+cxd4 48. b4 Qe6 49. Qc1 R6d7 50. bxa5 Bb4 51. Rda2 Bxa5 52. Be1 d3 53. Bxa5 bxa5
+54. Qd2 Kb7 55. Rxa5 Rb8 56. Ra6 Qe5 57. b6 cxb6 58. Ra7+ Kc8 59. Rc1+ Kd8 60.
+Rxd7+ Kxd7 61. Qxd3+ Ke7 62. Qa3+ Ke8 63. Qa7 Rd8 64. Qg7 Qf4 65. Ra1 Qd6 66. e5
+Qf8 67. Qc7 Qe7 68. Qc6+ Kf7 69. exf6 Qe6 70. Ra7+ Kxf6 71. Qc3+ Kf5 72. Qc2+
+Kf6 73. Qb2+ Kf5 74. Qb1+ Kf6 75. Rh7 Ke5 76. Rg7 Qf6 77. Qe1+ Kd5 78. Re7 Rd6
+79. Qe4+ Kc5 80. Rc7+ Rc6 81. Qc2+ Kb5 82. Qe2+ Kb4 83. Qe4+ Kb5 84. Qd5+ Rc5
+85. Qb3+ Ka6 86. Qd3+ Ka5 87. Ra7+ Kb4 88. Qa3+ Kc4 89. Qa4+ Kd5 90. Qd1+ Ke5
+91. Rd7 Qe6 92. Rd8 Rd5 93. Qe2+ 1-0
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.22"]
+[Round "2.5"]
+[White "Aronian,L"]
+[Black "Caruana,F"]
+[Result "0-1"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2745"]
+[BlackElo "2766"]
+[ECO "C77"]
+[Opening "Ruy Lopez"]
+[Variation "Anderssen variation"]
+[WhiteFideId "13300474"]
+[BlackFideId "2020009"]
+[EventDate "2023.03.19"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. d3 d6 6. c3 g6 7. O-O Bg7 8. Be3 O-O
+9. Nbd2 h6 10. h3 Nd7 11. d4 f5 12. dxe5 dxe5 13. exf5 gxf5 14. Bxc6 bxc6 15.
+Nb3 Qf6 16. Re1 Re8 17. Qc2 Qf7 18. Rad1 Nf8 19. Nc5 a5 20. Qa4 Ng6 21. Bc1 Rb8
+22. Nd2 Rb5 23. Ndb3 Bf8 24. Nd3 Rd5 25. Nxa5 f4 26. Nb4 Rxd1 27. Qxd1 Nh4 28.
+Kh2 e4 29. Naxc6 Bd6 30. Kh1 f3 31. g4 Ng2 32. Rg1 h5 33. Qd5 hxg4 34. hxg4 Qxd5
+35. Nxd5 Kf7 36. Rxg2 fxg2+ 37. Kxg2 Bxg4 38. Nd4 Rh8 39. Ne3 Rh2+ 40. Kg1 Bf3
+41. Nxf3 exf3 42. Nf5 Rg2+ 43. Kf1 Bh2 44. Ke1 Rg1+ 45. Kd2 Bf4+ 0-1
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.22"]
+[Round "2.6"]
+[White "Caruana,F"]
+[Black "Aronian,L"]
+[Result "0-1"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2766"]
+[BlackElo "2745"]
+[ECO "B06"]
+[Opening "Robatsch (modern) defence"]
+[WhiteFideId "2020009"]
+[BlackFideId "13300474"]
+[EventDate "2023.03.19"]
+
+1. e4 g6 2. d4 Bg7 3. Nc3 d6 4. Be3 a6 5. a4 Nc6 6. Nf3 Nf6 7. h3 O-O 8. Be2 e6
+9. O-O Ne7 10. a5 b5 11. axb6 cxb6 12. e5 dxe5 13. dxe5 Nd7 14. Ne4 Bb7 15. Nd6
+Bc6 16. Bf4 b5 17. Re1 Qc7 18. Qd2 Nb6 19. Bh6 Nbd5 20. Bxg7 Kxg7 21. Nd4 Qb6
+22. h4 Nc8 23. Ne4 Rd8 24. h5 Nde7 25. h6+ Kf8 26. Nxe6+ fxe6 27. Qf4+ Nf5 28.
+Ng5 Kg8 29. Rad1 Nce7 30. Nxe6 Rxd1 31. Rxd1 Bxg2 32. Ng5 Bb7 33. e6 Rd8 34. Rd7
+Bc6 35. Rd3 Qb8 36. Qd2 Rxd3 37. Bxd3 Qf8 38. Qc3 Be8 39. Qe5 Qxh6 40. Nf3 Qg7
+41. Qb8 Qf8 42. Ne5 Nc6 43. Nxc6 Bxc6 44. Qc7 Qd6 45. Qf7+ Kh8 46. Qf6+ Ng7 47.
+Kf1 Be8 48. Be2 Kg8 49. c4 Qxe6 50. Qd4 bxc4 51. Qd8 h5 52. Bf3 Kh7 53. Bd5 Qf5
+54. Qd6 Bb5 55. Kg1 Qg5+ 56. Kh1 Qh4+ 57. Kg1 Qg4+ 58. Kh1 c3 59. bxc3 Qh3+ 60.
+Kg1 Qf1+ 61. Kh2 Qxf2+ 62. Kh1 Qe1+ 63. Kg2 Bf1+ 64. Kh2 Qxc3 65. Qd8 Qe5+ 66.
+Kg1 Bd3 67. Bg8+ Kh6 68. Qxd3 Nf5 69. Qxa6 Qe3+ 70. Kf1 Qc1+ 71. Kg2 Qb2+ 72.
+Kg1 Qd4+ 73. Kf1 Qf4+ 74. Kg1 Qe3+ 75. Kf1 h4 76. Qb7 h3 0-1
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.22"]
+[Round "2.7"]
+[White "Caruana,F"]
+[Black "Aronian,L"]
+[Result "0-1"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2766"]
+[BlackElo "2745"]
+[ECO "A13"]
+[Opening "English"]
+[Variation "Neo-Catalan"]
+[WhiteFideId "2020009"]
+[BlackFideId "13300474"]
+[EventDate "2023.03.19"]
+
+1. c4 Nf6 2. Nf3 e6 3. g3 d5 4. d3 Be7 5. Bg2 O-O 6. O-O c5 7. Ne5 Qc7 8. f4
+Nbd7 9. Nxd7 Bxd7 10. e4 dxe4 11. dxe4 Bc6 12. Nc3 a6 13. Qe2 Rfd8 14. g4 h6 15.
+h4 h5 16. gxh5 b5 17. h6 b4 18. Nd1 g6 19. Bf3 Kh7 20. Nf2 Nh5 21. Bxh5 gxh5 22.
+Qxh5 Rg8+ 23. Kh2 Rg6 24. Be3 Rf8 25. Qf3 f5 26. h5 Rxh6 27. Rg1 Be8 28. Rg3
+Bxh5 0-1
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.21"]
+[Round "2.1"]
+[White "Dominguez Perez,L"]
+[Black "Shankland,S"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2743"]
+[BlackElo "2710"]
+[ECO "B90"]
+[Opening "Sicilian"]
+[Variation "Najdorf, Byrne (English) attack"]
+[WhiteFideId "3503240"]
+[BlackFideId "2004887"]
+[EventDate "2023.03.19"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Be3 Ng4 7. Bc1 Nc6 8. h3
+Nf6 9. Be3 e5 10. Nxc6 bxc6 11. f4 Be7 12. fxe5 dxe5 13. Qxd8+ Bxd8 14. O-O-O
+Be6 15. Bd3 Nh5 16. Na4 Nf4 17. Bf1 Bg5 18. Kb1 O-O 19. g3 Nxh3 20. Bb6 Nf4 21.
+gxf4 exf4 22. Rg1 Bh4 23. Nc5 g5 24. Nxe6 fxe6 25. Bc4 Rae8 26. Rd2 Kg7 27. Rd6
+Rf6 28. e5 Rg6 29. Bd3 h5 30. Rd7+ Kh6 31. Rf7 Bg3 32. Bxg6 Kxg6 33. Rf6+ Kh7
+34. Bf2 h4 35. Bxg3 fxg3 36. Kc1 Rd8 37. Rxe6 Rd4 38. Rxc6 Re4 39. Kd2 g4 40.
+Rc3 Rxe5 41. Rc4 Rg5 42. Ke3 Rg8 43. Kf4 Kh6 44. Rh1 g2 45. Rxh4+ Kg7 46. Rxg4+
+Kh8 47. Rxg8+ Kxg8 48. Rc3 1-0
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.21"]
+[Round "2.2"]
+[White "Shankland,S"]
+[Black "Dominguez Perez,L"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2710"]
+[BlackElo "2743"]
+[ECO "C43"]
+[Opening "Petrov"]
+[Variation "modern attack, Symmetrical variation"]
+[WhiteFideId "2004887"]
+[BlackFideId "3503240"]
+[EventDate "2023.03.19"]
+
+1. e4 e5 2. Nf3 Nf6 3. d4 Nxe4 4. Bd3 d5 5. Nxe5 Nd7 6. Nxd7 Bxd7 7. Nc3 Qh4 8.
+Nxe4 dxe4 9. g3 Bb4+ 10. c3 Qe7 11. Bc2 Bd6 12. O-O O-O 13. f3 exf3 14. Qxf3
+Rae8 15. Bf4 Bxf4 16. Qxf4 Bh3 17. Rfd1 Qe3+ 18. Qxe3 Rxe3 19. Re1 Rfe8 20. Rxe3
+Rxe3 21. Kf2 Re6 22. d5 Re5 23. c4 Kf8 24. Rd1 Ke7 25. b4 Bg4 26. Rd2 b6 27. Bd3
+Kd6 28. Bf1 Rf5+ 29. Kg1 Re5 30. Rd4 Bd7 31. Kf2 a5 32. a3 axb4 33. axb4 Re8 34.
+Bd3 h6 35. Bc2 Ra8 36. Ke3 Ra2 37. Bb3 Ra3 38. Rd3 Bf5 39. Rc3 Bc2 40. c5+ bxc5
+41. bxc5+ Ke5 42. d6 cxd6 43. cxd6 Kxd6 44. Rxc2 Rxb3+ 45. Kf2 Ra3 46. Rb2 Rc3
+47. Re2 Ra3 48. Rb2 Rc3 49. Re2 Ra3 50. Rb2 1/2-1/2
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.22"]
+[Round "3.1"]
+[White "Aronian,L"]
+[Black "Dominguez Perez,L"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2745"]
+[BlackElo "2743"]
+[ECO "C42"]
+[Opening "Petrov's defence"]
+[WhiteFideId "13300474"]
+[BlackFideId "3503240"]
+[EventDate "2023.03.19"]
+
+1. e4 e5 2. Nf3 Nf6 3. Nxe5 d6 4. Nf3 Nxe4 5. Bd3 d5 6. O-O Be7 7. Re1 O-O 8.
+Bxe4 dxe4 9. Rxe4 c5 10. d3 Nc6 11. Nc3 b6 12. Bf4 Bb7 13. Re1 Nd4 14. Nxd4 cxd4
+15. Ne4 Rc8 16. Nd2 Re8 17. f3 h6 18. Bg3 Qd5 19. Re2 Bf8 20. Rxe8 Rxe8 21. Nb3
+g5 22. h3 h5 23. Qd2 g4 24. hxg4 hxg4 25. Rf1 gxf3 26. Rxf3 Qh5 27. Rf2 Bh6 28.
+Bf4 Bg7 29. Nc1 Re6 30. Ne2 Rg6 31. Ng3 Qd5 32. b3 Bf6 33. Qe2 Bc6 34. Qh5 Qxh5
+35. Nxh5 Bh4 36. g3 Be7 37. Re2 Kf8 38. Rh2 Bf3 39. Be5 Bg5 40. Bxd4 Re6 41. Nf4
+Bxf4 42. Rh8+ Ke7 43. gxf4 Re2 44. Rc8 Ke6 45. Rc7 f6 46. a4 Kf5 47. Bf2 Rd2 48.
+Kf1 Bd1 49. Ke1 Rxc2 50. Rxa7 Bg4 51. Bxb6 Kxf4 52. Re7 Rb2 53. Re4+ Kf3 54. Rb4
+f5 55. a5 Ra2 56. Kd1 f4 57. Kc1 Bf5 58. Rd4 Ke2 59. Rxf4 1-0
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.22"]
+[Round "3.2"]
+[White "Dominguez Perez,L"]
+[Black "Aronian,L"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2743"]
+[BlackElo "2745"]
+[ECO "C67"]
+[Opening "Ruy Lopez"]
+[Variation "Berlin defence, open variation"]
+[WhiteFideId "3503240"]
+[BlackFideId "13300474"]
+[EventDate "2023.03.19"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. d4 Nd6 6. Bxc6 dxc6 7. dxe5 Nf5 8.
+Qxd8+ Kxd8 9. h3 Be7 10. Nc3 Nh4 11. Nxh4 Bxh4 12. Be3 h5 13. f3 Bf5 14. g4 Bxc2
+15. Rac1 Bh7 16. f4 Re8 17. Rcd1+ Kc8 18. Bf2 Be7 19. f5 b6 20. Bg3 Kb7 21. Kg2
+Rad8 22. Rxd8 Rxd8 23. Rd1 Rxd1 24. Nxd1 c5 25. Kf3 Kc6 26. Ne3 hxg4+ 27. hxg4
+b5 28. Ke4 c4 29. Nd5 Bc5 30. Be1 Kd7 31. Bb4 Bf2 32. Bf8 c6 33. Nb4 g6 34. Na6
+gxf5+ 35. gxf5 Kc8 36. Bc5 Kb7 37. Bxf2 Kxa6 38. Kf4 Kb7 39. Kg5 c5 40. e6 fxe6
+41. f6 Bg8 42. Kg6 e5 43. f7 Bxf7+ 44. Kxf7 Kc6 45. Ke6 a5 46. Bg3 a4 47. Bxe5
+b4 48. Bf6 c3 49. bxc3 bxc3 50. Bxc3 a3 51. Ke5 c4 52. Kd4 Kb7 53. Kc5 Ka8 54.
+Kb4 Kb8 55. Kxa3 Ka8 56. Kb4 Kb8 57. Kb5 Ka8 58. a4 Kb8 59. Kb6 Ka8 60. a5 Kb8
+61. a6 Ka8 62. a7 1/2-1/2
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.23"]
+[Round "4.1"]
+[White "So,W"]
+[Black "Aronian,L"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2761"]
+[BlackElo "2745"]
+[ECO "D37"]
+[Opening "QGD"]
+[Variation "4.Nf3"]
+[WhiteFideId "5202213"]
+[BlackFideId "13300474"]
+[EventDate "2023.03.19"]
+
+1. d4 Nf6 2. c4 e6 3. Nf3 d5 4. Nc3 Nbd7 5. e3 Be7 6. b3 O-O 7. Bb2 b6 8. Bd3
+Bb7 9. Qc2 h6 10. Rd1 c5 11. cxd5 Nxd5 12. Nxd5 Bxd5 13. dxc5 Bxc5 14. O-O Qe7
+15. Bh7+ Kh8 16. Be4 Bxe4 17. Qxe4 a5 18. Qf4 Kh7 19. g4 Nf6 20. g5 hxg5 21.
+Nxg5+ Kg8 22. Kh1 Rfd8 23. Rxd8+ Qxd8 24. Rg1 Be7 25. e4 Qe8 26. Qh4 Qc6 27. f3
+e5 28. Bxe5 Ra7 29. Bxf6 Bxf6 30. Qh7+ Kf8 31. Qf5 Bxg5 32. Qxg5 f6 33. Qh5 Kg8
+34. Rd1 Ra8 35. h4 Qe6 36. Kg2 Rc8 37. Kg3 Qe7 38. Qd5+ Kh8 39. Qd6 Qe8 40. Qxb6
+Qe5+ 41. Kh3 Rc3 42. Kg4 Rc2 43. Qd8+ Kh7 44. Rd2 Qe6+ 45. Kg3 Qe5+ 46. Kh3 Rc3
+47. Kg2 Qf4 48. Rf2 Rc5 49. Qd7 Qxh4 50. Qh3 Qxh3+ 51. Kxh3 g5 52. Rd2 a4 53.
+bxa4 Rc4 54. Rd6 Kg7 55. a5 Ra4 56. a6 Rxa2 57. Kg4 Ra5 58. Kh5 Kf7 59. Rb6 Ra4
+60. Rb7+ Ke6 61. a7 Ke5 62. Re7+ Kf4 63. Rf7 Kxf3 64. e5 Ke4 65. exf6 Kf5 66.
+Kh6 g4 67. Kg7 g3 68. Rb7 g2 69. Rb1 Rxa7+ 70. f7 Kf4 71. Kg8 Ra8+ 72. f8=R+
+Rxf8+ 73. Kxf8 Kg3 74. Ra1 Kh2 75. Ra2 Kh1 76. Rxg2 Kxg2 1/2-1/2
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.23"]
+[Round "4.2"]
+[White "Aronian,L"]
+[Black "So,W"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2745"]
+[BlackElo "2761"]
+[ECO "C42"]
+[Opening "Petrov's defence"]
+[WhiteFideId "13300474"]
+[BlackFideId "5202213"]
+[EventDate "2023.03.19"]
+
+1. e4 e5 2. Nf3 Nf6 3. Nxe5 d6 4. Nf3 Nxe4 5. Bd3 Nf6 6. O-O Be7 7. Re1 O-O 8.
+Bf1 d5 9. d4 Re8 10. c4 Nc6 11. Nc3 h6 12. h3 dxc4 13. Bxc4 Bd6 14. Rxe8+ Qxe8
+15. Be3 Bf5 16. Nh4 Bh7 17. Qf3 Qd7 18. Bxh6 Nxd4 19. Qxb7 Re8 20. Be3 Nc2 21.
+Bb5 Qc8 22. Qxc8 Rxc8 23. Rd1 Nxe3 24. fxe3 Bc5 25. Bd3 Rb8 26. b3 Re8 27. Bxh7+
+Kxh7 28. Rd3 Bxe3+ 29. Kf1 Bb6 30. g4 g6 31. Nf3 Kg7 32. Nd2 Ba5 33. a3 c5 34.
+Nc4 Bxc3 35. Rxc3 Ne4 36. Rd3 f5 37. gxf5 gxf5 38. Nd6 Nxd6 39. Rxd6 Re3 40. Rd5
+Rxb3 41. Rxc5 Rxa3 42. Rxf5 Rxh3 43. Ra5 Rf3+ 44. Ke2 Rf6 45. Rxa7+ Rf7 46.
+Rxf7+ Kxf7 1/2-1/2
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.23"]
+[Round "4.3"]
+[White "Aronian,L"]
+[Black "So,W"]
+[Result "0-1"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2745"]
+[BlackElo "2761"]
+[ECO "C67"]
+[Opening "Ruy Lopez"]
+[Variation "Berlin defence, open variation"]
+[WhiteFideId "13300474"]
+[BlackFideId "5202213"]
+[EventDate "2023.03.19"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. d4 Nd6 6. Bxc6 dxc6 7. dxe5 Nf5 8.
+Qxd8+ Kxd8 9. Nc3 Ke8 10. h3 Be6 11. Ng5 Nd4 12. Nxe6 fxe6 13. Bg5 Nxc2 14. Rad1
+Nb4 15. Ne4 Nxa2 16. g4 Nb4 17. f4 h6 18. Bh4 Nd5 19. f5 Ne3 20. fxe6 Nxd1 21.
+Rf7 Rc8 22. Bf6 Rg8 23. g5 Ne3 24. g6 Nd5 25. Bh4 Be7 26. Bxe7 Nxe7 27. Nd6+
+cxd6 28. exd6 Nxg6 29. h4 Rb8 30. h5 Nf8 0-1
+
+[Event "American Cup Elim"]
+[Site "Saint Louis USA"]
+[Date "2023.03.24"]
+[Round "4.4"]
+[White "So,W"]
+[Black "Aronian,L"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2761"]
+[BlackElo "2745"]
+[ECO "B06"]
+[Opening "Robatsch (modern) defence"]
+[WhiteFideId "5202213"]
+[BlackFideId "13300474"]
+[EventDate "2023.03.19"]
+
+1. d4 g6 2. e4 Bg7 3. Nf3 d6 4. Bc4 a6 5. O-O e6 6. a4 b6 7. Qe2 Nd7 8. Nbd2 Bb7
+9. Re1 Ngf6 10. h3 d5 11. exd5 Nxd5 12. Ne4 h6 13. Bxd5 Bxd5 14. c4 Bb7 15. Bf4
+O-O 16. Rad1 Rc8 17. Ne5 g5 18. Bh2 f5 19. Nc3 f4 20. Nxd7 Qxd7 21. Qxe6+ Qxe6
+22. Rxe6 Rce8 23. Rxe8 Rxe8 24. Kf1 Bc8 25. f3 Be6 26. b3 Bf5 27. Ne4 b5 28.
+axb5 axb5 29. Bg1 Ra8 30. d5 Ra3 31. cxb5 Rxb3 32. Bd4 Rxb5 33. Bxg7 Kxg7 34. d6
+cxd6 35. Nxd6 Re5 36. Nxf5+ Rxf5 37. h4 gxh4 38. Kg1 h3 39. gxh3 Kf6 40. h4 Rh5
+41. Kg2 Re5 42. Rd6+ Re6 43. Rd5 Re5 44. Rd6+ Re6 45. Rd5 Re8 46. Rd6+ Re6 47.
+Rd5 1/2-1/2
+
+[Event "American Cup Elim w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.21"]
+[Round "2.1"]
+[White "Paikidze,N"]
+[Black "Abrahamyan,T"]
+[Result "1-0"]
+[WhiteTitle "IM"]
+[BlackTitle "WGM"]
+[WhiteElo "2314"]
+[BlackElo "2294"]
+[ECO "E00"]
+[Opening "Catalan opening"]
+[WhiteFideId "13603620"]
+[BlackFideId "13301918"]
+[EventDate "2023.03.19"]
+
+1. d4 Nf6 2. c4 e6 3. g3 d5 4. Nf3 h6 5. Bg2 Bd6 6. O-O O-O 7. b3 b6 8. Bb2 Bb7
+9. Nc3 a6 10. Rc1 Nbd7 11. Nd2 c5 12. dxc5 bxc5 13. cxd5 exd5 14. Nc4 dxc4 15.
+Bxb7 Ra7 16. Qxd6 Rxb7 17. Qxa6 Qa8 18. Qxc4 Rb4 19. Qd3 c4 20. Qf5 cxb3 21. a3
+Rb6 22. Rfd1 Re6 23. e4 Rfe8 24. Nb5 g6 25. Qf3 Rxe4 26. Qc3 R8e5 27. Nd6 Re2
+28. Qxb3 Rxb2 29. Qxf7+ Kh8 30. Qxg6 Re7 31. Rc8+ Qxc8 32. Nxc8 Rg7 33. Qxh6+
+Kg8 34. Qe3 1-0
+
+[Event "American Cup Elim w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.21"]
+[Round "2.2"]
+[White "Abrahamyan,T"]
+[Black "Paikidze,N"]
+[Result "1/2-1/2"]
+[WhiteTitle "WGM"]
+[BlackTitle "IM"]
+[WhiteElo "2294"]
+[BlackElo "2314"]
+[ECO "B15"]
+[Opening "Caro-Kann"]
+[Variation "Tartakower (Nimzovich) variation"]
+[WhiteFideId "13301918"]
+[BlackFideId "13603620"]
+[EventDate "2023.03.19"]
+
+1. e4 c6 2. d4 d5 3. Nd2 dxe4 4. Nxe4 Nf6 5. Nxf6+ exf6 6. Be3 Bd6 7. Bd3 O-O 8.
+Ne2 Re8 9. O-O Bg4 10. h3 Bh5 11. c4 Nd7 12. Qc2 Nf8 13. Rfe1 Qc7 14. c5 Be7 15.
+Nf4 Bg6 16. b4 Bxd3 17. Qxd3 Ne6 18. Qf5 g6 19. Qg4 Nxf4 20. Bxf4 Qd8 21. Rad1
+Bf8 22. Rxe8 Qxe8 23. d5 cxd5 24. Qf3 Rd8 25. Be3 Qe6 26. Bd4 f5 27. Qc3 Qc6 28.
+a4 a6 29. Qb3 Bg7 30. b5 axb5 31. axb5 Qe6 32. Qb2 Bxd4 33. Qxd4 Qd7 34. Rb1 Qe6
+35. Rc1 Rc8 36. Qc3 Qe8 37. Qb3 Qd7 38. Qa4 d4 39. c6 bxc6 40. bxc6 Qd6 41. Rd1
+Qxc6 42. Qxd4 Qe6 43. h4 h5 44. Qf4 Re8 45. Qg5 Qe7 46. Qf4 Qe5 47. Qg5 Qe7 48.
+Qf4 Qe5 49. Qg5 Qe7 50. Qf4 Qe5 1/2-1/2
+
+[Event "American Cup Elim w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.21"]
+[Round "2.1"]
+[White "Tokhirjonova,Gulrukhbegim"]
+[Black "Pourkashiyan,A"]
+[Result "1-0"]
+[WhiteTitle "WGM"]
+[BlackTitle "WGM"]
+[WhiteElo "2332"]
+[BlackElo "2313"]
+[ECO "E36"]
+[Opening "Nimzo-Indian"]
+[Variation "classical, Noa variation, 5.a3"]
+[WhiteFideId "14203626"]
+[BlackFideId "12502014"]
+[EventDate "2023.03.19"]
+
+1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. Qc2 d5 5. a3 Bxc3+ 6. Qxc3 O-O 7. Nf3 dxc4 8.
+Qxc4 b6 9. Bg5 Ba6 10. Qc1 Nbd7 11. e4 Bxf1 12. Kxf1 h6 13. Bh4 Qc8 14. Qe3 c5
+15. h3 cxd4 16. Nxd4 Qc4+ 17. Kg1 e5 18. Nf5 Qxe4 19. Qxe4 Nxe4 20. Rd1 Ndc5 21.
+b4 Nc3 22. Re1 Nd3 23. Re3 e4 24. f3 Rfe8 25. fxe4 Nf4 26. Kh2 Nb5 27. Rd1 a5
+28. a4 Nc7 29. b5 Nce6 30. Nd6 Rf8 31. Be7 Rfb8 32. Nc4 Rb7 33. Ba3 Ng5 34. h4
+Nge6 35. g3 Ng6 36. Rd6 Rab8 37. Red3 Ngf8 38. Ne5 Rc8 39. Rc6 Rcb8 40. Rcd6 Rc8
+41. Nc6 h5 42. Rd2 Ng6 43. Rd7 Rcc7 44. Rxc7 Rxc7 45. Rd5 Nef8 46. Rxh5 f6 47.
+Rd5 Nd7 48. Bd6 Rc8 49. h5 Re8 50. hxg6 Rxe4 51. Be7 1-0
+
+[Event "American Cup Elim w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.21"]
+[Round "2.2"]
+[White "Pourkashiyan,A"]
+[Black "Tokhirjonova,Gulrukhbegim"]
+[Result "0-1"]
+[WhiteTitle "WGM"]
+[BlackTitle "WGM"]
+[WhiteElo "2313"]
+[BlackElo "2332"]
+[ECO "C42"]
+[Opening "Petrov"]
+[Variation "Nimzovich attack"]
+[WhiteFideId "12502014"]
+[BlackFideId "14203626"]
+[EventDate "2023.03.19"]
+
+1. e4 e5 2. Nf3 Nf6 3. Nxe5 d6 4. Nf3 Nxe4 5. Nc3 Nxc3 6. dxc3 Be7 7. Bf4 Nd7 8.
+Qd2 O-O 9. O-O-O Nc5 10. Kb1 Re8 11. Be3 Ne4 12. Qe1 Bf8 13. h4 c6 14. c4 a6 15.
+Ng5 h6 16. Nxe4 Rxe4 17. f3 Re8 18. Qf2 b5 19. c5 Qe7 20. Bc1 dxc5 21. g4 c4 22.
+Bg2 Qc5 23. Qg3 c3 24. Rhe1 Rxe1 25. Rxe1 Bd7 26. g5 h5 27. g6 fxg6 28. Qxg6 Bf5
+29. Qg3 cxb2 30. Bxb2 Qxc2+ 31. Ka1 Rd8 32. Qf4 Rd2 33. Qe5 Rd1+ 0-1
+
+[Event "American Cup Elim w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.22"]
+[Round "3.1"]
+[White "Tokhirjonova,Gulrukhbegim"]
+[Black "Paikidze,N"]
+[Result "0-1"]
+[WhiteTitle "WGM"]
+[BlackTitle "IM"]
+[WhiteElo "2332"]
+[BlackElo "2314"]
+[ECO "A04"]
+[Opening "Reti v Dutch"]
+[WhiteFideId "14203626"]
+[BlackFideId "13603620"]
+[EventDate "2023.03.19"]
+
+1. Nf3 f5 2. g3 Nf6 3. Bg2 g6 4. c4 Bg7 5. Nc3 O-O 6. O-O d6 7. d3 e5 8. e3 Nc6
+9. Rb1 a5 10. a3 Ne7 11. b4 axb4 12. axb4 h6 13. b5 Be6 14. Nd2 c6 15. Qb3 Nd7
+16. Ba3 Nc5 17. Bxc5 dxc5 18. Na4 Qd6 19. Rfd1 Ra5 20. bxc6 b5 21. Nb2 b4 22.
+Ra1 Rfa8 23. Rxa5 Rxa5 24. d4 exd4 25. exd4 Ra3 26. dxc5 Qxd2 27. Rxd2 Rxb3 28.
+Nd1 Rb1 29. Bd5 Kf7 30. c7 Be5 31. Kg2 Bxc7 32. Ne3 b3 33. Nd1 Ba5 34. Rd3 b2
+35. c6 Bc7 36. f4 Rc1 37. Nxb2 Rc2+ 38. Kh3 Rxb2 39. Bxe6+ Kxe6 40. Rd7 Ba5 41.
+Ra7 Nxc6 0-1
+
+[Event "American Cup Elim w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.22"]
+[Round "3.2"]
+[White "Paikidze,N"]
+[Black "Tokhirjonova,Gulrukhbegim"]
+[Result "1-0"]
+[WhiteTitle "IM"]
+[BlackTitle "WGM"]
+[WhiteElo "2314"]
+[BlackElo "2332"]
+[ECO "E06"]
+[Opening "Catalan"]
+[Variation "closed, 5.Nf3"]
+[WhiteFideId "13603620"]
+[BlackFideId "14203626"]
+[EventDate "2023.03.19"]
+
+1. d4 Nf6 2. c4 e6 3. g3 d5 4. Nf3 Be7 5. Bg2 O-O 6. Nc3 dxc4 7. Ne5 c6 8. Nxc4
+b5 9. Ne5 Qb6 10. O-O Rd8 11. Qc2 Bb7 12. Rd1 Na6 13. e3 Rac8 14. Qe2 Nb4 15.
+Bd2 a6 16. a3 Nbd5 17. Ne4 a5 18. Ng5 Rf8 19. e4 Nc7 20. Be3 c5 21. Rac1 Na6 22.
+d5 exd5 23. exd5 Bd6 24. Nd3 h6 25. Ne4 Nxe4 26. Bxe4 Rfe8 27. Qg4 Bf8 28. b4
+axb4 29. axb4 h5 30. Qf3 g6 31. g4 hxg4 32. Qxg4 Rc7 33. bxc5 Nxc5 34. Nxc5 Bxc5
+35. Bxc5 Rxc5 36. Rxc5 Qxc5 37. Bxg6 Kf8 38. Bxf7 Kxf7 39. Qf5+ Kg7 40. Qg5+ Kf7
+41. Qf5+ Ke7 42. d6+ Kd8 43. Qxc5 1-0
+
+[Event "American Cup Elim w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.23"]
+[Round "4.1"]
+[White "Lee,Alice"]
+[Black "Paikidze,N"]
+[Result "1-0"]
+[WhiteTitle "FM"]
+[BlackTitle "IM"]
+[WhiteElo "2362"]
+[BlackElo "2314"]
+[ECO "A40"]
+[Opening "Modern defence"]
+[WhiteFideId "30941822"]
+[BlackFideId "13603620"]
+[EventDate "2023.03.19"]
+
+1. d4 g6 2. c4 Bg7 3. e4 c5 4. d5 d6 5. Be2 e6 6. Nc3 Bxc3+ 7. bxc3 e5 8. Bd3
+Nd7 9. Ne2 Qe7 10. h3 Kd8 11. Be3 Kc7 12. Qd2 f5 13. exf5 e4 14. Bg5 Ndf6 15.
+Bc2 Bxf5 16. Qe3 h6 17. Bf4 g5 18. Qxc5+ Kd8 19. Bxd6 Qd7 20. Nd4 Rc8 21. Qb4
+Ne8 22. Be5 Rh7 23. g4 1-0
+
+[Event "American Cup Elim w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.23"]
+[Round "4.2"]
+[White "Paikidze,N"]
+[Black "Lee,Alice"]
+[Result "1-0"]
+[WhiteTitle "IM"]
+[BlackTitle "FM"]
+[WhiteElo "2314"]
+[BlackElo "2362"]
+[ECO "D45"]
+[Opening "QGD semi-Slav"]
+[Variation "Stoltz variation"]
+[WhiteFideId "13603620"]
+[BlackFideId "30941822"]
+[EventDate "2023.03.19"]
+
+1. d4 d5 2. c4 c6 3. Nc3 Nf6 4. e3 e6 5. Nf3 Nbd7 6. Qc2 Bd6 7. g4 h6 8. h3 b6
+9. cxd5 exd5 10. Nh4 Bb7 11. Nf5 Bf8 12. Bg2 g6 13. Ng3 Bd6 14. f4 Qe7 15. O-O
+O-O 16. Bd2 b5 17. e4 dxe4 18. Rae1 Bc7 19. Ncxe4 Nxe4 20. Nxe4 Qd8 21. f5 Nf6
+22. fxg6 fxg6 23. Nc5 Qxd4+ 24. Be3 Qe5 25. Qxg6+ Kh8 26. Rf5 Qh2+ 27. Kf1 Nxg4
+28. hxg4 Rxf5+ 29. gxf5 Qh4 30. Qxh6+ Qxh6 31. Bxh6 Bc8 32. Re8+ Kh7 33. Be3 b4
+34. Re7+ 1-0
+
+[Event "American Cup Elim w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.23"]
+[Round "4.3"]
+[White "Paikidze,N"]
+[Black "Lee,Alice"]
+[Result "0-1"]
+[WhiteTitle "IM"]
+[BlackTitle "FM"]
+[WhiteElo "2314"]
+[BlackElo "2362"]
+[ECO "D45"]
+[Opening "QGD semi-Slav"]
+[Variation "Stoltz variation"]
+[WhiteFideId "13603620"]
+[BlackFideId "30941822"]
+[EventDate "2023.03.19"]
+
+1. d4 d5 2. c4 c6 3. Nc3 Nf6 4. e3 e6 5. Nf3 Nbd7 6. Qc2 b6 7. Be2 Bb7 8. b3 Bd6
+9. Bb2 Rc8 10. O-O O-O 11. e4 dxe4 12. Nxe4 Nxe4 13. Qxe4 Qe7 14. Rfe1 f5 15.
+Qc2 Rfd8 16. Bd3 Qf7 17. h3 h6 18. Rad1 Re8 19. a3 Rcd8 20. b4 g6 21. Qc3 Kh7
+22. c5 Bb8 23. Ne5 Bxe5 24. dxe5 bxc5 25. bxc5 Qe7 26. Qb4 Nxc5 27. Bc2 Rd5 28.
+Bd4 a5 29. Qb6 Na6 30. Rb1 Nb4 31. Ba4 Ra8 32. axb4 Ra6 33. bxa5 Rxb6 34. Bxb6
+c5 35. Red1 Qg5 36. g3 Qh5 37. Rxd5 Bxd5 38. Kf1 Qxh3+ 39. Ke2 Qg4+ 40. Kd2 Qd4+
+41. Ke2 Qe4+ 0-1
+
+[Event "American Cup Elim w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.24"]
+[Round "4.4"]
+[White "Lee,Alice"]
+[Black "Paikidze,N"]
+[Result "1-0"]
+[WhiteTitle "FM"]
+[BlackTitle "IM"]
+[WhiteElo "2362"]
+[BlackElo "2314"]
+[ECO "A43"]
+[Opening "Old Benoni defence"]
+[WhiteFideId "30941822"]
+[BlackFideId "13603620"]
+[EventDate "2023.03.19"]
+
+1. d4 c5 2. d5 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 Nf6 6. Bb5+ Bd7 7. a4 O-O 8. O-O
+Bxb5 9. axb5 Nbd7 10. Nd2 Nb6 11. Qe2 Qc7 12. Nc4 Nxc4 13. Qxc4 Nd7 14. Bf4 Nb6
+15. Qb3 c4 16. Qb4 f5 17. Be3 f4 18. Bxb6 axb6 19. f3 g5 20. Ne2 Ra5 21. Ra3
+Rxa3 22. Qxa3 c3 23. bxc3 Qc4 24. Re1 Rc8 25. Qb3 Qc5+ 26. Kf1 Ra8 27. Qb4 Ra2
+28. Qxc5 bxc5 29. Rc1 Rb2 30. c4 Rb4 31. c3 Rxc4 32. Ra1 Kf7 33. Ra3 e6 34.
+dxe6+ Kxe6 35. Ke1 d5 36. exd5+ Kxd5 37. Kd2 Be5 38. Kd3 h5 39. Ra8 Bd6 40. h3
+h4 41. b6 Be7 42. Ra1 Bf6 43. Ra3 Bd8 44. Ra7 Bxb6 45. Rxb7 Ba5 46. Rd7+ Kc6 47.
+Kxc4 Kxd7 48. Kxc5 Ke6 49. Kd4 Bb6+ 50. Ke4 Bf2 51. Nd4+ Kf6 52. c4 Be1 53. c5
+Ba5 54. c6 Ke7 55. Kd5 Bb6 56. Ne6 Kf6 57. c7 Bxc7 58. Nxc7 Kf5 59. Ne6 Kf6 60.
+Nxg5 Kxg5 61. Ke5 1-0
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.17"]
+[Round "1.1"]
+[White "Nakamura,Hi"]
+[Black "Sevian,Samuel"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2768"]
+[BlackElo "2687"]
+[ECO "C77"]
+[Opening "Ruy Lopez"]
+[Variation "Morphy defence, Duras variation"]
+[WhiteFideId "2016192"]
+[BlackFideId "2040506"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. d3 d6 6. c4 Bg4 7. h3 Bxf3 8. Qxf3
+Nd7 9. Be3 Be7 10. Nc3 Nf8 11. Ne2 Ne6 12. d4 exd4 13. Nxd4 Nxd4 14. Bxd4 O-O
+15. Bxc6 bxc6 16. Rd1 Re8 17. O-O Bf6 18. c5 Re6 19. Bxf6 Qxf6 20. Qxf6 gxf6 21.
+f3 Rb8 22. Rf2 Rb5 23. Rc2 dxc5 24. Rd7 Rd6 25. Rxc7 c4 26. Kf2 Rb6 27. Ke3 Kg7
+28. Ra7 Rd3+ 29. Kf4 Rd4 30. h4 Kg6 31. h5+ Kg7 32. Ra8 h6 33. a4 c5 34. a5 Rc6
+35. Rb8 Kh7 36. Ke3 Kg7 37. Ke2 Re6 38. g4 Rc6 39. Rd2 Rc7 40. Rb6 Rcd7 41. Rxd4
+cxd4 42. Rxa6 Rc7 43. Rd6 Rb7 44. Rb6 Rc7 45. a6 c3 46. bxc3 Rxc3 47. a7 Ra3 48.
+Rb7 Re3+ 49. Kd2 Ra3 50. Rc7 f5 51. e5 fxg4 52. fxg4 1-0
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.18"]
+[Round "1.2"]
+[White "Sevian,Samuel"]
+[Black "Nakamura,Hi"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2687"]
+[BlackElo "2768"]
+[ECO "D37"]
+[Opening "QGD"]
+[Variation "4.Nf3"]
+[WhiteFideId "2040506"]
+[BlackFideId "2016192"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. d4 Nf6 2. c4 e6 3. Nf3 d5 4. Nc3 h6 5. Bf4 Bd6 6. Bxd6 Qxd6 7. e3 O-O 8. Rc1
+a6 9. a3 b6 10. cxd5 exd5 11. Be2 Nbd7 12. O-O Bb7 13. b4 c6 14. Qb3 a5 15. Rfd1
+axb4 16. axb4 Ra7 17. Ra1 Rfa8 18. Rxa7 Rxa7 19. Ne1 Ne4 20. Nxe4 dxe4 21. f3
+Nf6 22. fxe4 Nxe4 23. Nf3 Bc8 24. Qc2 Bf5 25. Ne5 Qf6 26. Bd3 Qg5 27. Re1 Ra1
+28. Rxa1 Qxe3+ 29. Kf1 Nd2+ 30. Qxd2 Qxd2 31. Ra8+ Kh7 32. Bxf5+ g6 33. Bd3 Qc1+
+34. Ke2 Qb2+ 35. Ke3 c5 36. bxc5 bxc5 37. Rd8 cxd4+ 38. Rxd4 Qxg2 39. Rd7 Qg1+
+40. Ke4 Qe1+ 41. Kd5 Qa5+ 42. Ke4 Qe1+ 43. Kd5 Qa5+ 44. Ke4 Qe1+ 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.17"]
+[Round "1.1"]
+[White "Aronian,L"]
+[Black "Dominguez Perez,L"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2745"]
+[BlackElo "2743"]
+[ECO "D35"]
+[Opening "QGD"]
+[Variation "exchange, positional line, 5...c6"]
+[WhiteFideId "13300474"]
+[BlackFideId "3503240"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. c4 e6 2. Nc3 d5 3. d4 Nf6 4. cxd5 exd5 5. Bg5 c6 6. e3 Bf5 7. Qf3 Bg6 8. Bxf6
+Qxf6 9. Qxf6 gxf6 10. Nf3 Nd7 11. Nh4 Be7 12. Ne2 f5 13. Nf3 Bb4+ 14. Kd1 Bd6
+15. Ne1 Ke7 16. Nd3 Bh5 17. f3 Bg6 18. Nef4 a5 19. Ke1 Nf8 20. g3 Ne6 21. Rc1
+Rhe8 22. Kf2 Kf6 23. Be2 Re7 24. Bd1 Kg7 25. Re1 Ree8 26. Re2 Re7 27. Rc3 Kf8
+28. a3 Bxf4 29. Nxf4 Nxf4 30. exf4 f6 31. Rb3 Rxe2+ 32. Bxe2 b5 33. Rc3 Be8 34.
+Bd3 Bd7 35. g4 Ke7 36. Bxf5 Bxf5 37. gxf5 Kd7 38. Rc1 a4 39. Rg1 Re8 40. h4 Re7
+41. h5 c5 42. dxc5 Kc6 43. h6 Kxc5 44. Rg6 Kc4 45. Rxf6 Rb7 46. Re6 Kb3 47. Re2
+Rb6 48. Ke3 Rf6 49. Rg2 Rf8 50. Kd4 Rxf5 51. Rf2 Ka2 52. Ke3 Kb3 53. Rd2 Kc4 54.
+Rd3 Kc5 55. Rc3+ Kd6 56. Rc8 Rf6 57. Rd8+ Kc5 58. Rc8+ Kd6 59. Re8 Rxh6 60. f5
+Rh4 61. Rd8+ Ke5 62. f4+ Kxf5 63. Rxd5+ Kf6 64. Rxb5 Rh2 65. Ke4 Re2+ 66. Kf3
+Rd2 67. Kg3 Re2 68. Rb7 Kf5 69. Kf3 Rh2 70. Rb5+ Kf6 71. Ke4 Re2+ 72. Kd3 Rf2
+73. Rb7 h5 74. Ke3 Rg2 75. Kf3 Rd2 76. Kg3 Re2 77. Rb6+ Kf5 78. Rb5+ Kf6 79. Kf3
+Rd2 80. Ke3 Rg2 81. Kf3 Rd2 82. Ke4 Re2+ 83. Kd3 Rf2 84. Ke3 Rg2 85. Rb6+ Kf5
+86. Kf3 Rd2 87. Rb4 Rc2 88. Kg3 Rd2 89. Rb8 Re2 90. Rf8+ Kg6 91. Rg8+ Kf6 92.
+Rb8 Kf5 93. Rb4 Rd2 94. Rxa4 Rxb2 95. Ra5+ Kf6 96. Kf3 Rb3+ 97. Ke4 h4 98. Rh5
+Rxa3 99. Rh6+ Kf7 100. Rh7+ Kf6 101. Rh6+ Kf7 102. Rh7+ Kf6 103. Rh6+ 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.18"]
+[Round "1.2"]
+[White "Dominguez Perez,L"]
+[Black "Aronian,L"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2743"]
+[BlackElo "2745"]
+[ECO "C67"]
+[Opening "Ruy Lopez"]
+[Variation "Berlin defence, open variation"]
+[WhiteFideId "3503240"]
+[BlackFideId "13300474"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. d4 Nd6 6. Bxc6 dxc6 7. dxe5 Nf5 8.
+Qxd8+ Kxd8 9. h3 Be7 10. Nc3 Nh4 11. Nxh4 Bxh4 12. Rd1+ Ke8 13. Ne2 h5 14. f3
+Bf5 15. c3 Rd8 16. Be3 Be7 17. g4 Be6 18. Rxd8+ Kxd8 19. Nf4 hxg4 20. Nxe6+ fxe6
+21. hxg4 a6 22. Kg2 g6 23. f4 Ke8 24. Rd1 Rh7 25. Rh1 Rxh1 26. Kxh1 Bf8 27. Bf2
+Bh6 28. Bg3 Kd7 29. Kg2 Ke8 30. Kf3 Kd7 31. Ke4 Ke8 32. Be1 Kd7 33. Bf2 Ke8 34.
+Be3 Kd7 35. Kd3 Bf8 36. Ke4 Bh6 37. Bc5 Ke8 38. Bb4 Kd7 39. Ba3 Ke8 40. Bc5 Kd7
+41. Bb4 Ke8 42. c4 Kd7 43. b3 Ke8 44. Ba5 Kd7 45. f5 gxf5+ 46. gxf5 exf5+ 47.
+Kxf5 Be3 48. e6+ Ke8 49. Bxc7 Bf2 50. Bd6 Bd4 51. Ke4 Bf2 52. Kd3 Bh4 53. Ke4
+Bf2 54. Kf5 Bd4 55. Kf4 Bf2 56. Be5 Ke7 57. Kf5 Ke8 58. Bf6 Be1 59. Bg5 Bb4 60.
+Ke5 Bc5 61. Bh4 Be3 62. Be1 Bg1 63. Bc3 Bh2+ 64. Kf5 Bg3 65. Be5 Bf2 66. Bd6 Bd4 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.18"]
+[Round "1.3"]
+[White "Dominguez Perez,L"]
+[Black "Aronian,L"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2743"]
+[BlackElo "2745"]
+[ECO "C67"]
+[Opening "Ruy Lopez"]
+[Variation "Berlin defence, open variation"]
+[WhiteFideId "3503240"]
+[BlackFideId "13300474"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. d4 Nd6 6. Bxc6 dxc6 7. dxe5 Nf5 8.
+Qxd8+ Kxd8 9. h3 Be7 10. Nc3 Nh4 11. Nxh4 Bxh4 12. Rd1+ Ke8 13. Ne2 Be7 14. g4
+f5 15. exf6 Bxf6 16. Ng3 Kf7 17. Ne4 Be6 18. Bf4 Bd5 19. Nxf6 gxf6 20. Kh2 h5
+21. Kg3 hxg4 22. hxg4 Rh7 23. c4 Bxc4 24. Rd7+ Kg6 25. Rxh7 Kxh7 26. Re1 Rg8 27.
+b3 Bd5 28. Re7+ Rg7 29. Rxc7 Rxc7 30. Bxc7 c5 31. f4 c4 32. bxc4 Bxc4 33. a3 Kg6
+34. f5+ Kf7 35. Kf4 a6 36. Bb6 Bb3 37. Bd4 Bc4 38. a4 b5 39. axb5 axb5 40. Bc3
+Be2 41. Bb4 Bd1 42. Bc3 Be2 43. Bb4 Bd1 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.4"]
+[White "Aronian,L"]
+[Black "Dominguez Perez,L"]
+[Result "0-1"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2745"]
+[BlackElo "2743"]
+[ECO "A30"]
+[Opening "English"]
+[Variation "symmetrical variation"]
+[WhiteFideId "13300474"]
+[BlackFideId "3503240"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. c4 c5 2. e3 Nf6 3. d4 cxd4 4. exd4 g6 5. Nc3 Bg7 6. d5 O-O 7. Be2 e6 8. Nf3
+exd5 9. cxd5 d6 10. O-O Nbd7 11. Bg5 h6 12. Bh4 Re8 13. Nd2 Nc5 14. f3 Bf5 15.
+Nb3 Nxb3 16. Qxb3 g5 17. Bf2 Nd7 18. Bb5 a6 19. Bxd7 Qxd7 20. Na4 Qb5 21. Qa3
+Re2 22. Rae1 Rc2 23. Re7 Rac8 24. h3 Rxf2 25. Rxf2 Bd4 26. Qxd6 Qxa4 27. Qxh6
+Qd1+ 0-1
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.17"]
+[Round "1.1"]
+[White "So,W"]
+[Black "Shankland,S"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2761"]
+[BlackElo "2710"]
+[ECO "C78"]
+[Opening "Ruy Lopez"]
+[Variation "Moeller defence"]
+[WhiteFideId "5202213"]
+[BlackFideId "2004887"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Bc5 6. c3 b5 7. Bb3 d6 8. a4 Ba7
+9. d3 b4 10. a5 Rb8 11. Re1 O-O 12. Be3 Bxe3 13. Rxe3 Be6 14. Bxe6 fxe6 15. Nbd2
+bxc3 16. bxc3 d5 17. exd5 Nxd5 18. Re1 Nf4 19. Qa4 Qd7 20. Rad1 Rb5 21. Qe4 Rxa5
+22. g3 Nd5 23. Nxe5 Nxe5 24. Qxe5 Ra3 25. Ne4 Nxc3 26. Nxc3 Rf5 27. Qxe6+ Qxe6
+28. Rxe6 Rxc3 29. Rxa6 Rd5 30. d4 Rc4 31. Re1 Rdxd4 32. Re7 Kf8 33. Rae6 Rc2 34.
+Re8+ Kf7 35. R8e7+ Kf8 36. Re8+ Kf7 37. R8e7+ Kf8 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.18"]
+[Round "1.2"]
+[White "Shankland,S"]
+[Black "So,W"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2710"]
+[BlackElo "2761"]
+[ECO "C67"]
+[Opening "Ruy Lopez"]
+[Variation "Berlin defence, open variation"]
+[WhiteFideId "2004887"]
+[BlackFideId "5202213"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. d4 Nd6 6. Bxc6 dxc6 7. dxe5 Nf5 8.
+Qxd8+ Kxd8 9. Nc3 Ke8 10. h3 h5 11. Ne2 b6 12. Bg5 c5 13. Rad1 Bb7 14. Nc3 Bxf3
+15. gxf3 c6 16. Ne4 Be7 17. f4 Bxg5 18. fxg5 Ke7 19. Nd6 Ke6 20. Rd3 Nxd6 21.
+exd6 Kd7 22. Rf3 f6 23. gxf6 gxf6 24. Rxf6 Raf8 25. Rg6 Rhg8 26. Rg3 Kxd6 27.
+Kg2 Ke5 28. Re1+ Kf5 29. Re7 Rxg3+ 30. fxg3 Rd8 31. Rf7+ Kg6 32. Rf2 c4 33. Re2
+Kf5 34. Rf2+ Kg6 35. Re2 Kf5 36. Rf2+ Kg6 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.18"]
+[Round "1.3"]
+[White "Shankland,S"]
+[Black "So,W"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2710"]
+[BlackElo "2761"]
+[ECO "C67"]
+[Opening "Ruy Lopez"]
+[Variation "Berlin defence, open variation"]
+[WhiteFideId "2004887"]
+[BlackFideId "5202213"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. d4 Nd6 6. Bxc6 dxc6 7. dxe5 Nf5 8.
+Qxd8+ Kxd8 9. Nc3 Be7 10. Bf4 Nh4 11. Rad1+ Ke8 12. Nxh4 Bxh4 13. Ne2 a6 14.
+Rfe1 g5 15. Bd2 g4 16. e6 Bxe6 17. Bc3 Rg8 18. Nf4 Rd8 19. Rxd8+ Kxd8 20. Nxe6+
+fxe6 21. Rxe6 Bg5 22. Kf1 Kd7 23. Re4 Be7 24. g3 Bd6 25. Kg2 h5 26. h3 b5 27.
+Bd2 c5 28. b3 Rg6 29. c4 b4 30. Be1 a5 31. f3 gxf3+ 32. Kxf3 a4 33. Bf2 Rf6+ 34.
+Ke2 Rf8 35. g4 hxg4 36. hxg4 Rh8 37. g5 Rg8 38. Be3 Be7 39. bxa4 Ra8 40. g6 Rxa4
+41. g7 Rxa2+ 42. Bd2 Ra8 43. Rg4 Rg8 44. Kd3 Ke6 45. Kc2 Kf5 46. Rg2 Bf6 47. Kb3
+Bd4 48. Bc1 Ke6 49. Bh6 Kf7 50. Bf4 Bxg7 51. Bxc7 Ra8 52. Ra2 Rh8 53. Rh2 Re8
+54. Rf2+ Kg8 55. Rg2 Re3+ 56. Ka4 Kf7 57. Rg3 Re8 58. Rf3+ Kg6 59. Rg3+ Kh7 60.
+Rh3+ Kg8 61. Rg3 Kh7 62. Rh3+ Kg8 63. Rg3 Kf7 64. Rf3+ Bf6 65. Bd6 Ra8+ 66. Kb5
+Ra3 67. Rf1 Ke6 68. Bxc5 Ra8 69. Bxb4 Rb8+ 70. Ka4 Ra8+ 71. Kb3 Be5 72. Re1 Rb8
+73. Re2 Kf5 74. c5 Rg8 75. Kc4 Rg4+ 76. Kb5 Rg8 77. Ba5 Rb8+ 78. Bb6 Ra8 79. c6
+Rb8 80. Kc5 Rc8 81. Kd5 Bf4 82. Re7 Kf6 83. Rd7 Bg3 84. Bd4+ Kf5 85. Rf7+ Kg4
+86. Rg7+ Kf3 87. Re7 Rd8+ 88. Rd7 Rc8 89. Bc5 Bc7 90. Bd6 Ba5 91. Ra7 Be1 92.
+Rf7+ Kg4 93. Re7 Ba5 94. Ra7 Be1 95. Rf7 Ba5 96. Rf8 Rxf8 97. Bxf8 Kf5 98. Kd6
+Ke4 99. Kd7 Kd5 100. Bd6 Bb6 101. Bc7 Bf2 102. Bf4 Bb6 103. Bd2 Kc4 104. Kc8 Kb5
+105. Kb7 Bd8 106. Be1 Bb6 107. Bg3 Ba5 108. Bc7 Bc3 109. Bd6 Ba5 110. Bf4 Bb6
+111. Bd2 Bd8 112. Be1 Bb6 113. Bg3 Ba5 114. Bc7 Bc3 115. Bb6 Be5 116. Ba7 Bf4
+117. Be3 Be5 118. Bb6 Bf4 119. Bc7 Bd2 120. Bb8 Ba5 121. Ba7 Bd8 122. c7 Bxc7
+123. Kxc7 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.4"]
+[White "So,W"]
+[Black "Shankland,S"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2761"]
+[BlackElo "2710"]
+[ECO "C55"]
+[Opening "Two knights defence (Modern bishop's opening)"]
+[WhiteFideId "5202213"]
+[BlackFideId "2004887"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. d3 Be7 5. O-O O-O 6. Nc3 d6 7. a4 Na5 8. Ba2
+Nc6 9. h3 Be6 10. Bxe6 fxe6 11. Ne2 a5 12. Ng3 d5 13. c3 Nd7 14. Re1 d4 15. cxd4
+exd4 16. e5 Nc5 17. Ne4 Qd5 18. Bg5 Bxg5 19. Nfxg5 Nxe4 20. Rxe4 h6 21. Nf3 Rf5
+22. Rc1 Raf8 23. Qe2 Rf4 24. Rc4 Rxe4 25. Qxe4 Rd8 26. Kf1 Rd7 27. Ke2 Kf8 28.
+h4 Ke7 29. Qh7 Kf7 30. h5 Kf8 31. Qh8+ Kf7 32. Qh7 Kf8 33. Kf1 Kf7 34. b3 Kf8
+35. Qh8+ Kf7 36. Qa8 Ke7 37. Qg8 Nxe5 38. Rxd4 Qc6 39. Qxg7+ Nf7 40. Rxd7+ Qxd7
+41. Ne5 Qe8 42. g4 1-0
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.17"]
+[Round "1.1"]
+[White "Caruana,F"]
+[Black "Robson,R"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2766"]
+[BlackElo "2702"]
+[ECO "E10"]
+[Opening "Queen's pawn game"]
+[WhiteFideId "2020009"]
+[BlackFideId "2023970"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. d4 Nf6 2. c4 e6 3. Nf3 d5 4. g3 Bb4+ 5. Nbd2 O-O 6. Bg2 dxc4 7. O-O b5 8. a4
+c6 9. Ne1 Ba6 10. Nc2 Be7 11. axb5 Bxb5 12. Nb1 Nbd7 13. Nc3 Nd5 14. e4 Nxc3 15.
+bxc3 Nb6 16. h4 a6 17. Qh5 Qe8 18. Re1 Rd8 19. Na3 Na4 20. Qf3 c5 21. d5 Bf6 22.
+Bd2 exd5 23. exd5 Qd7 24. Rab1 Nb6 25. Bg5 Bxg5 26. hxg5 Qxd5 27. Qxd5 Nxd5 28.
+Nxb5 axb5 29. Rxb5 Nxc3 30. Rxc5 Rc8 31. Rxc8 Rxc8 32. Bh3 Rd8 33. Bf1 Kf8 34.
+Bxc4 Rd4 35. Be2 Ne4 36. Rd1 Rxd1+ 37. Bxd1 Nxg5 38. Kg2 Ke7 39. f4 Ne6 40. Kf3
+Kf6 41. Ba4 h6 42. Ke3 g6 43. Bc6 Ng7 44. Bd5 Nf5+ 45. Kf2 Ke7 46. Bc4 f6 47.
+Bd3 Kd6 48. Bc4 Kc5 49. Bf7 g5 50. Kf3 Kd4 51. Be6 Nd6 52. Bd7 Kd3 53. Kg4 Ne4
+54. Kf3 Nd2+ 55. Kg4 Ne4 56. Kf3 Kd4 57. Bc6 Nd6 58. Bd7 Kd3 59. Kg4 Ke4 60. Kh5
+Nf5 61. fxg5 hxg5 62. Kg6 Nxg3 63. Kxf6 Kf4 64. Bc8 Nf1 65. Kg6 Ne3 66. Be6 Nc2
+67. Bc8 Nb4 68. Bh3 Nc6 69. Kf6 Ne5 70. Bc8 Ng4+ 71. Kg6 Nh2 72. Kf6 Nf3 73. Bh3
+Nd4 74. Bd7 Nb3 75. Bc8 Nc5 76. Kg6 Ne4 77. Bh3 Nd2 78. Bc8 Nc4 79. Bh3 Ne5+ 80.
+Kf6 g4 81. Bxg4 Nxg4+ 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.18"]
+[Round "1.2"]
+[White "Robson,R"]
+[Black "Caruana,F"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2702"]
+[BlackElo "2766"]
+[ECO "C47"]
+[Opening "Four knights"]
+[Variation "Scotch, 4...exd4"]
+[WhiteFideId "2023970"]
+[BlackFideId "2020009"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. d4 exd4 5. Nxd4 Bb4 6. Nxc6 bxc6 7. Bd3 d5 8.
+Bd2 O-O 9. O-O Bxc3 10. Bxc3 dxe4 11. Bxf6 Qxf6 12. Bxe4 Qxb2 13. Bxc6 Rb8 14.
+Rb1 Qxb1 15. Qxb1 Rxb1 16. Rxb1 Rd8 17. Bf3 Kf8 18. Rb8 Re8 19. h4 Ba6 20. Rb3
+Be2 21. Bxe2 Rxe2 22. Rc3 Re4 23. g3 Ra4 24. Rxc7 Rxa2 25. c4 a5 26. Ra7 Rc2 27.
+Rxa5 Rxc4 28. Kg2 g6 29. Kf3 Kg7 30. Kg2 Kf8 31. Kf3 Kg7 32. Kg2 Kf8 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.18"]
+[Round "1.3"]
+[White "Robson,R"]
+[Black "Caruana,F"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2702"]
+[BlackElo "2766"]
+[ECO "E50"]
+[Opening "Nimzo-Indian"]
+[Variation "4.e3 e8g8, 5.Nf3, without ...d5"]
+[WhiteFideId "2023970"]
+[BlackFideId "2020009"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. e3 O-O 5. Nf3 b6 6. Bd3 Bb7 7. O-O c5 8. Re1 d5
+9. cxd5 Nxd5 10. Bd2 cxd4 11. exd4 Be7 12. Ne4 Nd7 13. a3 h6 14. Qe2 Rc8 15. Ne5
+N5f6 16. Ng3 Bd5 17. Bf4 Nxe5 18. dxe5 Nd7 19. Qg4 Bg5 20. Nh5 f5 21. exf6 Nxf6
+22. Nxf6+ Qxf6 23. Bg3 Bf4 24. Bxf4 Qxf4 25. Qxf4 Rxf4 26. f3 Rf7 27. Rac1 Rfc7
+28. Rxc7 Rxc7 29. Kf2 Kf7 30. Ke3 Kf6 31. h4 a5 32. Rg1 Rc5 33. g4 Bc4 34. g5+
+hxg5 35. hxg5+ Ke7 36. b4 axb4 37. axb4 Rc8 38. Rc1 b5 39. Bxc4 bxc4 40. Kd4
+Rd8+ 41. Ke4 Rc8 42. Kd4 Rd8+ 43. Ke4 Rc8 44. f4 Kd6 45. Kd4 Rf8 46. Ke4 Rc8 47.
+Rc3 g6 48. Kd4 Rf8 49. Ke4 Rc8 50. Kd4 Rf8 51. Rf3 Rc8 52. Ra3 Rf8 53. Ra6+ Kd7
+54. Kxc4 Rxf4+ 55. Kc3 Rf5 56. Ra5 e5 57. Ra7+ Kc8 58. Kc4 Rxg5 59. Kd5 Rf5 60.
+Rg7 e4+ 61. Kxe4 Rb5 62. Rxg6 Rxb4+ 63. Kd5 Kb7 64. Kc5 Rb1 65. Rh6 Ka7 66. Rg6
+Kb7 67. Rh6 Ka7 68. Rg6 Kb7 69. Rh6 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "1.4"]
+[White "Caruana,F"]
+[Black "Robson,R"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2766"]
+[BlackElo "2702"]
+[ECO "E01"]
+[Opening "Catalan"]
+[Variation "closed"]
+[WhiteFideId "2020009"]
+[BlackFideId "2023970"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. d4 Nf6 2. c4 e6 3. g3 d5 4. Bg2 Bb4+ 5. Nd2 O-O 6. Nf3 dxc4 7. Qc2 c5 8. O-O
+cxd4 9. Nxc4 Nc6 10. Rd1 Qe7 11. a3 Bd6 12. Nxd4 Nxd4 13. Rxd4 Bc7 14. Rd1 Rb8
+15. Bd2 Rd8 16. Bb4 Qe8 17. Nd6 Bxd6 18. Bxd6 Ra8 19. Bc7 Rd7 20. Rxd7 Nxd7 21.
+Rd1 a5 22. Qb3 h6 23. Qb5 a4 24. Rd4 Qe7 25. Bxb7 e5 26. Bxe5 Ra7 27. Bxc8 Nxe5
+28. Re4 f6 29. Rxa4 Rc7 30. Bf5 g6 31. Ra8+ Kh7 32. Qb8 Qg7 33. Be6 h5 34. b4 f5
+35. b5 h4 36. gxh4 Kh6 37. Qh8+ Qxh8 38. Rxh8+ Kg7 39. Rc8 Rb7 40. a4 Kf6 41.
+Bd5 Rd7 42. Rc5 Ke7 43. b6 Kd6 44. Rb5 Rh7 45. a5 Nd7 46. Bf3 Nb8 47. Rd5+ Ke7
+48. Rd4 Rh8 49. Kg2 Ke6 50. e3 Ke5 51. Bb7 f4 52. a6 fxe3 53. fxe3 Nxa6 54. Bxa6 1-0
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "2.1"]
+[White "Nakamura,Hi"]
+[Black "Dominguez Perez,L"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2768"]
+[BlackElo "2743"]
+[ECO "C42"]
+[Opening "Petrov's defence"]
+[WhiteFideId "2016192"]
+[BlackFideId "3503240"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nf6 3. Nxe5 d6 4. Nd3 Nxe4 5. Qe2 Qe7 6. Nf4 Nf6 7. d4 Qxe2+ 8.
+Bxe2 Nc6 9. c3 d5 10. Bf3 Ne7 11. h4 h5 12. g3 Bf5 13. O-O O-O-O 14. Re1 c6 15.
+Nd2 Ng6 16. Ng2 Bd6 17. Ne3 Rde8 18. a4 Ng4 19. Ndf1 Nxe3 20. Nxe3 Bd3 21. Bg2
+Ne7 22. Rd1 Bf5 23. Nxf5 Nxf5 24. b4 Bc7 25. Bh3 g6 26. Kf1 Kb8 27. Bxf5 gxf5
+28. Rd3 f4 29. Bxf4 Bxf4 30. gxf4 Rhg8 31. Rg3 Rxg3 32. fxg3 f5 33. Kf2 Kc7 34.
+a5 Re4 35. Rb1 a6 36. Rc1 Kd6 37. Rc2 Ke6 38. Re2 Rxe2+ 39. Kxe2 Kd7 40. Kd2 Kd6
+41. Kc2 Ke6 42. Kb3 Kd7 43. c4 Kc7 44. Kc3 Kd7 45. cxd5 cxd5 46. b5 axb5 47. Kb4
+Kc6 48. Kb3 Kd7 49. Kc3 Kd6 50. Kb3 Kd7 51. Kc3 Kd6 52. Kb3 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.20"]
+[Round "2.2"]
+[White "Dominguez Perez,L"]
+[Black "Nakamura,Hi"]
+[Result "0-1"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2743"]
+[BlackElo "2768"]
+[ECO "B32"]
+[Opening "Sicilian"]
+[Variation "Labourdonnais-Loewenthal (Kalashnikov) variation"]
+[WhiteFideId "3503240"]
+[BlackFideId "2016192"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. e4 c5 2. Nf3 Nc6 3. d4 cxd4 4. Nxd4 e5 5. Nb5 d6 6. N1c3 a6 7. Na3 Be6 8. Nc4
+Rb8 9. Nd5 Bxd5 10. exd5 Nce7 11. g3 b5 12. Ne3 g6 13. a4 Nf6 14. axb5 axb5 15.
+Bg2 Bh6 16. O-O O-O 17. Qd3 Nd7 18. Bd2 Nc5 19. Qe2 Qc7 20. b4 Nd7 21. Ra5 Bxe3
+22. Bxe3 Nf5 23. Ra7 Rb7 24. Rxb7 Qxb7 25. Bd2 Ra8 26. Qd3 Ra2 27. Rd1 Nf6 28.
+Bg5 Kg7 29. Bh3 Nd4 30. c3 Nc2 31. Qf3 Ng8 32. Bf1 Ra3 33. Bc1 Rb3 34. Qe4 Rxc3
+35. Bb2 Nf6 36. Qh4 Rb3 37. Bc1 Ng8 38. Qd8 Qe7 39. Qa5 Nd4 40. Be3 Nf3+ 41. Kg2
+Qf6 42. Be2 e4 43. Qxb5 Qb2 44. Qa6 Nf6 45. h3 h5 46. Kf1 Qe5 47. Kg2 Rxe3 48.
+fxe3 h4 49. gxh4 Qh2+ 0-1
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "2.1"]
+[White "Caruana,F"]
+[Black "So,W"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2766"]
+[BlackElo "2761"]
+[ECO "D26"]
+[Opening "QGA"]
+[Variation "classical variation"]
+[WhiteFideId "2020009"]
+[BlackFideId "5202213"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. d4 d5 2. c4 dxc4 3. Nf3 Nf6 4. e3 e6 5. Bxc4 c5 6. Nc3 a6 7. Bb3 b5 8. e4
+cxd4 9. Nxd4 Bd6 10. O-O Bb7 11. Re1 Be5 12. Nd5 Nbd7 13. Nf3 O-O 14. Nxe5 Nxe5
+15. Bf4 exd5 16. Bxe5 dxe4 17. Rc1 Rc8 18. Rxc8 Bxc8 19. Qxd8 Rxd8 20. Bxf6 gxf6
+21. Rxe4 Be6 22. Kf1 Bxb3 23. axb3 Rd2 24. Re2 Rd1+ 25. Re1 Rd2 26. Re2 Rd1+ 27.
+Re1 Rd2 28. Re2 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.20"]
+[Round "2.2"]
+[White "So,W"]
+[Black "Caruana,F"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2761"]
+[BlackElo "2766"]
+[ECO "E36"]
+[Opening "Nimzo-Indian"]
+[Variation "classical, Noa variation, 5.a3"]
+[WhiteFideId "5202213"]
+[BlackFideId "2020009"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. Qc2 d5 5. a3 Bxc3+ 6. Qxc3 dxc4 7. Qxc4 b6 8.
+Nf3 Ba6 9. Qa4+ Qd7 10. Qc2 O-O 11. Bg5 c5 12. dxc5 Rc8 13. Rd1 Qe7 14. e4 Bxf1
+15. Kxf1 h6 16. Bxf6 Qxf6 17. e5 Qe7 18. Qe4 Nc6 19. cxb6 axb6 20. g3 b5 21. Nd4
+Nxd4 22. Rxd4 Ra4 23. Rxa4 bxa4 24. Kg2 Qd7 25. Re1 Qb5 26. Re2 Rc1 27. h4 g6
+28. Kh2 h5 29. Rc2 Rxc2 30. Qxc2 Qxe5 31. Qxa4 Qxb2 32. Qa7 e5 33. a4 e4 34. Kg2
+Qb4 35. Qa8+ Kg7 36. Qc6 e3 37. fxe3 Qd2+ 38. Kh3 Qxe3 39. a5 Qd3 40. Qc5 Qd7+
+41. Kg2 Qd2+ 42. Kf3 Qd3+ 43. Kf4 f6 44. Qe7+ Kh6 45. Qxf6 Qd2+ 46. Kf3 Qd3+ 47.
+Kg2 Qd2+ 48. Kh3 Qd7+ 49. Kh2 Qd2+ 50. Kh3 Qd7+ 51. Kg2 Qd2+ 52. Kh3 Qd7+ 1/2-1/2
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.17"]
+[Round "1.1"]
+[White "Krush,I"]
+[Black "Abrahamyan,T"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "WGM"]
+[WhiteElo "2432"]
+[BlackElo "2294"]
+[ECO "E48"]
+[Opening "Nimzo-Indian"]
+[Variation "4.e3 O-O, 5.Bd3 d5"]
+[WhiteFideId "2012782"]
+[BlackFideId "13301918"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. e3 O-O 5. Bd3 d5 6. cxd5 exd5 7. Ne2 Re8 8. Bd2
+c6 9. O-O Bd6 10. Rc1 Na6 11. a3 Nc7 12. f3 c5 13. dxc5 Bxc5 14. Nd4 Ne6 15.
+Nce2 Bb6 16. Kh1 Bd7 17. Be1 Nc5 18. Bb1 Rxe3 19. Bh4 Re5 20. Ng3 Bc6 21. f4 Re8
+22. Nh5 Ncd7 23. Nf5 g6 24. Nh6+ Kf8 25. Nxf6 Nxf6 26. Ng4 Nxg4 27. Bxd8 Ne3 28.
+Bxb6 1-0
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.18"]
+[Round "1.2"]
+[White "Abrahamyan,T"]
+[Black "Krush,I"]
+[Result "0-1"]
+[WhiteTitle "WGM"]
+[BlackTitle "GM"]
+[WhiteElo "2294"]
+[BlackElo "2432"]
+[ECO "B43"]
+[Opening "Sicilian"]
+[Variation "Kan, 5.Nc3"]
+[WhiteFideId "13301918"]
+[BlackFideId "2012782"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 a6 5. Nc3 b5 6. Bd3 Bb7 7. O-O Nc6 8. Nxc6
+Bxc6 9. a4 b4 10. Nb1 Bc5 11. Nd2 Ne7 12. Nb3 Bd6 13. Qe2 Ng6 14. f4 O-O 15. a5
+Qb8 16. e5 Be7 17. Be3 d6 18. exd6 Bxd6 19. Qh5 Qb7 20. Rf2 Be4 21. Rd1 Be7 22.
+Bxe4 Qxe4 23. Qf3 Qxf3 24. Rxf3 Bf6 25. Bd4 Rfd8 26. g3 e5 27. fxe5 Nxe5 28.
+Rff1 Rac8 29. c3 bxc3 30. bxc3 Rd5 31. Bxe5 Rxe5 32. Rf3 Rb5 33. Nd4 Rxa5 34.
+Nf5 h5 35. Rd7 Rxc3 36. Nh6+ Kh7 37. Rxc3 Bxc3 38. Nxf7 Bf6 39. h4 Kg6 40. Kg2
+Ra2+ 41. Kh3 Re2 42. Ra7 Re7 43. Nh8+ Kh7 44. Ra8 Rd7 45. Kg2 Rd8 46. Rxd8 Bxd8
+47. Nf7 Bc7 48. Ng5+ Kg6 49. Ne6 Bd6 50. Kf3 a5 51. g4 hxg4+ 52. Kxg4 a4 0-1
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.17"]
+[Round "1.1"]
+[White "Tokhirjonova,Gulrukhbegim"]
+[Black "Nemcova,Kat"]
+[Result "1-0"]
+[WhiteTitle "WGM"]
+[BlackTitle "WGM"]
+[WhiteElo "2332"]
+[BlackElo "2325"]
+[ECO "A28"]
+[Opening "English"]
+[Variation "four knights, Nimzovich variation"]
+[WhiteFideId "14203626"]
+[BlackFideId "322750"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. c4 Nf6 2. Nc3 e5 3. Nf3 Nc6 4. e4 d6 5. d4 Bg4 6. d5 Nd4 7. Be2 Bxf3 8. Bxf3
+Be7 9. Be3 c5 10. dxc6 Nxf3+ 11. Qxf3 bxc6 12. O-O O-O 13. Rfd1 Qc8 14. h3 Qe6
+15. Rac1 Rab8 16. b3 c5 17. Bg5 Ne8 18. Bxe7 Qxe7 19. Nd5 Qe6 20. Rc3 g6 21. Qg4
+Rb7 22. Ne3 Nf6 23. Qh4 Ne8 24. Rcd3 Rd7 25. Qg4 Qxg4 26. hxg4 Rb7 27. f3 f6 28.
+Kf2 Kf7 29. g3 Rh8 30. R3d2 Ke6 31. f4 Rb6 32. Rh1 Kf7 33. Nd5 Rb7 34. Ke3 Ke6
+35. f5+ Kf7 36. Rdh2 Kg7 37. fxg6 Kxg6 38. Rh6+ Kg7 39. Kd3 Rf7 40. Ne3 Kf8 41.
+Ke2 Ke7 42. Nf5+ Kd7 43. Kf3 Nc7 44. g5 Ne6 45. g6 hxg6 46. Rxh8 gxf5 47. exf5
+Ng5+ 48. Ke3 Kc6 49. Rc8+ Kb7 50. Rhh8 Kb6 51. Rcf8 1-0
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.18"]
+[Round "1.2"]
+[White "Nemcova,Kat"]
+[Black "Tokhirjonova,Gulrukhbegim"]
+[Result "0-1"]
+[WhiteTitle "WGM"]
+[BlackTitle "WGM"]
+[WhiteElo "2325"]
+[BlackElo "2332"]
+[ECO "A13"]
+[Opening "English opening"]
+[WhiteFideId "322750"]
+[BlackFideId "14203626"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. c4 e6 2. Nc3 d5 3. e3 Nf6 4. Nf3 Bd6 5. d4 b6 6. Bd3 O-O 7. O-O Bb7 8. b3 Re8
+9. Bb2 Nbd7 10. Rc1 e5 11. Bf5 e4 12. Nd2 c6 13. a4 Qb8 14. g3 a6 15. a5 bxa5
+16. c5 Bc7 17. Bh3 Nf8 18. f4 exf3 19. Qxf3 Bc8 20. Bxc8 Qxc8 21. e4 dxe4 22.
+Ncxe4 Nxe4 23. Nxe4 Qd7 24. Nd6 Bxd6 25. cxd6 Rac8 26. Ba3 Ne6 27. Qf5 Rcd8 28.
+Rcd1 f6 29. Qxa5 Ng5 30. Qxa6 Kh8 31. Qc4 Ra8 32. Bc5 Ra2 33. d5 Qh3 34. Rf2
+Nf3+ 0-1
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.17"]
+[Round "1.1"]
+[White "Zatonskih,A"]
+[Black "Paikidze,N"]
+[Result "1/2-1/2"]
+[WhiteTitle "IM"]
+[BlackTitle "IM"]
+[WhiteElo "2337"]
+[BlackElo "2314"]
+[ECO "A43"]
+[Opening "Old Benoni defence"]
+[WhiteFideId "14101572"]
+[BlackFideId "13603620"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. d4 c5 2. e3 Nf6 3. Nf3 d5 4. dxc5 e6 5. c4 Bxc5 6. Nc3 O-O 7. a3 a5 8. cxd5
+exd5 9. Be2 Nc6 10. O-O h6 11. Nb5 Ne4 12. b3 Qf6 13. Ra2 Qg6 14. Rc2 Bb6 15.
+Bb2 Bh3 16. Ne1 Bf5 17. Rc1 Rac8 18. Nd3 Rfd8 19. Ne5 Qg5 20. Nxc6 Rxc6 21. Rxc6
+bxc6 22. Nd4 Bh3 23. Bf3 c5 24. Ne2 Bc8 25. Ng3 Nxg3 26. hxg3 Be6 27. Qe2 c4 28.
+b4 axb4 29. axb4 Bf5 30. Ra1 Bd3 31. Qe1 Re8 32. Qc3 Kh7 33. Bxd5 Rxe3 34. Bxc4
+Bxc4 35. Qxc4 Rxg3 36. Qe4+ f5 37. Qb7 Qg4 38. Be5 Qxb4 39. Qd7 Rg5 40. Qd5 Qe4
+41. Qxe4 fxe4 42. Bb8 Rf5 43. Ra2 Rb5 44. Bg3 Kg6 45. Ra8 Rb3 46. Kf1 e3 47.
+fxe3 Bxe3 48. Bf2 Bf4 49. Ke2 Be5 50. Rd8 Kf5 51. Rd3 Rb2+ 52. Kf3 Rb4 53. Bg3
+Bf6 54. Rd5+ Ke6 55. Rd6+ Ke7 56. Rd3 Rb5 57. Bd6+ Kf7 58. g4 Kg6 59. Bf4 Rb1
+60. Kg2 Rb4 61. Kf3 Ra4 62. Kg3 Ra1 63. Kg2 h5 64. gxh5+ Kxh5 65. Rd2 Kg4 66.
+Bh2 Ra4 67. Re2 g5 68. Be5 Bd8 69. Bh2 Bb6 70. Bg1 Bd8 71. Bh2 Rd4 72. Bg1 Rd1
+73. Bf2 Bf6 74. Bg3 Bd4 75. Bf2 Bc3 76. Rc2 Be5 77. Re2 Kf5 78. Bg3 Bd4 79. Bf2
+Bf6 80. Bg3 Bd8 81. Re5+ Kg4 82. Re4+ Kh5 83. Re2 Rd3 84. Bh2 Kh4 85. Bg1 Bc7
+86. Bf2+ Kg4 87. Rc2 Bf4 88. Ra2 Kf5 89. Re2 g4 90. Bg1 g3 91. Kh3 Rb3 92. Kg2
+Kg4 93. Rc2 Kf5 94. Re2 Rd3 95. Bc5 Rd5 96. Bg1 Kg4 97. Bb6 Bd6 98. Bg1 Rd3 99.
+Be3 Kf5 100. Rd2 Rxd2+ 101. Bxd2 Bf4 102. Be1 Kg4 103. Bxg3 Bxg3 1/2-1/2
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.18"]
+[Round "1.2"]
+[White "Paikidze,N"]
+[Black "Zatonskih,A"]
+[Result "1-0"]
+[WhiteTitle "IM"]
+[BlackTitle "IM"]
+[WhiteElo "2314"]
+[BlackElo "2337"]
+[ECO "E06"]
+[Opening "Catalan"]
+[Variation "closed, 5.Nf3"]
+[WhiteFideId "13603620"]
+[BlackFideId "14101572"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. d4 d5 2. c4 e6 3. Nf3 Nf6 4. g3 Be7 5. Bg2 O-O 6. Qc2 dxc4 7. Qxc4 a6 8. Bf4
+Bd6 9. Ne5 Nd5 10. Nc3 Nxf4 11. gxf4 Ra7 12. Rd1 Qh4 13. e3 b6 14. Qe2 Qe7 15.
+Qh5 Bb7 16. Bxb7 Rxb7 17. Ne4 f6 18. Rg1 c5 19. Nc4 Bc7 20. dxc5 Nc6 21. Qf3 b5
+22. Ncd6 Ba5+ 23. Kf1 Rc7 24. a3 b4 25. Qe2 bxa3 26. bxa3 Ra7 27. Qc4 Kh8 28.
+Kg2 f5 29. Ng5 Nd8 30. Rb1 Rc7 31. Qxa6 Rxc5 32. Rgc1 Bc3 33. Rb6 e5 34. Nb7 Rc7
+35. Nxd8 Qxd8 36. Rd6 Qb8 37. Ne6 Ra7 38. Qd3 e4 39. Qd5 Ra5 40. Qc6 Rc8 41.
+Qxc8+ Qxc8 42. Rxc3 Qe8 43. Rd8 1-0
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.17"]
+[Round "1.1"]
+[White "Lee,Alice"]
+[Black "Pourkashiyan,A"]
+[Result "1-0"]
+[WhiteTitle "FM"]
+[BlackTitle "WGM"]
+[WhiteElo "2362"]
+[BlackElo "2313"]
+[ECO "E25"]
+[Opening "Nimzo-Indian"]
+[Variation "Saemisch variation"]
+[WhiteFideId "30941822"]
+[BlackFideId "12502014"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. f3 d5 5. a3 Bxc3+ 6. bxc3 c5 7. cxd5 exd5 8. e3
+O-O 9. Bd3 b6 10. Ne2 Ba6 11. O-O Bxd3 12. Qxd3 Re8 13. c4 dxc4 14. Qxc4 Nbd7
+15. e4 cxd4 16. Qxd4 Nc5 17. Qxd8 Raxd8 18. Bg5 Ncd7 19. Rfd1 h6 20. Bh4 g5 21.
+Bf2 Nc5 22. Nd4 Rd7 23. Nf5 Kh7 24. Rxd7 Nfxd7 25. Nd6 Rf8 26. Rd1 Ne5 27. Bxc5
+bxc5 28. Rd5 Rd8 29. Rxe5 Rxd6 30. Rxc5 Ra6 31. Rc3 Kg6 32. Kf2 h5 33. Ke3 Rb6
+34. g3 f6 35. f4 gxf4+ 36. gxf4 h4 37. h3 a5 38. Kf3 f5 39. exf5+ Kh5 40. f6 Kg6
+41. Kg4 Kxf6 42. Rc5 a4 43. Ra5 Rb3 44. Ra6+ Kg7 45. Rxa4 Rg3+ 46. Kxh4 Rg1 47.
+Ra6 Rf1 48. Kg5 Rg1+ 49. Kf5 Rh1 50. Ra7+ Kh6 51. a4 Rxh3 52. a5 Rc3 53. a6 Rc5+
+54. Kg4 Ra5 55. Ra8 Kg7 56. a7 Kh7 57. f5 Ra6 58. f6 Rxf6 59. Rb8 Rg6+ 60. Kf5 1-0
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.18"]
+[Round "1.2"]
+[White "Pourkashiyan,A"]
+[Black "Lee,Alice"]
+[Result "0-1"]
+[WhiteTitle "WGM"]
+[BlackTitle "FM"]
+[WhiteElo "2313"]
+[BlackElo "2362"]
+[ECO "C42"]
+[Opening "Petrov"]
+[Variation "classical attack, close variation"]
+[WhiteFideId "12502014"]
+[BlackFideId "30941822"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. e4 e5 2. Nf3 Nf6 3. Nxe5 d6 4. Nf3 Nxe4 5. d3 Nf6 6. d4 d5 7. Bd3 Bd6 8. O-O
+O-O 9. Bg5 h6 10. Bh4 Bg4 11. Nc3 c6 12. h3 Be6 13. Ne5 c5 14. Nb5 c4 15. Nxd6
+Qxd6 16. Be2 Bf5 17. b3 cxb3 18. axb3 Ne4 19. Bf3 Nc6 20. Nxc6 bxc6 21. c4 Rfe8
+22. Ra6 Qf4 23. Bg3 Nxg3 24. fxg3 Qxg3 25. Rxc6 dxc4 26. bxc4 Rab8 27. Bd5 Rb1
+28. Bxf7+ Kh7 29. Qxb1 Bxb1 30. Rxb1 Rf8 31. Rf1 g5 32. Rcf6 Kg7 33. Rg6+ Kh7
+34. Rgf6 Kg7 35. d5 Qc3 36. Rg6+ Kh7 37. Rc6 Qe3+ 38. Kh1 Qe2 39. Rcf6 Kg7 40.
+d6 Qe5 41. Rg6+ Kh7 42. Rgf6 Kg7 43. Rg6+ Kh7 44. Re6 Qxe6 45. Bxe6 Rxf1+ 46.
+Kh2 Kg7 47. c5 Kf6 48. Bd5 Ke5 49. Bf3 Rxf3 50. gxf3 Ke6 51. h4 a5 52. Kh3 a4
+53. Kg4 a3 0-1
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "2.1"]
+[White "Krush,I"]
+[Black "Tokhirjonova,Gulrukhbegim"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "WGM"]
+[WhiteElo "2432"]
+[BlackElo "2332"]
+[ECO "D25"]
+[Opening "QGA, Janowsky-Larsen variation"]
+[WhiteFideId "2012782"]
+[BlackFideId "14203626"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. Nf3 d5 2. d4 Nf6 3. c4 dxc4 4. e3 Bg4 5. Bxc4 e6 6. h3 Bh5 7. Qb3 Nbd7 8.
+Qxb7 c5 9. Nbd2 Rb8 10. Qa6 Qc7 11. Bb5 Rb6 12. Qa4 a6 13. Be2 cxd4 14. exd4 Bg6
+15. O-O Bc2 16. Nb3 Bd6 17. Bd2 Qb8 18. Rfc1 Bxb3 19. axb3 O-O 20. Bc4 h6 21.
+Re1 Bf4 22. Qa5 Bxd2 23. Qxd2 Nd5 24. Ra5 N7f6 25. Ne5 Nb4 26. Ra4 Qb7 27. Nd3
+Nxd3 28. Qxd3 Rd8 29. Rxa6 Rxa6 30. Bxa6 Qb6 31. Rd1 e5 32. Bc4 Rxd4 33. Qe2 Ne4
+34. Rxd4 Qxd4 35. b4 Nd2 36. b3 e4 37. Qe3 Qa1+ 38. Kh2 Qe5+ 39. Qg3 Qf6 40. b5
+g5 41. Qe3 Qe5+ 42. Qg3 Qf6 43. Qe3 Qe5+ 44. g3 Nf3+ 45. Kg2 Kg7 46. b6 f5 47.
+b7 Qa1 48. Bf1 Qe5 49. Qa7 Ne1+ 50. Kh1 Qd5 51. b8=Q+ 1-0
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.20"]
+[Round "2.2"]
+[White "Tokhirjonova,Gulrukhbegim"]
+[Black "Krush,I"]
+[Result "1/2-1/2"]
+[WhiteTitle "WGM"]
+[BlackTitle "GM"]
+[WhiteElo "2332"]
+[BlackElo "2432"]
+[ECO "A13"]
+[Opening "English opening"]
+[WhiteFideId "14203626"]
+[BlackFideId "2012782"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. c4 e6 2. Nc3 d5 3. e3 dxc4 4. Bxc4 Nf6 5. Nf3 c5 6. O-O a6 7. Be2 Nc6 8. d4
+cxd4 9. exd4 Be7 10. a3 O-O 11. Re1 b5 12. Bg5 Bb7 13. Bd3 Rc8 14. Rc1 Na5 15.
+Ne5 Nc4 16. Bb1 g6 17. Bh6 Nxb2 18. Qb3 Nc4 19. Bxf8 Bxf8 20. Nxc4 Rxc4 21. Ne2
+Ra4 22. Nf4 Rxa3 23. Qb2 Ra4 24. Rcd1 Qd6 25. Ne2 Ng4 26. Ng3 Bg7 27. Qe2 Bxd4
+28. Qxg4 Bxf2+ 29. Kf1 Rxg4 30. Rxd6 Bxe1 31. Kxe1 h5 32. Rb6 Bd5 33. Bd3 h4 34.
+Nf1 Rxg2 35. Rxa6 b4 36. Rb6 b3 37. h3 Kg7 38. Ne3 Rg3 39. Ke2 Bf3+ 40. Kf2 Rxh3
+41. Rxb3 Bh5 42. Be4 Rh2+ 43. Kg1 Re2 44. Bg2 g5 45. Bf1 Rd2 46. Rb5 Kf6 47. Rb4
+Bf3 48. Ra4 Rb2 49. Bh3 Re2 50. Ra3 Rb2 51. Ra4 Re2 52. Ra3 Rb2 53. Ra4 Re2 1/2-1/2
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.19"]
+[Round "2.1"]
+[White "Lee,Alice"]
+[Black "Paikidze,N"]
+[Result "1/2-1/2"]
+[WhiteTitle "FM"]
+[BlackTitle "IM"]
+[WhiteElo "2362"]
+[BlackElo "2314"]
+[ECO "A43"]
+[Opening "Old Benoni defence"]
+[WhiteFideId "30941822"]
+[BlackFideId "13603620"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. d4 c5 2. d5 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 Nf6 6. Bb5+ Bd7 7. a4 a6 8. Be2 Bg4
+9. h3 Bxf3 10. Bxf3 Nbd7 11. Be2 Qa5 12. O-O b5 13. Bf3 b4 14. Nb1 Ne5 15. Bf4
+Nxf3+ 16. Qxf3 Nd7 17. Nd2 Qc7 18. Qb3 c4 19. Nxc4 Rc8 20. Nd2 Qxc2 21. Qxc2
+Rxc2 22. Rac1 Rxc1 23. Rxc1 Nc5 24. Rc4 a5 25. Be3 Nxa4 26. b3 Nc3 27. Bb6 O-O
+28. Bxa5 Ra8 29. Bxb4 Ne2+ 30. Kh2 Bd4 31. Rc2 Bxf2 32. Nf1 Bg1+ 33. Kh1 Ra1 34.
+Rxe2 Rxf1 35. Re1 Rxe1 36. Bxe1 Bd4 37. g4 Kg7 38. Kg2 f5 39. gxf5 gxf5 40. Kf3
+Kf6 41. b4 Bb6 42. Kf4 e5+ 43. dxe6 fxe4 44. Kxe4 Kxe6 45. h4 d5+ 46. Kf4 Kf6
+47. Bc3+ Ke6 48. Be1 Kf6 49. h5 Ke6 50. Bd2 Kf6 51. Bc3+ Ke6 52. Bg7 Kf7 53. Be5
+Ke6 54. Bb2 Bf2 55. Kf3 Bb6 56. Kf4 Bf2 57. Bg7 Kf7 58. h6 Ke6 59. Bf8 Bb6 60.
+Bc5 Bxc5 61. bxc5 d4 62. Ke4 d3 63. Kxd3 Kd5 64. Ke3 Kxc5 65. Ke4 Kd6 66. Kf5
+Ke7 67. Ke5 Kf7 68. Kf5 Ke7 69. Ke5 Kf7 70. Kf5 1/2-1/2
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.20"]
+[Round "2.2"]
+[White "Paikidze,N"]
+[Black "Lee,Alice"]
+[Result "0-1"]
+[WhiteTitle "IM"]
+[BlackTitle "FM"]
+[WhiteElo "2314"]
+[BlackElo "2362"]
+[ECO "D12"]
+[Opening "QGD Slav"]
+[Variation "4.e3 Bf5"]
+[WhiteFideId "13603620"]
+[BlackFideId "30941822"]
+[EventDate "2023.03.17"]
+[EventType "k.o."]
+
+1. d4 d5 2. c4 c6 3. Nf3 Nf6 4. e3 Bf5 5. Nc3 e6 6. Nh4 Bg6 7. Nxg6 hxg6 8. Bd2
+Nbd7 9. Qc2 Rc8 10. c5 Be7 11. g3 e5 12. O-O-O Ng4 13. Be1 Rxh2 14. Rxh2 Nxh2
+15. Bh3 e4 16. f4 Nf3 17. Bf2 Qa5 18. Rh1 Rc7 19. g4 b6 20. cxb6 Nxb6 21. Bg2
+Nc4 22. Rh8+ Kd7 23. Rb8 Rc8 24. Rxc8 Kxc8 25. Bxf3 exf3 26. e4 Bb4 27. Nb1 Qxa2
+28. exd5 cxd5 29. f5 g5 30. f6 g6 31. Be3 Kd7 32. Bxg5 Qxb2+ 33. Qxb2 Nxb2 34.
+Nd2 Bxd2+ 35. Kxd2 Nc4+ 36. Ke1 Nd6 37. Bc1 Ne4 38. g5 f2+ 0-1
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.20"]
+[Round "2.3"]
+[White "So,W"]
+[Black "Caruana,F"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2761"]
+[BlackElo "2766"]
+[ECO "C78"]
+[Opening "Ruy Lopez"]
+[Variation "5.O-O"]
+[WhiteFideId "5202213"]
+[BlackFideId "2020009"]
+[EventDate "2023.03.17"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O b5 6. Bb3 Bc5 7. a4 Bb7 8. d3
+O-O 9. c3 d6 10. Bg5 h6 11. Bxf6 Qxf6 12. Bd5 Rab8 13. b4 Bb6 14. Na3 bxa4 15.
+Nc4 Ne7 16. Bxb7 Rxb7 17. Rxa4 Ra8 18. Qe2 Qe6 19. Rfa1 Rba7 20. R1a3 Nc6 21. g3
+a5 22. bxa5 Nxa5 23. Nxb6 cxb6 24. Rb4 Ra6 25. Rb5 Nc6 26. Rxa6 Rxa6 27. Kg2 Ne7
+28. Qe3 Ra3 29. c4 Nc8 30. Nh4 g6 31. Nf3 Kg7 32. h4 Qf6 33. Nd2 Ra5 34. Rb2 Ra3
+35. Nb1 Ra1 36. Nc3 Qe6 37. Nd5 Qg4 38. Nc3 Ra3 39. Qd2 Ra1 40. Nd5 Rd1 41. Qc3
+Ra1 42. Ne3 Qd7 43. Rxb6 Nxb6 44. Qxa1 Na4 45. f4 Qe8 46. fxe5 dxe5 47. h5 Nc5
+48. hxg6 Kxg6 49. Nf5 Kh7 50. Qa3 Qc6 51. Qa7 Nd7 52. Qa5 Qg6 53. Qd5 Nf6 54.
+Qxe5 Ng4 55. Qd4 Qg5 56. Qc3 h5 57. c5 f6 58. Qb2 Ne5 59. c6 Qg4 60. Qb7+ Kh8
+61. Qb8+ Kh7 62. Qc7+ Kh8 63. Qd8+ 1-0
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.21"]
+[Round "2.4"]
+[White "Caruana,F"]
+[Black "So,W"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2766"]
+[BlackElo "2761"]
+[ECO "D26"]
+[Opening "QGA"]
+[Variation "classical variation"]
+[WhiteFideId "2020009"]
+[BlackFideId "5202213"]
+[EventDate "2023.03.17"]
+
+1. d4 d5 2. c4 dxc4 3. e3 Nf6 4. Nf3 e6 5. Bxc4 c5 6. Nc3 a6 7. Bb3 Nc6 8. O-O
+b5 9. Qe2 Bb7 10. Rd1 Be7 11. dxc5 Qc7 12. e4 O-O 13. e5 Nd7 14. Bf4 Nxc5 15.
+Bc2 Nb4 16. Rac1 Nxc2 17. Rxc2 Rac8 18. a3 Rfd8 19. Nd4 Qb6 20. Rcd2 Na4 21.
+Nxa4 bxa4 22. Qg4 Rd5 23. h4 Kh8 24. Be3 Qc7 25. Qf4 Kg8 26. Nf5 Rxd2 27. Nxe7+
+Qxe7 28. Rxd2 Bc6 29. Qg4 Kh8 30. Rd4 Rd8 31. Rf4 Qd7 32. Kh2 Qc7 33. Qh5 Be8
+34. Rb4 f6 35. Bb6 Bxh5 36. Bxc7 Rc8 37. Ba5 Be8 38. Rb6 Bc6 39. Rxa6 f5 40. f3
+h6 41. Kg3 Bd5 42. Bb4 Bb3 43. Ra7 Kg8 44. Bc3 Rd8 45. Kf2 Kh7 46. Rb7 Kg6 47.
+Bb4 Rc8 48. Ke3 Kh7 49. Bc3 Rd8 50. g4 fxg4 51. fxg4 Bd1 52. Rb4 h5 53. gxh5 Kh6
+54. Rb6 Bb3 55. Rb7 Kxh5 56. Rxg7 Kxh4 57. Bb4 Kh5 58. Bd6 Rc8 59. Bc7 Kh6 60.
+Rd7 Rg8 61. Ba5 Rg1 62. Rd8 Rd1 63. Rg8 Kh7 64. Rg4 Rd5 65. Bc3 Rd1 66. Ke2 Bc2
+67. Bd2 Rb1 68. Rb4 Rh1 69. Bc3 Kg6 70. Rb8 Kf5 71. Ke3 Rd1 72. Rf8+ Kg5 73. Bd2
+Kh5 74. Rg8 Rb1 75. Bc3 Rd1 76. Rg2 Rd3+ 77. Kf4 Bb3 78. Bd2 Bd5 79. Rh2+ Kg6
+80. Be3 Rb3 81. Rf2 Kf7 82. Kg5+ Ke8 83. Bd4 Rd3 84. Bc3 Rf3 85. Rh2 Kd7 86. Rh4
+Bb3 87. Rb4 Rf5+ 88. Kg6 Rf1 89. Rb6 Rg1+ 90. Kf6 Rf1+ 91. Kg5 Rf5+ 92. Kg4 Bd1+
+93. Kg3 Bb3 94. Rd6+ Kc7 95. Rd2 Rf1 96. Rh2 Rf7 97. Bd2 Rf1 98. Be3 Kc6 99. Rh4
+Bd5 100. Bf2 Bb3 101. Kf3 Rb1 102. Bd4 Re1 103. Bc3 Bd5+ 104. Kf2 Re4 105. Rh8
+Bb3 106. Rd8 Bd5 107. Rd6+ Kb5 108. Kg3 Bb3 109. Rd8 Bd5 110. Kf2 Bb3 111. Rb8+
+Kc6 112. Ra8 Bd5 113. Ra6+ Kb5 114. Rd6 Bb3 115. Bd4 Bd5 116. Rb6+ Kc4 117. Bc3
+Kd3 118. Rb5 Re2+ 119. Kg3 Re4 120. Ra5 Bb3 121. Bb4 Kc2 122. Kf3 Bd5 123. Kf2
+Bb3 124. Bc3 Bd5 125. Kf3 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.21"]
+[Round "3.1"]
+[White "Nakamura,Hi"]
+[Black "So,W"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2768"]
+[BlackElo "2761"]
+[ECO "C65"]
+[Opening "Ruy Lopez"]
+[Variation "Berlin defence"]
+[WhiteFideId "2016192"]
+[BlackFideId "5202213"]
+[EventDate "2023.03.17"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. d3 Bc5 5. O-O Nd4 6. Be3 Nxf3+ 7. Qxf3 Bxe3 8.
+Qxe3 c6 9. Bc4 d6 10. Nd2 Qb6 11. Qxb6 axb6 12. f4 exf4 13. Rxf4 b5 14. Bb3 Be6
+15. a3 O-O 16. Raf1 Rae8 17. Bxe6 Rxe6 18. Nf3 d5 19. e5 Nd7 20. d4 f6 21. h3
+Re7 22. exf6 Rxf6 23. Rxf6 Nxf6 24. Re1 Rxe1+ 25. Nxe1 Ne4 26. Nd3 Kf7 27. Kf1
+Ke6 28. Ke2 g5 29. g4 h6 30. Ke3 Kd6 31. Ne5 Ke6 32. Nd3 Kd6 33. Ne5 Ke6 34. Nd3 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.22"]
+[Round "3.2"]
+[White "So,W"]
+[Black "Nakamura,Hi"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2761"]
+[BlackElo "2768"]
+[ECO "E32"]
+[Opening "Nimzo-Indian"]
+[Variation "classical variation"]
+[WhiteFideId "5202213"]
+[BlackFideId "2016192"]
+[EventDate "2023.03.17"]
+
+1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. Qc2 O-O 5. e4 d5 6. e5 Ne4 7. Nf3 c5 8. Bd3
+cxd4 9. Nxd4 Nd7 10. Bf4 Qh4 11. g3 Qh5 12. O-O g5 13. cxd5 gxf4 14. dxe6 Nxc3
+15. exd7 Bxd7 16. bxc3 Rac8 17. Qd1 Qxd1 18. Raxd1 Bxc3 19. Bf5 Rcd8 20. Bxd7
+Rxd7 21. Nf5 Rxd1 22. Rxd1 Bxe5 23. Rd7 b5 24. Rxa7 fxg3 25. hxg3 b4 26. Kg2 h5
+27. Kh3 Kh7 28. Ra6 Rd8 29. f4 Bc3 30. Kh4 Rd5 31. Rh6+ Kg8 32. Kg5 Bg7 33. Rxh5
+Rd2 34. Kg4 Bc3 35. Rh6 Rxa2 36. Rb6 Ra7 37. Kg5 Kh7 38. Rh6+ Kg8 39. Rb6 Kh7
+40. Rh6+ Kg8 41. Rb6 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.22"]
+[Round "3.3"]
+[White "So,W"]
+[Black "Nakamura,Hi"]
+[Result "0-1"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2761"]
+[BlackElo "2768"]
+[ECO "B30"]
+[Opening "Sicilian"]
+[Variation "Nimzovich-Rossolimo attack (without ...d6)"]
+[WhiteFideId "5202213"]
+[BlackFideId "2016192"]
+[EventDate "2023.03.17"]
+
+1. e4 c5 2. Nf3 Nc6 3. Bb5 e5 4. O-O Bd6 5. c3 a6 6. Ba4 b5 7. Bb3 c4 8. Bc2 Nf6
+9. d4 cxd3 10. Qxd3 Be7 11. Bg5 d6 12. Rd1 Nh5 13. Bxe7 Kxe7 14. a4 Rb8 15. axb5
+axb5 16. Na3 Nf4 17. Qe3 Qb6 18. Nd4 Nxd4 19. cxd4 Rd8 20. Bb3 Be6 21. Nc2 Kf8
+22. Rd2 Rdc8 23. g3 Bxb3 24. Qxb3 Ne6 25. Rad1 b4 26. Kg2 g6 27. h4 h5 28. dxe5
+dxe5 29. Rd7 Rc7 30. Qf3 Rxd7 31. Rxd7 Nd8 32. Ne3 Qc6 33. Rd5 Qe6 34. Qd1 Qf6
+35. Rd7 Kg7 36. Rd6 Qe7 37. Rd7 Qf6 38. Nd5 Qe6 39. Nc7 Qc6 40. Qd5 Qxd5 41.
+exd5 Nb7 42. Ne6+ Kg8 43. Ng5 Nd8 44. Kf3 b3 45. Ke4 Nb7 46. Kxe5 Nc5 47. Rc7
+Nd3+ 48. Kf6 Nxb2 49. Nxf7 Nc4 50. Nh6+ Kf8 51. Rf7+ Ke8 52. Re7+ Kd8 53. Nf7+
+Kc8 54. d6 Rb6 55. Re8+ Kb7 56. Ke7 b2 57. d7 b1=Q 58. d8=Q Qb4+ 59. Nd6+ Qxd6+
+60. Qxd6 Nxd6 61. Rg8 Nf5+ 62. Ke8 Kc7 63. Rf8 Nh6 64. Rf4 Re6+ 65. Kf8 Kd6 66.
+Kg7 Nf5+ 67. Kf7 Kd5 68. Rf3 Ra6 69. Rb3 Ke4 70. Rc3 Nd6+ 71. Kg7 Kd4 72. Rb3
+Nf5+ 73. Kh7 Ke5 74. Rb8 Ne7 75. Kg7 Ra7 76. Rb5+ Ke6 77. Rb6+ Kf5 78. Rb5+ Kg4
+79. Rb4+ Kh3 80. Kh6 Ra6 81. Kg5 Nd5 82. Rd4 Nc3 83. Kh6 Kg2 84. g4 Ne2 85. Rb4
+Kf3 86. gxh5 gxh5+ 87. Kxh5 Nf4+ 88. Kg5 Ra5+ 89. Kh6 Kg4 90. Kg7 Kf5 91. Rb7
+Ne6+ 92. Kh6 Kf6 93. h5 Ra8 94. f4 Rh8+ 95. Rh7 Ra8 96. Rb7 Nxf4 97. Rb6+ Ne6
+98. Kh7 Ra7+ 99. Kh6 Rd7 100. Rxe6+ Kxe6 101. Kg6 Rd1 102. h6 Rg1+ 103. Kh7 Kf7 0-1
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.23"]
+[Round "3.4"]
+[White "Nakamura,Hi"]
+[Black "So,W"]
+[Result "0-1"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2768"]
+[BlackElo "2761"]
+[ECO "B06"]
+[Opening "Robatsch (modern) defence"]
+[WhiteFideId "2016192"]
+[BlackFideId "5202213"]
+[EventDate "2023.03.17"]
+
+1. e4 g6 2. d4 Bg7 3. Nc3 d6 4. h4 Nf6 5. f3 Nc6 6. Be3 e5 7. Nge2 O-O 8. dxe5
+dxe5 9. Qxd8 Rxd8 10. a3 Be6 11. Ng3 h5 12. Bg5 a6 13. Bd3 Rd6 14. O-O-O Nd7 15.
+Bf1 Nd4 16. Nce2 c5 17. Kb1 f6 18. Be3 Nb6 19. c3 Bb3 20. Rc1 Ne6 21. Re1 Nc4
+22. Nc1 Nxe3 23. Nxb3 Bh6 24. Rg1 c4 25. Na1 Rad8 26. Be2 Rd2 27. Nf1 Rxe2 28.
+Rxe2 Rd1+ 29. Ka2 Rxf1 30. Rxf1 Nxf1 31. Nc2 Nc5 32. Re1 Nd2 33. a4 Nxa4 34. Nb4
+Kf7 35. Nd5 Nc5 36. Rd1 b5 37. Ka3 Bf8 38. Ka2 Ndb3 39. f4 exf4 40. Nxf4 Bh6 41.
+Nd5 Nxe4 42. Nc7 Nec5 43. Rd8 Nc1+ 44. Kb1 N1d3 45. Nd5 Nf4 46. Nb4 Nxg2 47. Rc8
+Bf8 48. Rc7+ Ke6 49. Rc6+ Ke5 50. Rc8 Bd6 51. Rd8 Nxh4 52. Nc6+ Ke6 0-1
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.23"]
+[Round "3.5"]
+[White "So,W"]
+[Black "Nakamura,Hi"]
+[Result "0-1"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2761"]
+[BlackElo "2768"]
+[ECO "B30"]
+[Opening "Sicilian"]
+[Variation "Nimzovich-Rossolimo attack (without ...d6)"]
+[WhiteFideId "5202213"]
+[BlackFideId "2016192"]
+[EventDate "2023.03.17"]
+
+1. e4 c5 2. Nf3 Nc6 3. Bb5 e5 4. O-O Bd6 5. c3 a6 6. Ba4 b5 7. Bb3 c4 8. Bc2 Nf6
+9. d4 cxd3 10. Qxd3 Be7 11. Rd1 d6 12. Bg5 Nh5 13. Be3 O-O 14. Nbd2 Rb8 15. b4
+Kh8 16. Bb3 Qc7 17. Nf1 f5 18. Ng3 fxe4 19. Qxe4 Nf6 20. Qd3 d5 21. Qe2 e4 22.
+Nd4 Bg4 23. f3 exf3 24. gxf3 Bh3 25. Nxc6 Qxc6 26. Bd4 Rbe8 27. Re1 Bxb4 28. Qd3
+Bc5 29. Kh1 Bxd4 30. Qxd4 Qc7 31. Qh4 Rxe1+ 32. Rxe1 Qxc3 0-1
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.23"]
+[Round "3.6"]
+[White "Nakamura,Hi"]
+[Black "So,W"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2768"]
+[BlackElo "2761"]
+[ECO "B06"]
+[Opening "Robatsch (modern) defence"]
+[WhiteFideId "2016192"]
+[BlackFideId "5202213"]
+[EventDate "2023.03.17"]
+
+1. e4 g6 2. d4 Bg7 3. Nf3 d6 4. Bc4 Nf6 5. Qe2 O-O 6. e5 dxe5 7. dxe5 Nd5 8. h3
+Nb6 9. Bb3 Nc6 10. O-O Na5 11. Nc3 Nxb3 12. axb3 Bd7 13. Rd1 Qc8 14. Bg5 Re8 15.
+Qe3 c5 16. Bh6 Bh8 17. Ra5 Bc6 18. Rxc5 Rd8 19. Nd4 e6 20. b4 Nd7 21. Nxc6 bxc6
+22. Ra5 Qc7 23. f4 Nb6 24. Raa1 Qb7 25. Qc5 Nd5 26. Ne4 Bg7 27. Bg5 Rdb8 28. c3
+h6 29. Bf6 Nxf4 30. Bxg7 Kxg7 31. Rf1 Nd3 32. Qd4 Qb6 33. Nd6 Qxd4+ 34. cxd4 Rf8
+35. b5 cxb5 36. Nxb5 a6 37. Nd6 Nxb2 38. Rac1 Ra7 39. Rf3 Na4 40. Rb3 Rd7 41.
+Rc4 1-0
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.24"]
+[Round "4.1"]
+[White "Nakamura,Hi"]
+[Black "So,W"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2768"]
+[BlackElo "2761"]
+[ECO "A28"]
+[Opening "English"]
+[Variation "four knights, Nimzovich variation"]
+[WhiteFideId "2016192"]
+[BlackFideId "5202213"]
+[EventDate "2023.03.17"]
+
+1. c4 e5 2. Nc3 Nf6 3. Nf3 Nc6 4. e4 Bb4 5. d3 d6 6. a3 Bc5 7. b4 Bb6 8. Na4 Bg4
+9. Be2 Bxf3 10. Bxf3 Nd4 11. Nxb6 axb6 12. O-O Qd7 13. Bb2 Nxf3+ 14. Qxf3 O-O
+15. Qe2 Rfe8 16. f4 b5 17. c5 Qe6 18. Rac1 c6 19. cxd6 Nd7 20. Qf2 f6 21. d4
+exf4 22. e5 fxe5 23. dxe5 Nxe5 24. Rce1 Qd5 25. Qe2 Nc4 26. Qxe8+ Rxe8 27. Rxe8+
+Kf7 28. Re7+ Kg6 29. Rxg7+ Kh6 30. Ba1 Ne3 31. h4 Qd3 32. Rxf4 Qd1+ 33. Kf2 Qxa1
+34. Rg5 Nd5 35. d7 Qh8 36. Re4 Qf6+ 37. Kg1 Qd6 38. d8=Q Qxd8 39. Re6+ Nf6 40.
+Kh2 Qd4 41. Kg3 b6 42. Rxc6 Qe3+ 43. Kh2 Qf4+ 44. Kh3 Qf1 45. Re6 Qf2 46. Rc6
+Qe3+ 47. Kh2 Qd4 48. Kg3 Qxh4+ 49. Kxh4 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.25"]
+[Round "4.2"]
+[White "So,W"]
+[Black "Nakamura,Hi"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2761"]
+[BlackElo "2768"]
+[ECO "E32"]
+[Opening "Nimzo-Indian"]
+[Variation "classical variation"]
+[WhiteFideId "5202213"]
+[BlackFideId "2016192"]
+[EventDate "2023.03.17"]
+
+1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. Qc2 O-O 5. a3 Bxc3+ 6. Qxc3 d5 7. Bg5 h6 8.
+Bxf6 Qxf6 9. Nf3 dxc4 10. Qxc4 Nc6 11. Qc3 Re8 12. Rd1 e5 13. d5 Nb8 14. e3 Bg4
+15. Be2 Nd7 16. O-O Rac8 17. Qb4 Bxf3 18. Bxf3 Qb6 19. Qxb6 axb6 20. Bg4 Rcd8
+21. Bxd7 Rxd7 22. e4 Rd6 23. Rd3 b5 24. Rc1 c6 25. Kf1 Kf8 26. Ke2 Ke7 27. dxc6
+bxc6 28. Rcd1 Rxd3 29. Rxd3 Ra8 30. b4 h5 31. h4 g6 32. f3 f6 33. Ke3 Ke6 34.
+Rc3 Kd6 35. Rd3+ Ke6 36. Rc3 Kd6 37. Rd3+ Ke6 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.25"]
+[Round "4.3"]
+[White "So,W"]
+[Black "Nakamura,Hi"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2761"]
+[BlackElo "2768"]
+[ECO "C65"]
+[Opening "Ruy Lopez"]
+[Variation "Berlin defence"]
+[WhiteFideId "5202213"]
+[BlackFideId "2016192"]
+[EventDate "2023.03.17"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. d3 Bc5 5. O-O Nd4 6. Nxd4 Bxd4 7. c3 Bb6 8.
+Na3 c6 9. Ba4 d6 10. Bc2 Be6 11. Qe2 h6 12. Nc4 Bc7 13. f4 exf4 14. Bxf4 Bxc4
+15. dxc4 Qe7 16. Rad1 O-O-O 17. Kh1 Rhe8 18. Rfe1 Kb8 19. Qf3 g5 20. Bg3 h5 21.
+Qf5 h4 22. Bf2 Nh5 23. Kg1 f6 24. b4 Nf4 25. Bd4 Rf8 26. a4 Qf7 27. Bb3 Rde8 28.
+a5 Ne6 29. Be3 Nf4 30. Bd4 a6 31. Rd2 Ka8 32. Ba2 Qe7 33. Bb3 Rd8 34. Rdd1 Bb8
+35. b5 Ba7 36. Ba4 Bxd4+ 37. cxd4 cxb5 38. cxb5 Rc8 39. bxa6 bxa6 40. Rb1 Rb8
+41. Rb6 Rxb6 42. axb6 Kb8 43. Qa5 Qb7 44. Bd1 h3 45. g3 Ng2 46. Re2 Rc8 47. Bb3
+Rc1+ 48. Kf2 Rb1 49. Bd5 Qxb6 50. Qxb6+ Rxb6 51. Be6 f5 52. Bxf5 Rb3 53. Be6 Rc3
+54. Bxh3 Nf4 55. gxf4 Rxh3 56. Kg2 Rh4 57. fxg5 Rg4+ 58. Kf3 Rxg5 59. h4 Rg8 60.
+h5 Kc7 61. h6 Kd7 62. h7 Rh8 63. Rh2 Ke7 64. Rh5 Kf7 65. Rh6 d5 66. Rxa6 1-0
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.26"]
+[Round "4.4"]
+[White "Nakamura,Hi"]
+[Black "So,W"]
+[Result "0-1"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2768"]
+[BlackElo "2761"]
+[ECO "E46"]
+[Opening "Nimzo-Indian"]
+[Variation "4.e3 O-O"]
+[WhiteFideId "2016192"]
+[BlackFideId "5202213"]
+[EventDate "2023.03.17"]
+
+1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. e3 O-O 5. Bd2 d5 6. Nf3 b6 7. cxd5 exd5 8. Bd3
+Bd6 9. O-O Re8 10. a3 c5 11. Rc1 c4 12. Bb1 Bg4 13. h3 Bh5 14. Qa4 Nbd7 15. Nh4
+a6 16. Qc2 Ne4 17. Nf5 Bf3 18. Ng3 Bxg3 19. fxg3 Bh5 20. Nxd5 Be2 21. Rf4 Ndc5
+22. dxc5 Bd3 23. Qd1 Qxd5 24. Be1 Qxc5 25. Bxd3 Qxe3+ 26. Kh2 Qxd3 27. Qg4 Rad8
+28. Bc3 Nxc3 29. Rxc3 Qg6 30. Qh4 b5 31. Rcf3 Rd7 32. Rg4 Qd6 33. Rf6 Re6 34.
+Qg5 g6 35. Rgf4 Rxf6 36. Rxf6 Qe7 37. Qf4 Rd2 38. Rxg6+ hxg6 39. Qxd2 Qe5 40. h4
+Kg7 41. Kh3 a5 42. g4 Qf6 43. h5 Qe5 44. h6+ Kh7 45. g5 b4 46. axb4 axb4 47.
+Qxb4 Qe3+ 48. g3 Qe6+ 49. Kh4 Qe4+ 50. g4 Qg2 51. Qb8 Qf2+ 52. Kh3 Qe3+ 53. Kh4
+Qf2+ 54. Qg3 Qxb2 55. Qf4 Kg8 56. h7+ Kh8 57. Kg3 Qc3+ 58. Kg2 Qb2+ 59. Kf3 Qb3+
+60. Ke4 c3 61. Qd6 c2 62. Qc5 Kxh7 0-1
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.26"]
+[Round "5.1"]
+[White "Nakamura,Hi"]
+[Black "So,W"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2768"]
+[BlackElo "2761"]
+[ECO "A06"]
+[Opening "Reti opening"]
+[WhiteFideId "2016192"]
+[BlackFideId "5202213"]
+[EventDate "2023.03.17"]
+
+1. Nf3 d5 2. e3 Nf6 3. c4 e6 4. b3 Be7 5. Bb2 O-O 6. Nc3 c5 7. cxd5 exd5 8. d4
+Nc6 9. Be2 Ne4 10. dxc5 Bf6 11. Rc1 Qa5 12. Nd4 Nxc5 13. Nxc6 bxc6 14. O-O Ne4
+15. Qc2 Bxc3 16. Bxc3 Nxc3 17. Qxc3 Qxa2 18. Bf3 Qa6 19. Qxc6 Qxc6 20. Rxc6 Be6
+21. Rd1 Rab8 22. Rc7 Rxb3 23. Rxa7 Rfb8 24. Raa1 R3b5 25. h4 g6 26. Kh2 Kg7 27.
+Kg3 Kf6 28. Ra6 R8b6 29. Rxb6 Rxb6 30. Bxd5 Bxd5 31. Rxd5 h5 32. Rd2 Rb4 33. f3
+Ra4 34. e4 Ra1 35. Kf4 Rh1 36. g3 Rg1 37. e5+ Kg7 38. Rd7 Re1 39. Ra7 Re2 40.
+Ra3 Re1 41. Ra5 Re2 42. Ra6 Re1 43. Ra4 Re2 44. Re4 Ra2 45. Re1 Ra4+ 46. Ke3
+Ra3+ 47. Kf2 Kf8 48. Re3 Ra5 49. f4 Ke7 50. Rb3 Ra1 51. Rb7+ Ke6 52. Rb6+ Ke7
+53. f5 Ra2+ 54. Kf3 Ra3+ 55. Kf4 Ra4+ 56. Kg5 Rg4+ 57. Kh6 gxf5 58. Rf6 Rxg3 59.
+Rxf5 Ke6 60. Rf6+ Kxe5 61. Rxf7 Ke6 62. Ra7 Kf6 63. Kxh5 Rg8 64. Rh7 Rg2 65.
+Rh6+ Kf7 66. Rg6 Rxg6 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.26"]
+[Round "5.2"]
+[White "So,W"]
+[Black "Nakamura,Hi"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2761"]
+[BlackElo "2768"]
+[ECO "C67"]
+[Opening "Ruy Lopez"]
+[Variation "Berlin defence, open variation"]
+[WhiteFideId "5202213"]
+[BlackFideId "2016192"]
+[EventDate "2023.03.17"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. Re1 Nd6 6. Nxe5 Be7 7. Bf1 Nxe5 8.
+Rxe5 O-O 9. Nc3 Ne8 10. Nd5 Bd6 11. Re2 Nf6 12. Nxf6+ Qxf6 13. d4 b6 14. Qd3 Bb7
+15. Bd2 Rae8 16. Rae1 Re6 17. c4 Rfe8 18. Bc3 Qf4 19. g3 Qf3 20. Qxf3 Bxf3 21.
+Rxe6 fxe6 22. d5 Bg4 23. Bd3 Re7 24. dxe6 Bxe6 25. Kg2 Bf7 26. b3 Rxe1 27. Bxe1
+Be5 28. f4 Bb2 29. Be4 c6 30. Kf3 g6 31. g4 a5 32. a4 d5 33. cxd5 cxd5 34. Bc2
+Ba3 35. Bc3 Bc5 36. Be5 Kf8 37. f5 gxf5 38. Bxf5 h6 39. Bf4 Kg7 40. Be5+ Kf8 41.
+h4 d4 42. h5 Kg8 43. Bc2 d3 44. Bd1 Bd5+ 45. Kf4 Kh7 46. Bc3 Bg2 47. Bf3 Bf1 48.
+Ke4 Kg8 49. Bd2 Kg7 50. Bc3+ Kg8 51. Bd2 Kg7 52. Bf4 Bf2 53. Be5+ Kf7 54. Bc3
+Bc5 55. Be1 Kg8 56. Bd2 Kg7 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.26"]
+[Round "5.3"]
+[White "So,W"]
+[Black "Nakamura,Hi"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2761"]
+[BlackElo "2768"]
+[ECO "C50"]
+[Opening "Giuoco Pianissimo"]
+[WhiteFideId "5202213"]
+[BlackFideId "2016192"]
+[EventDate "2023.03.17"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. d3 Bc5 5. c3 d6 6. O-O a6 7. Re1 Ba7 8. a4 O-O
+9. h3 h6 10. Nbd2 Re8 11. b4 Be6 12. Bxe6 Rxe6 13. Bb2 Ne7 14. Nf1 Ng6 15. Ng3
+Nh7 16. d4 Ng5 17. Nxg5 Qxg5 18. Qg4 Rae8 19. Rad1 Qxg4 20. hxg4 exd4 21. cxd4
+d5 22. Kf1 f6 23. f3 c6 24. exd5 cxd5 25. Rxe6 Rxe6 26. Rc1 Rc6 27. Nf5 Kf7 28.
+b5 Rxc1+ 29. Bxc1 axb5 30. axb5 Nf8 31. Nd6+ Ke6 32. Nxb7 Bxd4 33. Ba3 Ng6 34.
+Nd6 Bb2 35. Bb4 Bc3 36. Ba3 Bb2 37. Bc5 Bd4 38. Nb7 Bxc5 39. Nxc5+ Kd6 40. b6
+Ne5 41. b7 Kc7 42. Kf2 d4 43. Ke2 g6 44. Kd2 h5 45. gxh5 gxh5 46. Ke2 Ng6 47.
+Kf2 h4 48. Ne6+ Kxb7 49. Nxd4 Kc7 50. Ke3 Kd6 51. Ke4 Ke7 52. Kf5 Kf7 53. Kg4
+Ne5+ 54. Kxh4 Kg6 55. Kg3 Nd3 56. Kg4 Ne5+ 57. Kf4 Nd3+ 58. Ke3 Ne5 59. Ke4 Nd7
+60. Ne6 Nb6 61. Nf4+ Kg5 62. Ne6+ Kg6 63. Nf4+ Kg5 64. Nd5 Nd7 65. Ne3 Nc5+ 66.
+Kd5 Nd3 67. g3 Kg6 68. f4 Nf2 69. Ke6 Ne4 70. Nf1 Nc5+ 71. Kd5 Nd7 72. Ne3 Nb6+
+73. Ke6 Na4 74. Nd5 Nc5+ 75. Ke7 Ne4 76. g4 f5 77. g5 Nxg5 78. fxg5 f4 79. Nxf4+
+Kxg5 1/2-1/2
+
+[Event "American Cup Champ"]
+[Site "Saint Louis USA"]
+[Date "2023.03.26"]
+[Round "5.4"]
+[White "Nakamura,Hi"]
+[Black "So,W"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "GM"]
+[WhiteElo "2768"]
+[BlackElo "2761"]
+[ECO "A06"]
+[Opening "Reti opening"]
+[WhiteFideId "2016192"]
+[BlackFideId "5202213"]
+[EventDate "2023.03.17"]
+
+1. Nf3 d5 2. e3 Nf6 3. c4 e6 4. b3 Be7 5. Bb2 O-O 6. Nc3 c5 7. cxd5 exd5 8. Rc1
+d4 9. Na4 dxe3 10. fxe3 b6 11. Be2 Nd5 12. O-O Nc6 13. Qe1 Bb7 14. Qg3 Bf6 15.
+Bxf6 Nxf6 16. Nc3 Nb4 17. Ne5 Qxd2 18. Rfd1 Qb2 19. Nc4 1-0
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.21"]
+[Round "3.1"]
+[White "Krush,I"]
+[Black "Lee,Alice"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "FM"]
+[WhiteElo "2432"]
+[BlackElo "2362"]
+[ECO "B10"]
+[Opening "Caro-Kann"]
+[Variation "anti-anti-Caro-Kann defence"]
+[WhiteFideId "2012782"]
+[BlackFideId "30941822"]
+[EventDate "2023.03.17"]
+
+1. c4 c6 2. e4 d5 3. exd5 cxd5 4. cxd5 Nf6 5. Nc3 g6 6. Bc4 Bg7 7. Nge2 O-O 8.
+O-O Nbd7 9. d3 a6 10. a4 b6 11. h3 Bb7 12. d4 b5 13. axb5 Nb6 14. Bd3 axb5 15.
+Rxa8 Qxa8 16. Bxb5 Nfxd5 17. Nxd5 Bxd5 18. Nf4 Bb7 19. Re1 e6 20. Bf1 Rd8 21.
+Qb3 Bxd4 22. Be3 Bxe3 23. Qxe3 Nd5 24. Nxd5 Rxd5 25. b4 Bc6 26. g3 Rd7 27. b5
+Bb7 28. Qe5 Qa3 29. Qb8+ Kg7 30. Qe5+ Kg8 31. Qb8+ Kg7 32. Qe5+ 1/2-1/2
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.22"]
+[Round "3.2"]
+[White "Lee,Alice"]
+[Black "Krush,I"]
+[Result "1/2-1/2"]
+[WhiteTitle "FM"]
+[BlackTitle "GM"]
+[WhiteElo "2362"]
+[BlackElo "2432"]
+[ECO "D38"]
+[Opening "QGD"]
+[Variation "Ragozin variation"]
+[WhiteFideId "30941822"]
+[BlackFideId "2012782"]
+[EventDate "2023.03.17"]
+
+1. d4 Nf6 2. c4 e6 3. Nf3 d5 4. Nc3 Bb4 5. Bg5 h6 6. Bxf6 Qxf6 7. Qa4+ Nc6 8. a3
+Bxc3+ 9. bxc3 O-O 10. e3 dxc4 11. Bxc4 Bd7 12. O-O Rfd8 13. Qc2 Na5 14. Be2 c5
+15. Ne5 Rac8 16. Qb2 Qe7 17. f4 Be8 18. Rac1 f6 19. Nc4 Nxc4 20. Bxc4 Kh8 21. e4
+Bc6 22. e5 f5 23. Bb3 Bd5 24. Rcd1 Bxb3 25. Qxb3 Rd5 26. dxc5 Qxc5+ 27. Kh1 Rcd8
+28. Rxd5 Qxd5 29. Qxd5 Rxd5 30. Kg1 Kg8 31. Rb1 b6 32. Rb4 Rc5 33. c4 g5 34. g3
+Kf7 35. Kf2 gxf4 36. gxf4 Kg6 37. Kg3 Kh5 38. a4 Rc7 39. a5 bxa5 40. Ra4 Rb7 41.
+Rxa5 Rb3+ 42. Kf2 Kg4 43. Ra6 Rb6 44. Ra4 Rb2+ 45. Ke3 Rb3+ 46. Kd4 Kxf4 47. c5
+Rb7 48. Ra6 Re7 49. Rd6 a5 50. c6 a4 51. Rd7 Re8 52. Ra7 Rc8 53. c7 a3 54. Kc5
+Kxe5 55. Kc6 f4 56. Rxa3 Kf5 57. Ra5+ Ke4 58. Kd6 f3 59. Re5+ Kd3 60. Rxe6 Rxc7
+61. Kxc7 f2 62. Rf6 Ke2 63. Re6+ Kd3 64. Rf6 Ke2 65. Re6+ Kd3 66. Rf6 Ke2 67.
+Re6+ 1/2-1/2
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.22"]
+[Round "3.3"]
+[White "Lee,Alice"]
+[Black "Krush,I"]
+[Result "0-1"]
+[WhiteTitle "FM"]
+[BlackTitle "GM"]
+[WhiteElo "2362"]
+[BlackElo "2432"]
+[ECO "D26"]
+[Opening "QGA"]
+[Variation "classical variation, 6.O-O"]
+[WhiteFideId "30941822"]
+[BlackFideId "2012782"]
+[EventDate "2023.03.17"]
+
+1. d4 d5 2. c4 dxc4 3. Nf3 Nf6 4. e3 e6 5. Bxc4 c5 6. O-O Nc6 7. dxc5 Qxd1 8.
+Rxd1 Bxc5 9. a3 a6 10. b4 Ba7 11. Bb2 Ke7 12. Nbd2 Bd7 13. Nb3 Rhd8 14. Ne5 Nxe5
+15. Bxe5 Ba4 16. Rdb1 Rac8 17. Bf1 Rc2 18. Nc5 Bc6 19. Rc1 Rxc1 20. Rxc1 Bxc5
+21. bxc5 Ne8 22. f3 f6 23. Bc3 Nc7 24. Ba5 Rd7 25. e4 Bb5 26. Bxb5 Nxb5 27. c6
+bxc6 28. Rxc6 Ra7 29. a4 Nd4 30. Bb4+ Kf7 31. Rd6 Nc2 32. Bc5 Rc7 33. Bb6 Rc4
+34. Rd7+ Kg6 35. a5 e5 36. Ra7 Nb4 37. h4 h5 38. Bc7 Rc1+ 39. Kh2 Rc6 40. Bd8
+Rc8 41. Bb6 Rc2 42. Kh3 Nd3 43. Rxa6 Nf4+ 44. Kh2 Nxg2 45. Ra8 Nxh4+ 46. Kg1
+Nxf3+ 47. Kf1 Nd2+ 48. Ke1 Nxe4 49. a6 Nd6 50. Bf2 Nb5 51. Rb8 Ra2 52. Rxb5 Rxa6
+53. Rb7 Ra4 54. Ke2 Rg4 55. Bc5 Kf5 56. Bf8 g5 57. Rb6 Rf4 58. Be7 Kg6 59. Bd6
+Rf5 60. Rb7 g4 61. Bc5 h4 62. Bf8 Rf4 63. Rg7+ Kf5 64. Rh7 h3 65. Rh5+ Ke4 66.
+Bc5 f5 67. Rh8 Rf3 68. Bd6 Rb3 69. Re8 Rb2+ 70. Kf1 h2 71. Rh8 g3 72. Bc5 g2+ 0-1
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.23"]
+[Round "3.4"]
+[White "Krush,I"]
+[Black "Lee,Alice"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "FM"]
+[WhiteElo "2432"]
+[BlackElo "2362"]
+[ECO "D31"]
+[Opening "QGD"]
+[Variation "Charousek (Petrosian) variation"]
+[WhiteFideId "2012782"]
+[BlackFideId "30941822"]
+[EventDate "2023.03.17"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Be7 4. cxd5 exd5 5. Bf4 Nf6 6. e3 Bd6 7. Qf3 c6 8. Bd3
+O-O 9. h3 Na6 10. Nge2 Nc7 11. g4 Ne6 12. O-O-O b5 13. g5 Ne8 14. h4 b4 15. Na4
+Qa5 16. b3 Bd7 17. Kb1 Nxf4 18. Nxf4 Nc7 19. Rc1 Nb5 20. Ne2 Rab8 21. h5 Nc3+
+22. Naxc3 bxc3 23. Rxc3 Bb4 24. h6 f5 25. hxg7 Rf7 26. Rc2 Rxg7 27. Ng3 Bc3 28.
+Rxc3 Qxc3 29. Bc2 Rf7 30. Nh5 Kf8 31. Nf6 Ke7 32. Qf4 Rb7 33. Qe5+ Kd8 34. g6
+Re7 35. gxh7 Rxe5 36. dxe5 Kc7 37. h8=Q a5 38. Nxd7 a4 39. Qg7 a3 40. Nc5+ Kb6
+41. Na4+ 1-0
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.24"]
+[Round "4.1"]
+[White "Krush,I"]
+[Black "Lee,Alice"]
+[Result "1-0"]
+[WhiteTitle "GM"]
+[BlackTitle "FM"]
+[WhiteElo "2432"]
+[BlackElo "2362"]
+[ECO "A22"]
+[Opening "English opening"]
+[WhiteFideId "2012782"]
+[BlackFideId "30941822"]
+[EventDate "2023.03.17"]
+
+1. c4 e5 2. Nc3 Nf6 3. Nf3 e4 4. Ng5 c6 5. Ngxe4 Nxe4 6. Nxe4 d5 7. cxd5 cxd5 8.
+Ng3 h5 9. e3 h4 10. Bb5+ Nc6 11. Ne2 Bd6 12. O-O Qf6 13. f3 Bd7 14. d4 O-O-O 15.
+Bd2 Bc7 16. Bd3 Qd6 17. f4 g5 18. Qb3 Rhg8 19. Kh1 g4 20. Rfc1 Qf6 21. Qxd5 g3
+22. Qf3 Bg4 23. Qf1 Bxe2 24. Bxe2 h3 25. Bf3 hxg2+ 26. Bxg2 gxh2 27. Qf3 Rg6 28.
+Rc2 Rdg8 29. Be1 Kb8 30. Rac1 Qf5 31. b4 Bd6 32. a4 f6 33. b5 Ba3 34. bxc6 Rxg2
+35. Rxg2 Rxg2 36. c7+ Kc8 37. Qxg2 Bxc1 38. Qg8+ Kxc7 39. Qc4+ Kd7 40. Qxc1 Qh3
+41. Bd2 Qf3+ 42. Kxh2 Qf2+ 43. Kh1 Qf3+ 44. Kg1 Qg3+ 45. Kf1 Qf3+ 46. Ke1 f5 47.
+Qc4 Qg3+ 48. Kd1 1-0
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.25"]
+[Round "4.2"]
+[White "Lee,Alice"]
+[Black "Krush,I"]
+[Result "1-0"]
+[WhiteTitle "FM"]
+[BlackTitle "GM"]
+[WhiteElo "2362"]
+[BlackElo "2432"]
+[ECO "E11"]
+[Opening "Bogo-Indian defence"]
+[WhiteFideId "30941822"]
+[BlackFideId "2012782"]
+[EventDate "2023.03.17"]
+
+1. d4 Nf6 2. c4 e6 3. Nf3 Bb4+ 4. Bd2 Bxd2+ 5. Qxd2 d5 6. cxd5 exd5 7. Nc3 Bf5
+8. e3 O-O 9. Bd3 Bxd3 10. Qxd3 c6 11. O-O a5 12. Na4 Ne4 13. Rac1 Nd7 14. Nc5
+Ndxc5 15. dxc5 Qe7 16. Nd4 a4 17. f3 Nxc5 18. Qa3 b6 19. Nxc6 Qf6 20. Nb4 Rad8
+21. Rfd1 d4 22. e4 Rd6 23. Nd5 Qg5 24. Nxb6 Nxe4 25. Nc8 d3 26. fxe4 Rd7 27. Qc5
+Qd8 28. Nb6 Rd4 29. Nd5 Rxe4 30. Rxd3 Rfe8 31. Rdd1 Qh4 32. Qf2 Qxf2+ 33. Kxf2
+Re2+ 34. Kf3 Rxb2 35. Re1 Rd8 36. Re2 Rb5 37. Ne7+ Kf8 38. Rc8 Rxc8 39. Nxc8
+Rf5+ 40. Ke4 g6 41. Nd6 Rf1 42. Kd4 f5 43. Nc4 Kg7 44. Kd3 f4 45. Ke4 Kf6 46.
+Nd2 Rh1 47. Nf3 g5 48. Re1 1-0
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.25"]
+[Round "4.3"]
+[White "Lee,Alice"]
+[Black "Krush,I"]
+[Result "0-1"]
+[WhiteTitle "FM"]
+[BlackTitle "GM"]
+[WhiteElo "2362"]
+[BlackElo "2432"]
+[ECO "E11"]
+[Opening "Bogo-Indian defence"]
+[WhiteFideId "30941822"]
+[BlackFideId "2012782"]
+[EventDate "2023.03.17"]
+
+1. d4 Nf6 2. c4 e6 3. Nf3 Bb4+ 4. Bd2 Bxd2+ 5. Qxd2 d5 6. Nc3 O-O 7. e3 a6 8.
+cxd5 exd5 9. Bd3 Nc6 10. Rc1 Re8 11. O-O Bg4 12. Ne1 Qd6 13. f3 Bh5 14. f4 Ng4
+15. Nc2 Bg6 16. Be2 Bxc2 17. Bxg4 Be4 18. f5 f6 19. Rf4 Re7 20. Nxe4 dxe4 21.
+Bd1 Nb4 22. Bb3+ Kh8 23. Rh4 Nd3 24. Rf1 c5 25. dxc5 Qxc5 26. Qe2 h6 27. Be6 Qe5
+28. b3 Nc5 29. Qc2 Rd8 30. b4 Nxe6 31. Rxe4 Qd6 32. fxe6 Rxe6 33. Rd4 Qe7 34.
+Qc5 Red6 35. Rxd6 Qxd6 36. Qxd6 Rxd6 37. Rc1 Rd2 38. a4 Rb2 39. Rc4 b5 40. Rc8+
+Kh7 41. a5 Rxb4 42. Rc6 Ra4 43. Rxa6 Ra2 44. Ra8 Kg6 45. a6 h5 46. Rb8 Rxa6 47.
+Rxb5 Ra2 48. Kf1 Rc2 49. e4 Rc4 50. e5 Rf4+ 51. Kg1 Rf5 52. Rb6 Rxe5 53. Rb7 h4
+54. Kf2 Rf5+ 55. Ke3 h3 56. gxh3 Rh5 57. Kf3 Rxh3+ 58. Kg2 Rc3 59. Kf2 Kh6 60.
+Rf7 Rc5 61. Kg3 f5 62. Kf4 g6 63. h4 Rc3 64. Rf8 Rh3 65. h5 Rh4+ 66. Ke5 Kxh5
+67. Rg8 Ra4 68. Kf6 Ra6+ 69. Ke5 Kg4 70. Rf8 Ra5+ 71. Kf6 f4 72. Kxg6 f3 0-1
+
+[Event "American Cup Champ w"]
+[Site "Saint Louis USA"]
+[Date "2023.03.26"]
+[Round "4.4"]
+[White "Krush,I"]
+[Black "Lee,Alice"]
+[Result "1/2-1/2"]
+[WhiteTitle "GM"]
+[BlackTitle "FM"]
+[WhiteElo "2432"]
+[BlackElo "2362"]
+[ECO "A40"]
+[Opening "Modern defence"]
+[WhiteFideId "2012782"]
+[BlackFideId "30941822"]
+[EventDate "2023.03.17"]
+
+1. d4 g6 2. c4 Bg7 3. e4 c5 4. d5 d6 5. Nc3 e5 6. Bd3 Ne7 7. h3 O-O 8. g4 f5 9.
+gxf5 gxf5 10. Nf3 f4 11. Bd2 Ng6 12. Qe2 Nh4 13. O-O-O Nd7 14. Rdg1 Nxf3 15.
+Qxf3 Rf7 16. Be2 a6 17. Qg2 Nf8 18. Bh5 Re7 19. Qg5 Bd7 20. f3 Be8 21. Be1 Bxh5
+22. Qxh5 Qe8 23. Qg4 Rc7 24. Rg2 b5 25. Rhg1 Kh8 26. h4 b4 27. Nd1 Qa4 28. b3
+Qd7 29. Qh5 Qe8 30. Qf5 Rf7 31. Qh5 Re7 32. Qxe8 Raxe8 33. h5 Nd7 34. Bh4 Rf7
+35. Nf2 Bf6 36. Bxf6+ Nxf6 37. Rg5 Rg8 38. h6 Rff8 39. Kd2 Rxg5 40. Rxg5 Rg8 41.
+Rxg8+ Kxg8 42. Nh3 Kf7 43. Ng5+ Kg6 44. Ne6 Kxh6 45. Nc7 a5 46. Nb5 Ne8 47. Na7
+Kg5 48. Ke2 Kh4 49. Kf2 h5 50. Kg2 Kg5 51. Nc6 Kf6 52. Nxa5 Ke7 53. Nc6+ Kd7 54.
+Kh3 Ng7 55. Kh4 Ke8 56. Kg5 Kd7 57. Nb8+ Kc7 58. Nc6 Kd7 59. Nb8+ Kc8 60. Nc6
+Kc7 61. Ne7 Kd7 62. Nf5 Ne8 63. Kxh5 Nc7 64. Kg5 Ne8 65. Nh6 Nc7 66. Nf5 Ne8 67.
+Nh6 Nc7 68. Nf5 Ne8 69. Nh6 1/2-1/2

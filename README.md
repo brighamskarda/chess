@@ -1,30 +1,98 @@
 # brighamskarda/chess
 
-I used this project to learn GoLang. This library supports all of the following features:
+**chess** is a go module with useful utilities for playing and manipulating the game of chess. It was created to expand the selection of chess libraries available in golang. As of now, one of the only fleshed out libraries is [CorentinGS/chess](https://github.com/corentings/chess) (who has done some admittedly great work along with [notnil](https://github.com/notnil/chess)). Some of the functionality provided in this library includes:
 
-- FEN parsing and generation
-- PGN parsing and generation
-- Legal move generation
 - Pseudo-legal move generation
-- UCI move parsing and generation
-- SAN move parsing and generation
-- Checks for Checkmate and Stalemate (including three-fold repetition)
+- Legal move generation
+- FEN position parsing
+- Extensive PGN support
+- Bitboard utilities for move generation
 
-All functionality has been thoroughly tested (including parsing and writing over 20,000 PGNs which hits nearly every part of the code base including move generation).
+## Performance
 
-## Usage
+This module is designed with performance in mind. It aims to be performant enough for engine development, while still being easy to use.
 
-I recommend taking at look at the docs at <https://pkg.go.dev/> as all non-obvious functions should be documented there.
+It performs similarly to [CorentinGS/chess](https://github.com/corentings/chess), with one notable exception. Legal move generation in this module is up to **40%** faster (sometimes even more).
 
-If you are looking to create a chess application I recommend using the Game struct as it keeps track of move history and always ensures that the game is in a valid state.
+| Postition | brighamskarda | CorentinGS |
+| --------- | ------------- | ---------- |
+| Starting  | 2820ns        | 4448ns     |
+| Midgame   | 6026ns        | 9987ns     |
+| Endgame   | 2167ns        | 4468ns     |
 
-For engine development I recommend using the Position struct as it allows for quick and easy access and modification of the game state. Using Move on a position does not check for move validity which increases engine speed.
+Of course, benchmarking is a fickle art, and a deeper review will show that CorentinGS has done a great job of minimizing heap allocations in his library.
 
 ## Future Development
 
-I am currently working on version 2.0 of this library. It features a fully bitboard based position representation.
-Currently moves generationa for version 2 is about twice as fast as the most popular chess library in go. https://github.com/corentings/chess
+There is still a lot of work to do to make this library as great as possible. Currently there are two future releases planned.
 
-## Contact info
+- v2.1 - UCI support to aid engine development
+- v2.2 - Chess 960 support
 
-I'm very happy to consider changes to the API to make things *feel better*. Feel free to email me, or post an issue. I'm even open to pull requests should you feel the urge to contribute.
+## Contributing
+
+I'm open to suggestions and contributions. Feel free to post them on github issues and pull requests. You can also email me directly at <brighamskarda@gmail.com>.
+
+## Usage
+
+You can find the full documentation at <https://pkg.go.dev/github.com/brighamskarda/chess>. Here are a few useful tips though:
+
+- Use the **Game** type to play, and keep track of your games. This struct is how you can read and manipulate PGN's.
+- Use the **Position** type for high performance applications. Using Position.Move is much faster than Game.Move since it doesn't validate the move, or keep a history.
+- If your developing an engine, use **Position.Bitboard** to get bitboards for pieces and colors. Bit operations can accelerate your engine.
+
+### Example Game Against Dumb Computer
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/brighamskarda/chess"
+)
+
+func main() {
+	// Initialize a new game of chess
+	myGame := chess.NewGame()
+	// Get input reader
+	input := bufio.NewReader(os.Stdin)
+
+	// Game Loop
+	for !myGame.IsStalemate() && !myGame.IsCheckmate() {
+		currentPosition := myGame.Position()
+		if currentPosition.SideToMove == chess.White {
+			// Player plays white
+			fmt.Println(currentPosition.String(true, false))
+			fmt.Print("Enter Move (<square1><square2><promotion>): ")
+			playerInput, _ := input.ReadString('\n')
+			playerInput = strings.TrimSpace(playerInput)
+			// MoveUCI automatically parses the players move
+			err := myGame.MoveUCI(playerInput)
+			if err != nil {
+				fmt.Println("Invalid Move")
+			}
+		} else if currentPosition.SideToMove == chess.Black {
+			// Computer plays the first legal move it sees
+			legalMoves := myGame.LegalMoves()
+			myGame.Move(legalMoves[0])
+			fmt.Printf("\nBlack performed move %v\n\n", legalMoves[0])
+		}
+	}
+
+	// Game detected stalemate or checkmate, so we print the result.
+	switch myGame.Result {
+	case chess.Draw:
+		fmt.Println("Draw")
+	case chess.WhiteWins:
+		fmt.Println("White Wins")
+	case chess.BlackWins:
+		fmt.Println("Black Wins")
+	default:
+		panic("game ended without result.")
+	}
+}
+```

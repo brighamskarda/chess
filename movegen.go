@@ -1,364 +1,455 @@
+// Copyright (C) 2025 Brigham Skarda
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package chess
 
-// GeneratePseudoLegalMoves expects a valid position. Behavior is undefined for invalid positions. This is to improve
-// performance since move generation is a vital part to engine development.
-func GeneratePseudoLegalMoves(p *Position) []Move {
-	pseudoLegalMoves := []Move{}
-	for index, piece := range p.Board {
-		if piece.Color == p.Turn {
-			switch piece.Type {
-			case Pawn:
-				pseudoLegalMoves = append(pseudoLegalMoves, generatePawnMoves(p, indexToSquare(index))...)
-			case Rook:
-				pseudoLegalMoves = append(pseudoLegalMoves, generateRookMoves(p, indexToSquare(index))...)
-			case Knight:
-				pseudoLegalMoves = append(pseudoLegalMoves, generateKnightMoves(p, indexToSquare(index))...)
-			case Bishop:
-				pseudoLegalMoves = append(pseudoLegalMoves, generateBishopMoves(p, indexToSquare(index))...)
-			case Queen:
-				pseudoLegalMoves = append(pseudoLegalMoves, generateQueenMoves(p, indexToSquare(index))...)
-			case King:
-				pseudoLegalMoves = append(pseudoLegalMoves, generateKingMoves(p, indexToSquare(index))...)
-				pseudoLegalMoves = append(pseudoLegalMoves, generateCastleMoves(p, indexToSquare(index))...)
-			}
-		}
+import "math/bits"
+
+// PseudoLegalMoves are moves that are legal except they leave one's king in check. Returns nil if moves could not be generated (for example if pos.SideToMove was not set). Returns an empty slice if move generation was successful, but no moves were found.
+func PseudoLegalMoves(pos *Position) []Move {
+	if pos.SideToMove != White && pos.SideToMove != Black {
+		return nil
 	}
-	return pseudoLegalMoves
+	moves := make([]Move, 0)
+	moves = append(moves, pawnMoves(pos)...)
+	moves = append(moves, rookMoves(pos)...)
+	moves = append(moves, knightMoves(pos)...)
+	moves = append(moves, bishopMoves(pos)...)
+	moves = append(moves, queenMoves(pos)...)
+	moves = append(moves, kingMoves(pos)...)
+	return moves
 }
 
-func generatePawnMoves(p *Position, s Square) []Move {
-	if p.Turn == White {
-		return generateWhitePawnMoves(p, s)
-	} else if p.Turn == Black {
-		return generateBlackPawnMoves(p, s)
-	} else {
-		return []Move{}
+func pawnMoves(pos *Position) []Move {
+	if pos.SideToMove == White {
+		return whitePawnMoves(pos)
 	}
+
+	if pos.SideToMove == Black {
+		return blackPawnMoves(pos)
+	}
+
+	return nil
 }
 
-func generateWhitePawnMoves(p *Position, s Square) []Move {
-	pawnMoves := []Move{}
-	pawnMoves = append(pawnMoves, generateWhitePawnSingleMoveForward(p, s)...)
-	pawnMoves = append(pawnMoves, generateWhitePawnDoubleMoveForward(p, s)...)
-	pawnMoves = append(pawnMoves, generateWhitePawnTakesPiece(p, s)...)
-	pawnMoves = append(pawnMoves, generateWhitePawnTakesEnPassant(p, s)...)
-	pawnMoves = append(pawnMoves, generateWhitePawnPromotion(p, s)...)
-	return pawnMoves
+func whitePawnMoves(pos *Position) []Move {
+	moves := make([]Move, 0)
+
+	whitePawns := pos.Bitboard(WhitePawn)
+	occupied := pos.OccupiedBitboard()
+	enemies := pos.ColorBitboard(Black) | (1 << squareToIndex(pos.EnPassant))
+
+	moves = append(moves, whitePawnsMoveForward(whitePawns, occupied)...)
+	moves = append(moves, whitePawnsMoveForward2(whitePawns, occupied)...)
+	moves = append(moves, whitePawnsTakeNE(whitePawns, enemies)...)
+	moves = append(moves, whitePawnsTakeNW(whitePawns, enemies)...)
+	includeWhitePawnPromotions(&moves)
+	return moves
 }
 
-func generateWhitePawnSingleMoveForward(p *Position, s Square) []Move {
-	if s.Rank < Rank7 && p.PieceAt(Square{s.File, s.Rank + 1}) == NoPiece {
-		return []Move{{FromSquare: s, ToSquare: Square{s.File, s.Rank + 1}, Promotion: NoPieceType}}
-	}
-	return []Move{}
-}
+func whitePawnsMoveForward(whitePawns Bitboard, occupied Bitboard) []Move {
+	moves := make([]Move, 0)
+	moveForward := (whitePawns << 8) &^ occupied
 
-func generateWhitePawnDoubleMoveForward(p *Position, s Square) []Move {
-	if s.Rank == Rank2 && p.PieceAt(Square{s.File, s.Rank + 1}) == NoPiece && p.PieceAt(Square{s.File, s.Rank + 2}) == NoPiece {
-		return []Move{{FromSquare: s, ToSquare: Square{s.File, s.Rank + 2}, Promotion: NoPieceType}}
-	}
-	return []Move{}
-}
-
-func generateWhitePawnTakesPiece(p *Position, s Square) []Move {
-	moves := []Move{}
-	pieceUpLeft := p.PieceAt(Square{s.File - 1, s.Rank + 1})
-	if s.Rank < Rank7 && pieceUpLeft.Color != NoColor && pieceUpLeft.Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: Square{s.File - 1, s.Rank + 1}, Promotion: NoPieceType})
-	}
-	pieceUpRight := p.PieceAt(Square{s.File + 1, s.Rank + 1})
-	if s.Rank < Rank7 && pieceUpRight.Color != NoColor && pieceUpRight.Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: Square{s.File + 1, s.Rank + 1}, Promotion: NoPieceType})
+	for moveForward != 0 {
+		squareIndex := bits.TrailingZeros64(uint64(moveForward))
+		moveForward ^= 1 << squareIndex
+		square := indexToSquare(squareIndex)
+		moves = append(moves, Move{Square{square.File, square.Rank - 1}, square, NoPieceType})
 	}
 	return moves
 }
 
-func generateWhitePawnTakesEnPassant(p *Position, s Square) []Move {
-	if p.EnPassant == (Square{s.File - 1, s.Rank + 1}) {
-		return []Move{{FromSquare: s, ToSquare: Square{s.File - 1, s.Rank + 1}, Promotion: NoPieceType}}
-	}
-	if p.EnPassant == (Square{s.File + 1, s.Rank + 1}) {
-		return []Move{{FromSquare: s, ToSquare: Square{s.File + 1, s.Rank + 1}, Promotion: NoPieceType}}
-	}
-	return []Move{}
-}
+func whitePawnsMoveForward2(whitePawns Bitboard, occupied Bitboard) []Move {
+	moves := make([]Move, 0)
+	moveForward2 := (whitePawns << 16) &^ occupied
 
-func generateWhitePawnPromotion(p *Position, s Square) []Move {
-	movesBeforePromotion := []Move{}
-	if s.Rank == Rank7 && p.PieceAt(Square{s.File, s.Rank + 1}) == NoPiece {
-		movesBeforePromotion = append(movesBeforePromotion, Move{FromSquare: s, ToSquare: Square{s.File, s.Rank + 1}, Promotion: NoPieceType})
-	}
-	pieceUpLeft := p.PieceAt(Square{s.File - 1, s.Rank + 1})
-	if s.Rank == Rank7 && pieceUpLeft.Color != NoColor && pieceUpLeft.Color != p.Turn {
-		movesBeforePromotion = append(movesBeforePromotion, Move{FromSquare: s, ToSquare: Square{s.File - 1, s.Rank + 1}, Promotion: NoPieceType})
-	}
-	pieceUpRight := p.PieceAt(Square{s.File + 1, s.Rank + 1})
-	if s.Rank == Rank7 && pieceUpRight.Color != NoColor && pieceUpRight.Color != p.Turn {
-		movesBeforePromotion = append(movesBeforePromotion, Move{FromSquare: s, ToSquare: Square{s.File + 1, s.Rank + 1}, Promotion: NoPieceType})
-	}
-	movesWithPromotion := []Move{}
-	for _, move := range movesBeforePromotion {
-		movesWithPromotion = append(movesWithPromotion, Move{move.FromSquare, move.ToSquare, Rook})
-		movesWithPromotion = append(movesWithPromotion, Move{move.FromSquare, move.ToSquare, Knight})
-		movesWithPromotion = append(movesWithPromotion, Move{move.FromSquare, move.ToSquare, Bishop})
-		movesWithPromotion = append(movesWithPromotion, Move{move.FromSquare, move.ToSquare, Queen})
-	}
-	return movesWithPromotion
-}
-
-func generateBlackPawnMoves(p *Position, s Square) []Move {
-	pawnMoves := []Move{}
-	pawnMoves = append(pawnMoves, generateBlackPawnSingleMoveForward(p, s)...)
-	pawnMoves = append(pawnMoves, generateBlackPawnDoubleMoveForward(p, s)...)
-	pawnMoves = append(pawnMoves, generateBlackPawnTakesPiece(p, s)...)
-	pawnMoves = append(pawnMoves, generateBlackPawnTakesEnPassant(p, s)...)
-	pawnMoves = append(pawnMoves, generateBlackPawnPromotion(p, s)...)
-	return pawnMoves
-}
-
-func generateBlackPawnSingleMoveForward(p *Position, s Square) []Move {
-	if s.Rank > Rank2 && p.PieceAt(Square{s.File, s.Rank - 1}) == NoPiece {
-		return []Move{{FromSquare: s, ToSquare: Square{s.File, s.Rank - 1}, Promotion: NoPieceType}}
-	}
-	return []Move{}
-}
-
-func generateBlackPawnDoubleMoveForward(p *Position, s Square) []Move {
-	if s.Rank == Rank7 && p.PieceAt(Square{s.File, s.Rank - 1}) == NoPiece && p.PieceAt(Square{s.File, s.Rank - 2}) == NoPiece {
-		return []Move{{FromSquare: s, ToSquare: Square{s.File, s.Rank - 2}, Promotion: NoPieceType}}
-	}
-	return []Move{}
-}
-
-func generateBlackPawnTakesPiece(p *Position, s Square) []Move {
-	moves := []Move{}
-	pieceUpLeft := p.PieceAt(Square{s.File - 1, s.Rank - 1})
-	if s.Rank > Rank2 && pieceUpLeft.Color != NoColor && pieceUpLeft.Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: Square{s.File - 1, s.Rank - 1}, Promotion: NoPieceType})
-	}
-	pieceUpRight := p.PieceAt(Square{s.File + 1, s.Rank - 1})
-	if s.Rank > Rank2 && pieceUpRight.Color != NoColor && pieceUpRight.Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: Square{s.File + 1, s.Rank - 1}, Promotion: NoPieceType})
-	}
-	return moves
-}
-
-func generateBlackPawnTakesEnPassant(p *Position, s Square) []Move {
-	if p.EnPassant == (Square{s.File - 1, s.Rank - 1}) {
-		return []Move{{FromSquare: s, ToSquare: Square{s.File - 1, s.Rank - 1}, Promotion: NoPieceType}}
-	}
-	if p.EnPassant == (Square{s.File + 1, s.Rank - 1}) {
-		return []Move{{FromSquare: s, ToSquare: Square{s.File + 1, s.Rank - 1}, Promotion: NoPieceType}}
-	}
-	return []Move{}
-}
-
-func generateBlackPawnPromotion(p *Position, s Square) []Move {
-	movesBeforePromotion := []Move{}
-	if s.Rank == Rank2 && p.PieceAt(Square{s.File, s.Rank - 1}) == NoPiece {
-		movesBeforePromotion = append(movesBeforePromotion, Move{FromSquare: s, ToSquare: Square{s.File, s.Rank - 1}, Promotion: NoPieceType})
-	}
-	pieceUpLeft := p.PieceAt(Square{s.File - 1, s.Rank - 1})
-	if s.Rank == Rank2 && pieceUpLeft.Color != NoColor && pieceUpLeft.Color != p.Turn {
-		movesBeforePromotion = append(movesBeforePromotion, Move{FromSquare: s, ToSquare: Square{s.File - 1, s.Rank - 1}, Promotion: NoPieceType})
-	}
-	pieceUpRight := p.PieceAt(Square{s.File + 1, s.Rank - 1})
-	if s.Rank == Rank2 && pieceUpRight.Color != NoColor && pieceUpRight.Color != p.Turn {
-		movesBeforePromotion = append(movesBeforePromotion, Move{FromSquare: s, ToSquare: Square{s.File + 1, s.Rank - 1}, Promotion: NoPieceType})
-	}
-	movesWithPromotion := []Move{}
-	for _, move := range movesBeforePromotion {
-		movesWithPromotion = append(movesWithPromotion, Move{move.FromSquare, move.ToSquare, Rook})
-		movesWithPromotion = append(movesWithPromotion, Move{move.FromSquare, move.ToSquare, Knight})
-		movesWithPromotion = append(movesWithPromotion, Move{move.FromSquare, move.ToSquare, Bishop})
-		movesWithPromotion = append(movesWithPromotion, Move{move.FromSquare, move.ToSquare, Queen})
-	}
-	return movesWithPromotion
-}
-
-func generateRookMoves(p *Position, s Square) []Move {
-	moves := []Move{}
-	moveFunctions := [4]func(Square) Square{squareToLeft, squareToRight, squareAbove, squareBelow}
-	for _, moveFunc := range moveFunctions {
-		for toSquare := moveFunc(s); toSquare != NoSquare; toSquare = moveFunc(toSquare) {
-			pieceAtSquare := p.PieceAt(toSquare)
-			if pieceAtSquare.Color == p.Turn {
-				break
-			}
-			moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-			if pieceAtSquare.Color != NoColor {
-				break
-			}
+	for moveForward2 != 0 {
+		squareIndex := bits.TrailingZeros64(uint64(moveForward2))
+		moveForward2 ^= 1 << squareIndex
+		square := indexToSquare(squareIndex)
+		if square.Rank == Rank4 && occupied.Square(Square{square.File, Rank3}) == 0 {
+			moves = append(moves, Move{Square{square.File, square.Rank - 2}, square, NoPieceType})
 		}
 	}
 	return moves
 }
 
-func generateKnightMoves(p *Position, s Square) []Move {
-	moves := []Move{}
-	toSquare := squareAbove(squareAbove(squareToRight(s)))
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-	}
-	toSquare = squareAbove(squareToRight(squareToRight(s)))
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-	}
-	toSquare = squareBelow(squareToRight(squareToRight(s)))
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-	}
-	toSquare = squareBelow(squareBelow(squareToRight(s)))
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-	}
-	toSquare = squareBelow(squareBelow(squareToLeft(s)))
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-	}
-	toSquare = squareBelow(squareToLeft(squareToLeft(s)))
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-	}
-	toSquare = squareAbove(squareToLeft(squareToLeft(s)))
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-	}
-	toSquare = squareAbove(squareAbove(squareToLeft(s)))
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+func whitePawnsTakeNE(whitePawns Bitboard, enemies Bitboard) []Move {
+	moves := make([]Move, 0)
+	neAttacks := whitePawns.pawnAttacksNE() & enemies
+
+	for neAttacks != 0 {
+		squareIndex := bits.TrailingZeros64(uint64(neAttacks))
+		neAttacks ^= 1 << squareIndex
+		square := indexToSquare(squareIndex)
+		moves = append(moves, Move{Square{square.File - 1, square.Rank - 1}, square, NoPieceType})
 	}
 	return moves
 }
 
-func generateBishopMoves(p *Position, s Square) []Move {
-	moves := []Move{}
-	verticalFunctions := [2]func(Square) Square{squareAbove, squareBelow}
-	horizontalFunctions := [2]func(Square) Square{squareToLeft, squareToRight}
-	for _, verticalFunc := range verticalFunctions {
-		for _, horizontalFunc := range horizontalFunctions {
-			for toSquare := verticalFunc(horizontalFunc(s)); toSquare != NoSquare; toSquare = verticalFunc(horizontalFunc(toSquare)) {
-				pieceAtSquare := p.PieceAt(toSquare)
-				if pieceAtSquare.Color == p.Turn {
-					break
-				}
-				moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-				if pieceAtSquare.Color != NoColor {
-					break
-				}
-			}
+func whitePawnsTakeNW(whitePawns Bitboard, enemies Bitboard) []Move {
+	moves := make([]Move, 0)
+	neAttacks := whitePawns.pawnAttacksNW() & enemies
+
+	for neAttacks != 0 {
+		squareIndex := bits.TrailingZeros64(uint64(neAttacks))
+		neAttacks ^= 1 << squareIndex
+		square := indexToSquare(squareIndex)
+		moves = append(moves, Move{Square{square.File + 1, square.Rank - 1}, square, NoPieceType})
+	}
+	return moves
+}
+
+func includeWhitePawnPromotions(moves *[]Move) {
+	numMoves := len(*moves)
+	for i := range numMoves {
+		if (*moves)[i].ToSquare.Rank == Rank8 {
+			moveCopy := (*moves)[i]
+			(*moves)[i].Promotion = Queen
+			moveCopy.Promotion = Rook
+			*moves = append(*moves, moveCopy)
+			moveCopy.Promotion = Knight
+			*moves = append(*moves, moveCopy)
+			moveCopy.Promotion = Bishop
+			*moves = append(*moves, moveCopy)
+		}
+	}
+}
+
+func blackPawnMoves(pos *Position) []Move {
+	moves := make([]Move, 0)
+
+	blackPawns := pos.Bitboard(BlackPawn)
+	occupied := pos.OccupiedBitboard()
+	enemies := pos.ColorBitboard(White) | (1 << squareToIndex(pos.EnPassant))
+
+	moves = append(moves, blackPawnsMoveForward(blackPawns, occupied)...)
+	moves = append(moves, blackPawnsMoveForward2(blackPawns, occupied)...)
+	moves = append(moves, blackPawnsTakeSE(blackPawns, enemies)...)
+	moves = append(moves, blackPawnsTakeSW(blackPawns, enemies)...)
+	includeBlackPawnPromotions(&moves)
+	return moves
+}
+
+func blackPawnsMoveForward(blackPawns Bitboard, occupied Bitboard) []Move {
+	moves := make([]Move, 0)
+	moveForward := (blackPawns >> 8) &^ occupied
+
+	for moveForward != 0 {
+		squareIndex := bits.TrailingZeros64(uint64(moveForward))
+		moveForward ^= 1 << squareIndex
+		square := indexToSquare(squareIndex)
+		moves = append(moves, Move{Square{square.File, square.Rank + 1}, square, NoPieceType})
+	}
+	return moves
+}
+
+func blackPawnsMoveForward2(blackPawns Bitboard, occupied Bitboard) []Move {
+	moves := make([]Move, 0)
+	moveForward2 := (blackPawns >> 16) &^ occupied
+
+	for moveForward2 != 0 {
+		squareIndex := bits.TrailingZeros64(uint64(moveForward2))
+		moveForward2 ^= 1 << squareIndex
+		square := indexToSquare(squareIndex)
+		if square.Rank == Rank5 && occupied.Square(Square{square.File, Rank6}) == 0 {
+			moves = append(moves, Move{Square{square.File, square.Rank + 2}, square, NoPieceType})
 		}
 	}
 	return moves
 }
 
-func generateQueenMoves(p *Position, s Square) []Move {
-	moves := []Move{}
-	moves = append(moves, generateRookMoves(p, s)...)
-	moves = append(moves, generateBishopMoves(p, s)...)
-	return moves
-}
+func blackPawnsTakeSE(blackPawns Bitboard, enemies Bitboard) []Move {
+	moves := make([]Move, 0)
+	seAttacks := blackPawns.pawnAttacksSE() & enemies
 
-func generateKingMoves(p *Position, s Square) []Move {
-	moves := []Move{}
-	toSquare := squareAbove(s)
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-	}
-	toSquare = squareToRight(squareAbove(s))
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-	}
-	toSquare = squareToRight(s)
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-	}
-	toSquare = squareBelow(squareToRight(s))
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-	}
-	toSquare = squareBelow(s)
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-	}
-	toSquare = squareToLeft(squareBelow(s))
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-	}
-	toSquare = squareToLeft(s)
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
-	}
-	toSquare = squareAbove(squareToLeft(s))
-	if toSquare != NoSquare && p.PieceAt(toSquare).Color != p.Turn {
-		moves = append(moves, Move{FromSquare: s, ToSquare: toSquare, Promotion: NoPieceType})
+	for seAttacks != 0 {
+		squareIndex := bits.TrailingZeros64(uint64(seAttacks))
+		seAttacks ^= 1 << squareIndex
+		square := indexToSquare(squareIndex)
+		moves = append(moves, Move{Square{square.File - 1, square.Rank + 1}, square, NoPieceType})
 	}
 	return moves
 }
 
-func generateCastleMoves(p *Position, s Square) []Move {
-	if p.Turn == White && s == E1 {
-		return generateWhiteCastleMoves(p)
-	}
-	if p.Turn == Black && s == E8 {
-		return generateBlackCastleMoves(p)
-	}
-	return []Move{}
-}
+func blackPawnsTakeSW(blackPawns Bitboard, enemies Bitboard) []Move {
+	moves := make([]Move, 0)
+	swAttacks := blackPawns.pawnAttacksSW() & enemies
 
-func generateWhiteCastleMoves(p *Position) []Move {
-	moves := []Move{}
-	if p.WhiteKingSideCastle &&
-		p.PieceAt(E1) == WhiteKing &&
-		p.PieceAt(F1) == NoPiece &&
-		p.PieceAt(G1) == NoPiece &&
-		p.PieceAt(H1) == WhiteRook {
-		moves = append(moves, Move{FromSquare: E1, ToSquare: G1, Promotion: NoPieceType})
-	}
-	if p.WhiteQueenSideCastle &&
-		p.PieceAt(E1) == WhiteKing &&
-		p.PieceAt(D1) == NoPiece &&
-		p.PieceAt(C1) == NoPiece &&
-		p.PieceAt(B1) == NoPiece &&
-		p.PieceAt(A1) == WhiteRook {
-		moves = append(moves, Move{FromSquare: E1, ToSquare: C1, Promotion: NoPieceType})
+	for swAttacks != 0 {
+		squareIndex := bits.TrailingZeros64(uint64(swAttacks))
+		swAttacks ^= 1 << squareIndex
+		square := indexToSquare(squareIndex)
+		moves = append(moves, Move{Square{square.File + 1, square.Rank + 1}, square, NoPieceType})
 	}
 	return moves
 }
 
-func generateBlackCastleMoves(p *Position) []Move {
-	moves := []Move{}
-	if p.BlackKingSideCastle &&
-		p.PieceAt(E8) == BlackKing &&
-		p.PieceAt(F8) == NoPiece &&
-		p.PieceAt(G8) == NoPiece &&
-		p.PieceAt(H8) == BlackRook {
-		moves = append(moves, Move{FromSquare: E8, ToSquare: G8, Promotion: NoPieceType})
+func includeBlackPawnPromotions(moves *[]Move) {
+	numMoves := len(*moves)
+	for i := 0; i < numMoves; i++ {
+		if (*moves)[i].ToSquare.Rank == Rank1 {
+			moveCopy := (*moves)[i]
+			(*moves)[i].Promotion = Queen
+			moveCopy.Promotion = Rook
+			*moves = append(*moves, moveCopy)
+			moveCopy.Promotion = Knight
+			*moves = append(*moves, moveCopy)
+			moveCopy.Promotion = Bishop
+			*moves = append(*moves, moveCopy)
+		}
 	}
-	if p.BlackQueenSideCastle &&
-		p.PieceAt(E8) == BlackKing &&
-		p.PieceAt(D8) == NoPiece &&
-		p.PieceAt(C8) == NoPiece &&
-		p.PieceAt(B8) == NoPiece &&
-		p.PieceAt(A8) == BlackRook {
-		moves = append(moves, Move{FromSquare: E8, ToSquare: C8, Promotion: NoPieceType})
+}
+
+func rookMoves(pos *Position) []Move {
+	moves := make([]Move, 0)
+	var rooks Bitboard
+	var occupied Bitboard = pos.OccupiedBitboard()
+	var allies Bitboard
+	switch pos.SideToMove {
+	case White:
+		rooks = pos.Bitboard(WhiteRook)
+		allies = pos.ColorBitboard(White)
+	case Black:
+		rooks = pos.Bitboard(BlackRook)
+		allies = pos.ColorBitboard(Black)
+	default:
+		return moves
 	}
+
+	for rooks != 0 {
+		singleRookIndex := bits.TrailingZeros64(uint64(rooks))
+		singleRookBitboard := Bitboard(1 << singleRookIndex)
+		rooks ^= singleRookBitboard
+		rookAttacks := singleRookBitboard.RookAttacks(occupied)
+		rookAttacks &^= allies
+		singleRookSquare := indexToSquare(singleRookIndex)
+		for rookAttacks != 0 {
+			attackIndex := bits.TrailingZeros64(uint64(rookAttacks))
+			rookAttacks ^= 1 << attackIndex
+			attackSquare := indexToSquare(attackIndex)
+			moves = append(moves, Move{singleRookSquare, attackSquare, NoPieceType})
+		}
+	}
+
 	return moves
 }
 
-// GenerateLegalMoves expects a valid position. Behavior is undefined for invalid positions. This is to improve
-// performance since move generation is a vital part to engine development.
-func GenerateLegalMoves(p *Position) []Move {
-	pseudoLegalMoves := GeneratePseudoLegalMoves(p)
-	isCurrentPositionCheck := IsCheck(p)
-	legalMoves := []Move{}
-	for _, move := range pseudoLegalMoves {
-		var tempPosition Position = *p
-		tempPosition.Move(move)
-		tempPosition.Turn = p.Turn
-		castleMove := isCastleMove(p, move)
-		if !IsCheck(&tempPosition) && ((castleMove && !isCurrentPositionCheck) || !castleMove) {
-			legalMoves = append(legalMoves, move)
+func knightMoves(pos *Position) []Move {
+	moves := make([]Move, 0)
+	var knights Bitboard
+	var allies Bitboard
+	switch pos.SideToMove {
+	case White:
+		knights = pos.Bitboard(WhiteKnight)
+		allies = pos.ColorBitboard(White)
+	case Black:
+		knights = pos.Bitboard(BlackKnight)
+		allies = pos.ColorBitboard(Black)
+	default:
+		return moves
+	}
+
+	for knights != 0 {
+		singleKnightIndex := bits.TrailingZeros64(uint64(knights))
+		singleKnightBitboard := Bitboard(1 << singleKnightIndex)
+		knights ^= singleKnightBitboard
+		knightAttacks := singleKnightBitboard.KnightAttacks()
+		knightAttacks &^= allies
+		singleKnightSquare := indexToSquare(singleKnightIndex)
+		for knightAttacks != 0 {
+			attackIndex := bits.TrailingZeros64(uint64(knightAttacks))
+			knightAttacks ^= 1 << attackIndex
+			attackSquare := indexToSquare(attackIndex)
+			moves = append(moves, Move{singleKnightSquare, attackSquare, NoPieceType})
+		}
+	}
+
+	return moves
+}
+
+func bishopMoves(pos *Position) []Move {
+	moves := make([]Move, 0)
+	var bishops Bitboard
+	var occupied Bitboard = pos.OccupiedBitboard()
+	var allies Bitboard
+	switch pos.SideToMove {
+	case White:
+		bishops = pos.Bitboard(WhiteBishop)
+		allies = pos.ColorBitboard(White)
+	case Black:
+		bishops = pos.Bitboard(BlackBishop)
+		allies = pos.ColorBitboard(Black)
+	default:
+		return moves
+	}
+
+	for bishops != 0 {
+		singleBishopIndex := bits.TrailingZeros64(uint64(bishops))
+		singleBishopBitboard := Bitboard(1 << singleBishopIndex)
+		bishops ^= singleBishopBitboard
+		bishopAttacks := singleBishopBitboard.BishopAttacks(occupied)
+		bishopAttacks &^= allies
+		singleBishopSquare := indexToSquare(singleBishopIndex)
+		for bishopAttacks != 0 {
+			attackIndex := bits.TrailingZeros64(uint64(bishopAttacks))
+			bishopAttacks ^= 1 << attackIndex
+			attackSquare := indexToSquare(attackIndex)
+			moves = append(moves, Move{singleBishopSquare, attackSquare, NoPieceType})
+		}
+	}
+
+	return moves
+}
+
+func queenMoves(pos *Position) []Move {
+	moves := make([]Move, 0)
+	var queens Bitboard
+	var occupied Bitboard = pos.OccupiedBitboard()
+	var allies Bitboard
+	switch pos.SideToMove {
+	case White:
+		queens = pos.Bitboard(WhiteQueen)
+		allies = pos.ColorBitboard(White)
+	case Black:
+		queens = pos.Bitboard(BlackQueen)
+		allies = pos.ColorBitboard(Black)
+	default:
+		return moves
+	}
+
+	for queens != 0 {
+		singleQueenIndex := bits.TrailingZeros64(uint64(queens))
+		singleQueenBitboard := Bitboard(1 << singleQueenIndex)
+		queens ^= singleQueenBitboard
+		// Combine rook and bishop attacks for queen moves
+		queenAttacks := singleQueenBitboard.RookAttacks(occupied) | singleQueenBitboard.BishopAttacks(occupied)
+		queenAttacks &^= allies
+		singleQueenSquare := indexToSquare(singleQueenIndex)
+		for queenAttacks != 0 {
+			attackIndex := bits.TrailingZeros64(uint64(queenAttacks))
+			queenAttacks ^= 1 << attackIndex
+			attackSquare := indexToSquare(attackIndex)
+			moves = append(moves, Move{singleQueenSquare, attackSquare, NoPieceType})
+		}
+	}
+
+	return moves
+}
+
+func kingMoves(pos *Position) []Move {
+	moves := make([]Move, 0)
+	var kings Bitboard
+	var allies Bitboard
+	switch pos.SideToMove {
+	case White:
+		kings = pos.Bitboard(WhiteKing)
+		allies = pos.ColorBitboard(White)
+	case Black:
+		kings = pos.Bitboard(BlackKing)
+		allies = pos.ColorBitboard(Black)
+	default:
+		return moves
+	}
+
+	for kings != 0 {
+		singleKingIndex := bits.TrailingZeros64(uint64(kings))
+		singleKingBitboard := Bitboard(1 << singleKingIndex)
+		kings ^= singleKingBitboard
+		kingAttacks := singleKingBitboard.KingAttacks()
+		kingAttacks &^= allies
+		singleKingSquare := indexToSquare(singleKingIndex)
+		for kingAttacks != 0 {
+			attackIndex := bits.TrailingZeros64(uint64(kingAttacks))
+			kingAttacks ^= 1 << attackIndex
+			attackSquare := indexToSquare(attackIndex)
+			moves = append(moves, Move{singleKingSquare, attackSquare, NoPieceType})
+		}
+	}
+
+	moves = append(moves, castleMoves(pos)...)
+
+	return moves
+}
+
+func castleMoves(pos *Position) []Move {
+	moves := make([]Move, 0)
+	occupied := pos.OccupiedBitboard()
+
+	if pos.SideToMove == White {
+		attacked := pos.getAttackedSquares(Black)
+		if pos.WhiteKsCastle &&
+			pos.Piece(E1) == WhiteKing &&
+			pos.Piece(H1) == WhiteRook &&
+			occupied.Square(F1) == 0 &&
+			occupied.Square(G1) == 0 &&
+			attacked.Square(E1) == 0 &&
+			attacked.Square(F1) == 0 &&
+			attacked.Square(G1) == 0 {
+			moves = append(moves, Move{E1, G1, NoPieceType})
+		}
+		if pos.WhiteQsCastle &&
+			pos.Piece(E1) == WhiteKing &&
+			pos.Piece(A1) == WhiteRook &&
+			occupied.Square(B1) == 0 &&
+			occupied.Square(C1) == 0 &&
+			occupied.Square(D1) == 0 &&
+			attacked.Square(E1) == 0 &&
+			attacked.Square(D1) == 0 &&
+			attacked.Square(C1) == 0 {
+			moves = append(moves, Move{E1, C1, NoPieceType})
+		}
+	} else if pos.SideToMove == Black {
+		attacked := pos.getAttackedSquares(White)
+		if pos.BlackKsCastle &&
+			pos.Piece(E8) == BlackKing &&
+			pos.Piece(H8) == BlackRook &&
+			occupied.Square(F8) == 0 &&
+			occupied.Square(G8) == 0 &&
+			attacked.Square(E8) == 0 &&
+			attacked.Square(F8) == 0 &&
+			attacked.Square(G8) == 0 {
+			moves = append(moves, Move{E8, G8, NoPieceType})
+		}
+		if pos.BlackQsCastle &&
+			pos.Piece(E8) == BlackKing &&
+			pos.Piece(A8) == BlackRook &&
+			occupied.Square(B8) == 0 &&
+			occupied.Square(C8) == 0 &&
+			occupied.Square(D8) == 0 &&
+			attacked.Square(E8) == 0 &&
+			attacked.Square(D8) == 0 &&
+			attacked.Square(C8) == 0 {
+			moves = append(moves, Move{E8, C8, NoPieceType})
+		}
+	}
+
+	return moves
+}
+
+// LegalMoves returns all legal moves for pos. Returns nil if moves could not be generated (for example if pos.SideToMove was not set). Returns an empty slice if move generation was successful, but no moves were found.
+func LegalMoves(pos *Position) []Move {
+	pseudoLegalMoves := PseudoLegalMoves(pos)
+	legalMoves := make([]Move, 0)
+	for _, m := range pseudoLegalMoves {
+		tempPos := pos.Copy()
+		tempPos.Move(m)
+		tempPos.SideToMove = pos.SideToMove
+		if !tempPos.IsCheck() {
+			legalMoves = append(legalMoves, m)
 		}
 	}
 	return legalMoves

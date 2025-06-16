@@ -1,3 +1,18 @@
+// Copyright (C) 2025 Brigham Skarda
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package chess
 
 import (
@@ -8,524 +23,738 @@ import (
 	"unicode"
 )
 
-const DefaultFen string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+const DefaultFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-// Position represents a chess position as described by Forsyth-Edwards Notation (FEN).
-// Board is the actual representation of the pieces on the squares. It starts at A8 and moves left
-// to right, top to bottom all the way to H1.
+// Position represents all parts of a chess position as specified by [Forsyth-Edwards Notation].
+//
+// The zero value is usable, though not very useful. See example for how to initialize the starting position.
+//
+// [Forsyth-Edwards Notation]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c16.1
 type Position struct {
-	Board                [64]Piece
-	Turn                 Color
-	WhiteKingSideCastle  bool
-	WhiteQueenSideCastle bool
-	BlackKingSideCastle  bool
-	BlackQueenSideCastle bool
-	EnPassant            Square
-	HalfMove             uint16
-	FullMove             uint16
+	whitePawns   Bitboard
+	whiteRooks   Bitboard
+	whiteKnights Bitboard
+	whiteBishops Bitboard
+	whiteQueens  Bitboard
+	whiteKings   Bitboard
+
+	blackPawns   Bitboard
+	blackRooks   Bitboard
+	blackKnights Bitboard
+	blackBishops Bitboard
+	blackQueens  Bitboard
+	blackKings   Bitboard
+
+	SideToMove Color
+
+	// WhiteKsCastle should be true if it is still possible to castle.
+	WhiteKsCastle bool
+	// WhiteQsCastle should be true if it is still possible to castle.
+	WhiteQsCastle bool
+	// BlackKsCastle should be true if it is still possible to castle.
+	BlackKsCastle bool
+	// BlackQsCastle should be true if it is still possible to castle.
+	BlackQsCastle bool
+
+	// EnPassant should be [NoSquare] if no en passant options are available.
+	EnPassant Square
+
+	HalfMove uint
+	FullMove uint
 }
 
-// String returns a representation of the board from white's perspective. No other information from the position is printed. It is recommended to use [Position.FormatString] to print from black's perspective.
-func (p *Position) String() string {
-	return p.FormatString(false)
+// Copy creates a copy of the current position.
+func (pos *Position) Copy() *Position {
+	newPos := *pos
+	return &newPos
 }
 
-// FormatString returns a representation of the board. No other information from the position is printed.
-// blacksPerspective should be true if you which to print the board as if you were on black's side.
-func (p *Position) FormatString(blacksPerspective bool) string {
-	if blacksPerspective {
-		str := strings.Builder{}
-		rank := '1'
-		for index := len(p.Board) - 1; index >= 0; index-- {
-			piece := p.Board[index]
-			if index%8 == 7 {
-				str.WriteRune(rank)
-				rank += 1
-			}
-			str.WriteString(piece.String())
-			if index%8 == 0 {
-				str.WriteRune('\n')
-			}
-		}
-		str.WriteString(" HGFEDCBA")
-		return str.String()
-	} else {
-		str := strings.Builder{}
-		rank := '8'
-		for index, piece := range p.Board {
-			if index%8 == 0 {
-				str.WriteRune(rank)
-				rank -= 1
-			}
-			str.WriteString(piece.String())
-			if index%8 == 7 {
-				str.WriteRune('\n')
-			}
-		}
-		str.WriteString(" ABCDEFGH")
-		return str.String()
-	}
+// Equal returns true if the positions are the same, excluding move counters.
+func (pos *Position) Equal(other *Position) bool {
+	return pos.whitePawns == other.whitePawns &&
+		pos.whiteRooks == other.whiteRooks &&
+		pos.whiteKnights == other.whiteKnights &&
+		pos.whiteBishops == other.whiteBishops &&
+		pos.whiteQueens == other.whiteQueens &&
+		pos.whiteKings == other.whiteKings &&
+		pos.blackPawns == other.blackPawns &&
+		pos.blackRooks == other.blackRooks &&
+		pos.blackKnights == other.blackKnights &&
+		pos.blackBishops == other.blackBishops &&
+		pos.blackQueens == other.blackQueens &&
+		pos.blackKings == other.blackKings &&
+		pos.SideToMove == other.SideToMove &&
+		pos.WhiteKsCastle == other.WhiteKsCastle &&
+		pos.WhiteQsCastle == other.WhiteQsCastle &&
+		pos.BlackKsCastle == other.BlackKsCastle &&
+		pos.BlackQsCastle == other.BlackQsCastle &&
+		pos.EnPassant == other.EnPassant
 }
 
-func (p *Position) PieceAt(s Square) Piece {
-	if !isValidSquare(s) || s == NoSquare {
-		return NoPiece
-	}
-	return p.Board[squareToIndex(s)]
-}
-
-func (p *Position) SetPieceAt(s Square, piece Piece) {
-	if isValidSquare(s) && s != NoSquare {
-		p.Board[squareToIndex(s)] = piece
-	}
-}
-
-// Position.Move does no checking of move legality. For checked moves use [Game.Move], or check that your move is in the
-// list provided by [GenerateLegalMoves]. All parts of the position are updated including en passant and castling rights based
-// how the the move interacts with the board.
-func (p *Position) Move(m Move) {
-	if !isValidMove(m) {
-		return
-	}
-	p.updateMoveCounts(m)
-	p.movePiece(m)
-	p.updateTurn()
-	p.updateCastleRights(m)
-	p.updateEnPassant(m)
-}
-
-func (p *Position) updateMoveCounts(m Move) {
-	if p.PieceAt(m.FromSquare).Type == Pawn || p.PieceAt(m.ToSquare) != NoPiece || isCastleMove(p, m) {
-		p.HalfMove = 0
-	} else {
-		p.HalfMove++
-	}
-	if p.Turn == Black {
-		p.FullMove++
-	}
-}
-
-func (p *Position) movePiece(m Move) {
-	if isCastleMove(p, m) {
-		p.performCastleMove(m)
-		return
-	}
-	pieceToMove := p.PieceAt(m.FromSquare)
-	if m.Promotion != NoPieceType {
-		pieceToMove.Type = m.Promotion
-	}
-	p.SetPieceAt(m.FromSquare, NoPiece)
-	p.SetPieceAt(m.ToSquare, pieceToMove)
-	if m.ToSquare == p.EnPassant && p.PieceAt(m.ToSquare).Type == Pawn {
-		if p.PieceAt(m.ToSquare).Color == White {
-			p.SetPieceAt(Square{File: m.ToSquare.File, Rank: m.ToSquare.Rank - 1}, NoPiece)
-		}
-		if p.PieceAt(m.ToSquare).Color == Black {
-			p.SetPieceAt(Square{File: m.ToSquare.File, Rank: m.ToSquare.Rank + 1}, NoPiece)
-		}
-	}
-}
-
-func (p *Position) performCastleMove(m Move) {
-	p.SetPieceAt(m.ToSquare, p.PieceAt(m.FromSquare))
-	p.SetPieceAt(m.FromSquare, NoPiece)
-	if m.ToSquare == G1 {
-		p.SetPieceAt(H1, NoPiece)
-		p.SetPieceAt(F1, WhiteRook)
-	}
-	if m.ToSquare == C1 {
-		p.SetPieceAt(A1, NoPiece)
-		p.SetPieceAt(D1, WhiteRook)
-	}
-	if m.ToSquare == G8 {
-		p.SetPieceAt(H8, NoPiece)
-		p.SetPieceAt(F8, BlackRook)
-	}
-	if m.ToSquare == C8 {
-		p.SetPieceAt(A8, NoPiece)
-		p.SetPieceAt(D8, BlackRook)
-	}
-}
-
-func (p *Position) updateTurn() {
-	if p.Turn == White {
-		p.Turn = Black
-	} else if p.Turn == Black {
-		p.Turn = White
-	}
-}
-
-func (p *Position) updateCastleRights(m Move) {
-	switch m.FromSquare {
-	case E1:
-		p.WhiteKingSideCastle = false
-		p.WhiteQueenSideCastle = false
-	case E8:
-		p.BlackKingSideCastle = false
-		p.BlackQueenSideCastle = false
-	case A1:
-		p.WhiteQueenSideCastle = false
-	case H1:
-		p.WhiteKingSideCastle = false
-	case A8:
-		p.BlackQueenSideCastle = false
-	case H8:
-		p.BlackKingSideCastle = false
-	}
-}
-
-func (p *Position) updateEnPassant(m Move) {
-	if p.PieceAt(m.ToSquare).Type == Pawn &&
-		((m.ToSquare.Rank == Rank4 && m.FromSquare.Rank == Rank2) ||
-			(m.ToSquare.Rank == Rank5 && m.FromSquare.Rank == Rank7)) {
-		if m.FromSquare.Rank == Rank2 {
-			p.EnPassant = Square{File: m.ToSquare.File, Rank: Rank3}
-		} else if m.FromSquare.Rank == Rank7 {
-			p.EnPassant = Square{File: m.ToSquare.File, Rank: Rank6}
-
-		}
-	} else {
-		p.EnPassant = NoSquare
-	}
-}
-
-func isCastleMove(p *Position, m Move) bool {
-	return (m.FromSquare == E1 && (m.ToSquare == G1 || m.ToSquare == C1) && p.PieceAt(m.FromSquare) == WhiteKing) ||
-		(m.FromSquare == E8 && (m.ToSquare == G8 || m.ToSquare == C8) && p.PieceAt(E8) == BlackKing)
-}
-
-func squareToIndex(s Square) int {
-	index := 0
-	index += int(s.File - 1)
-	index += int(Rank8-s.Rank) * 8
-	return index
-}
-
-func indexToSquare(index int) Square {
-	file := File(index%8 + 1)
-	rank := Rank(8 - (index / 8))
-	square := Square{file, rank}
-	if !isValidSquare(square) {
-		return NoSquare
-	}
-	return square
-}
-
-// ParseFen take only fully formed valid FEN strings. All parts of the FEN must be present, though the position need not necessarily be valid.
-func ParseFen(fen string) (*Position, error) {
-	words := strings.Split(fen, " ")
+// UnmarshalText is an implementation of the [encoding.TextUnmarshaler] interface. It expects text in [Forsyth-Edwards Notation]. It returns an error if it could not parse fen. It was likely malformed or missing important pieces.
+//
+// [Forsyth-Edwards Notation]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c16.1
+func (pos *Position) UnmarshalText(fen []byte) error {
+	words := strings.Fields(string(fen))
 	if len(words) != 6 {
-		return &Position{}, errors.New("invalid fen, fen does not have 6 required parts")
+		return fmt.Errorf("pos %q could not be unmarshaled: fen should contain 6 distinct sections", fen)
 	}
-	board, err := parseFenPos(words[0])
+	p := &Position{}
+	err := p.parseFenBody(words[0])
 	if err != nil {
-		return &Position{}, fmt.Errorf("invalid fen, %w", err)
+		return fmt.Errorf("pos %q could not be unmarshaled: %w", fen, err)
 	}
-	turn, err := parseTurn(words[1])
+	err = p.parseSideToMove(words[1])
 	if err != nil {
-		return &Position{}, fmt.Errorf("invalid fen, %w", err)
+		return fmt.Errorf("pos %q could not be unmarshaled: %w", fen, err)
 	}
-	castleRights, err := parseCastleRights(words[2])
+	err = p.parseCastleRights(words[2])
 	if err != nil {
-		return &Position{}, fmt.Errorf("invalid fen, %w", err)
+		return fmt.Errorf("pos %q could not be unmarshaled: %w", fen, err)
 	}
-	enPassant, err := ParseSquare(words[3])
+	err = p.parseEnPassant(words[3])
 	if err != nil {
-		return &Position{}, fmt.Errorf("invalid fen, %w", err)
+		return fmt.Errorf("pos %q could not be unmarshaled: %w", fen, err)
 	}
-	halfMove, err := strconv.ParseUint(words[4], 10, 16)
+	err = p.parseHalfMove(words[4])
 	if err != nil {
-		return &Position{}, fmt.Errorf("invalid fen, can't parse halfMove, %w", err)
+		return fmt.Errorf("pos %q could not be unmarshaled: %w", fen, err)
 	}
-	fullMove, err := strconv.ParseUint(words[5], 10, 16)
+	err = p.parseFullMove(words[5])
 	if err != nil {
-		return &Position{}, fmt.Errorf("invalid fen, can't parse fullMove, %w", err)
+		return fmt.Errorf("pos %q could not be unmarshaled: %w", fen, err)
 	}
-
-	return &Position{
-		Board:                board,
-		Turn:                 turn,
-		WhiteKingSideCastle:  castleRights[0],
-		WhiteQueenSideCastle: castleRights[1],
-		BlackKingSideCastle:  castleRights[2],
-		BlackQueenSideCastle: castleRights[3],
-		EnPassant:            enPassant,
-		HalfMove:             uint16(halfMove),
-		FullMove:             uint16(fullMove),
-	}, nil
+	*pos = *p
+	return nil
 }
 
-func parseFenPos(fen string) ([64]Piece, error) {
-	pos := [64]Piece{}
-	posIndex := 0
-	for _, char := range fen {
-		if posIndex >= 64 {
-			return pos, errors.New("invalid pos, too many pieces on board")
-		}
-		if unicode.IsNumber(char) {
-			posIndex += int(char - '0')
-			continue
-		}
-		if char == '/' {
-			if posIndex%8 != 0 {
-				return pos, errors.New("invalid pos, '/' in wrong position")
-			}
-			continue
-		}
-		piece, err := ParsePiece(char)
-		if err != nil {
-			return pos, errors.New("invalid pos, can't parse " + string(char) + "to piece")
-		}
-		pos[posIndex] = piece
-		posIndex++
-	}
-	return pos, nil
-}
-
-func parseTurn(turn string) (Color, error) {
-	switch strings.ToLower(turn) {
-	case "w":
-		return White, nil
-	case "b":
-		return Black, nil
-	default:
-		return NoColor, errors.New("can't parse color")
-	}
-}
-
-func parseCastleRights(castleRights string) ([4]bool, error) {
-	rights := [4]bool{}
-	if castleRights == "-" {
-		return rights, nil
-	}
-	for _, char := range castleRights {
-		switch char {
-		case 'K':
-			rights[0] = true
-		case 'Q':
-			rights[1] = true
-		case 'k':
-			rights[2] = true
-		case 'q':
-			rights[3] = true
-		default:
-			return rights, errors.New("invalid castling rights")
-		}
-	}
-	return rights, nil
-}
-
-func GenerateFen(p *Position) string {
-	fen := strings.Builder{}
-	fen.WriteString(generateFenPos(p))
-	fen.WriteString(" " + generateFenTurn(p))
-	fen.WriteString(" " + generateFenCastleRights(p))
-	fen.WriteString(" " + strings.ToLower(p.EnPassant.String()))
-	fen.WriteString(" " + strconv.FormatUint(uint64(p.HalfMove), 10))
-	fen.WriteString(" " + strconv.FormatUint(uint64(p.FullMove), 10))
-	return fen.String()
-}
-
-func generateFenPos(p *Position) string {
-	fen := strings.Builder{}
+func (pos *Position) parseFenBody(body string) error {
 	currentFile := FileA
-	numBlank := 0
-	for _, piece := range p.Board {
-		if currentFile > FileH {
-			if numBlank > 0 {
-				fen.WriteString(strconv.FormatUint(uint64(numBlank), 10))
-				numBlank = 0
+	currentRank := Rank8
+	for _, r := range body {
+		if unicode.IsLetter(r) {
+			p, err := parsePiece(string(r))
+			if err != nil {
+				return fmt.Errorf("could not parse fen body: %w", err)
 			}
-			fen.WriteRune('/')
-			currentFile = FileA
+			pos.SetPiece(p, Square{currentFile, currentRank})
+		} else if unicode.IsNumber(r) {
+			currentFile += File(r - '1') // Note this is 1 because file is automatically incremented in loop.
+		} else if r == '/' {
+			if currentFile != FileH+1 {
+				return fmt.Errorf("could not parse fen body, invalid number of squares on rank %d", currentRank)
+			}
+			currentRank -= 1
+			currentFile = NoFile
+		} else {
+			return fmt.Errorf("could not parse fen body, encountered unexpected character %q", r)
 		}
-		if piece != NoPiece && numBlank > 0 {
-			fen.WriteString(strconv.FormatUint(uint64(numBlank), 10))
-			numBlank = 0
-		}
-		if piece == NoPiece {
-			numBlank++
-			currentFile++
-			continue
-		}
-		fen.WriteString(piece.String())
-		currentFile++
+		currentFile += 1
 	}
-	if numBlank > 0 {
-		fen.WriteString(strconv.FormatUint(uint64(numBlank), 10))
+	if currentRank != Rank1 {
+		return fmt.Errorf("could not parse fen body, ended on rank %v, should be Rank1", currentRank)
 	}
-
-	return fen.String()
+	return nil
 }
 
-func generateFenTurn(p *Position) string {
-	switch p.Turn {
-	case White:
-		return "w"
-	case Black:
-		return "b"
-	default:
-		return "-"
+func (pos *Position) parseSideToMove(sideToMove string) error {
+	color := parseColor(sideToMove)
+	if color == NoColor {
+		return fmt.Errorf("could not parse side to move %q", sideToMove)
 	}
+	pos.SideToMove = color
+	return nil
 }
 
-func generateFenCastleRights(p *Position) string {
-	if !p.WhiteKingSideCastle && !p.WhiteQueenSideCastle && !p.BlackKingSideCastle && !p.BlackQueenSideCastle {
-		return "-"
+func (pos *Position) parseCastleRights(castleRights string) error {
+	if castleRights == "-" {
+		return nil
 	}
-	rights := ""
-	if p.WhiteKingSideCastle {
-		rights += "K"
+	for _, r := range castleRights {
+		switch r {
+		case 'K':
+			if pos.WhiteKsCastle {
+				return errors.New("could not parse castle rights, white king-side castle set twice")
+			}
+			pos.WhiteKsCastle = true
+		case 'Q':
+			if pos.WhiteQsCastle {
+				return errors.New("could not parse castle rights, white queen-side castle set twice")
+			}
+			pos.WhiteQsCastle = true
+		case 'k':
+			if pos.BlackKsCastle {
+				return errors.New("could not parse castle rights, black king-side castle set twice")
+			}
+			pos.BlackKsCastle = true
+		case 'q':
+			if pos.BlackQsCastle {
+				return errors.New("could not parse castle rights, black queen-side castle set twice")
+			}
+			pos.BlackQsCastle = true
+		default:
+			return fmt.Errorf("could not parse castle rights, invalid character %q", r)
+		}
 	}
-	if p.WhiteQueenSideCastle {
-		rights += "Q"
-	}
-	if p.BlackKingSideCastle {
-		rights += "k"
-	}
-	if p.BlackQueenSideCastle {
-		rights += "q"
-	}
-	return rights
+	return nil
 }
 
-// IsValidPosition determines if a given position is a legal chess position. It checks the following:
-//   - There is one king of each color on the board
-//   - There are no pawns on their last rank
-//   - Castling rights are logical
-//   - The enPassant Square is logical
-//   - Turn is set
-//   - All pieces are valid chess pieces
-func IsValidPosition(p *Position) bool {
-	return checkKings(p) &&
-		checkNoInvalidPawns(p) &&
-		checkCastlingRightsLogical(p) &&
-		checkEnPassantLogical(p) &&
-		checkTurnIsSet(p) &&
-		checkAllPiecesValid(p)
+func (pos *Position) parseEnPassant(enPassant string) error {
+	if enPassant == "-" {
+		return nil
+	}
+	square := Square{}
+	err := square.UnmarshalText([]byte(enPassant))
+	if err != nil {
+		return fmt.Errorf("could not parse en passant: %w", err)
+	}
+	pos.EnPassant = square
+	return nil
 }
 
-func checkKings(p *Position) bool {
-	numWhiteKings := 0
-	numBlackKings := 0
-	for _, piece := range p.Board {
-		if piece == WhiteKing {
-			numWhiteKings++
-		}
-		if piece == BlackKing {
-			numBlackKings++
-		}
+func (pos *Position) parseHalfMove(halfMove string) error {
+	hm, err := strconv.ParseUint(halfMove, 10, 0)
+	if err != nil {
+		return fmt.Errorf("could not parse half move: %w", err)
 	}
-	if numWhiteKings != 1 || numBlackKings != 1 {
-		return false
-	}
-	return true
+	pos.HalfMove = uint(hm)
+	return nil
 }
 
-func checkNoInvalidPawns(p *Position) bool {
-	return checkNoInvalidWhitePawns(p) && checkNoInvalidBlackPawns(p)
+func (pos *Position) parseFullMove(fullMove string) error {
+	fm, err := strconv.ParseUint(fullMove, 10, 0)
+	if err != nil {
+		return fmt.Errorf("could not parse full move %w", err)
+	}
+	pos.FullMove = uint(fm)
+	return nil
 }
 
-func checkNoInvalidWhitePawns(p *Position) bool {
-	for i := 0; i < 8; i++ {
-		if p.Board[i] == WhitePawn {
-			return false
-		}
+// MarshalText is an implementation of the [encoding.TextMarshaler] interface. It provides the [FEN] representation of the board and returns an error if position contains invalid fields. See also [Position.String] for a more human readable form of the position.
+//
+// [FEN]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c16.1
+func (pos *Position) MarshalText() (text []byte, err error) {
+	fen := ""
+	board := pos.boardString()
+	fen += board + " "
+	stm, err := pos.sideToMoveString()
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal position: %w", err)
 	}
-	return true
+	fen += stm + " "
+	fen += pos.castleRightString() + " "
+	enPassant, err := pos.EnPassant.MarshalText()
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal position, could not marshal en passant: %w", err)
+	}
+	fen += string(enPassant) + " "
+	fen += strconv.FormatUint(uint64(pos.HalfMove), 10) + " "
+	fen += strconv.FormatUint(uint64(pos.FullMove), 10)
+	return []byte(fen), nil
 }
 
-func checkNoInvalidBlackPawns(p *Position) bool {
-	for i := 56; i < 64; i++ {
-		if p.Board[i] == BlackPawn {
-			return false
+func (pos *Position) boardString() string {
+	boardString := ""
+	numEmptySquares := 0
+	for currentRank := Rank8; currentRank != NoRank; currentRank -= 1 {
+		for currentFile := FileA; currentFile <= FileH; currentFile += 1 {
+			if piece := pos.Piece(Square{currentFile, currentRank}); piece == NoPiece {
+				numEmptySquares += 1
+			} else {
+				if numEmptySquares > 0 {
+					boardString += strconv.Itoa(numEmptySquares)
+					numEmptySquares = 0
+				}
+				boardString += piece.String()
+			}
+		}
+		if numEmptySquares > 0 {
+			boardString += strconv.Itoa(numEmptySquares)
+			numEmptySquares = 0
+		}
+		if currentRank != Rank1 {
+			boardString += "/"
 		}
 	}
-	return true
+	return boardString
 }
 
-func checkCastlingRightsLogical(p *Position) bool {
-	if p.WhiteKingSideCastle {
-		if p.PieceAt(E1) != WhiteKing || p.PieceAt(H1) != WhiteRook {
-			return false
-		}
+func (pos *Position) castleRightString() string {
+	castleRights := ""
+	if pos.WhiteKsCastle {
+		castleRights += "K"
 	}
-	if p.WhiteQueenSideCastle {
-		if p.PieceAt(E1) != WhiteKing || p.PieceAt(A1) != WhiteRook {
-			return false
-		}
+	if pos.WhiteQsCastle {
+		castleRights += "Q"
 	}
-	if p.BlackKingSideCastle {
-		if p.PieceAt(E8) != BlackKing || p.PieceAt(H8) != BlackRook {
-			return false
-		}
+	if pos.BlackKsCastle {
+		castleRights += "k"
 	}
-	if p.BlackQueenSideCastle {
-		if p.PieceAt(E8) != BlackKing || p.PieceAt(A8) != BlackRook {
-			return false
-		}
+	if pos.BlackQsCastle {
+		castleRights += "q"
 	}
-	return true
+	if len(castleRights) == 0 {
+		castleRights = "-"
+	}
+	return castleRights
 }
 
-func checkEnPassantLogical(p *Position) bool {
-	if p.EnPassant == NoSquare {
-		return true
+func (pos *Position) sideToMoveString() (string, error) {
+	if pos.SideToMove == White {
+		return "w", nil
 	}
-	if !isValidColor(p.Turn) || p.Turn == NoColor {
-		return false
+	if pos.SideToMove == Black {
+		return "b", nil
 	}
-	if !isValidSquare(p.EnPassant) {
-		return false
-	}
+	return "", errors.New("side to move not set")
+}
 
-	if p.Turn == White {
-		return checkValidBlackEnPassant(p)
+// String returns a board like representation of the current position. Uppercase letters are white and lowercase letters are black.
+//
+// Set whitesPerspective to true to see the board from white's side. Set extraInfo to false to just see the board. Set extraInfo to true to see all the other information stored in an FEN.
+func (pos *Position) String(whitesPerspective bool, extraInfo bool) string {
+	s := ""
+	if whitesPerspective {
+		s += pos.prettyBoardStringWhite()
 	} else {
-		return checkValidWhiteEnPassant(p)
+		s += pos.prettyBoardStringBlack()
+	}
+	if extraInfo {
+		s += "\n\n"
+		s += pos.extraInfo()
+	}
+	return s
+}
+
+func (pos *Position) prettyBoardStringWhite() string {
+	s := ""
+	for currentRank := Rank8; currentRank > NoRank; currentRank -= 1 {
+		s += currentRank.String()
+		for currentFile := FileA; currentFile <= FileH; currentFile += 1 {
+			piece := pos.Piece(Square{currentFile, currentRank})
+			s += piece.String()
+		}
+		s += "\n"
+	}
+	s += " ABCDEFGH"
+	return s
+}
+
+func (pos *Position) prettyBoardStringBlack() string {
+	s := ""
+	for currentRank := Rank1; currentRank <= Rank8; currentRank += 1 {
+		s += currentRank.String()
+		for currentFile := FileH; currentFile > NoFile; currentFile -= 1 {
+			piece := pos.Piece(Square{currentFile, currentRank})
+			s += piece.String()
+		}
+		s += "\n"
+	}
+	s += " HGFEDCBA"
+	return s
+}
+
+func (pos *Position) extraInfo() string {
+	s := ""
+	s += "Side To Move: "
+	if pos.SideToMove == White {
+		s += "White"
+	} else if pos.SideToMove == Black {
+		s += "Black"
+	} else {
+		s += "-"
+	}
+	s += "\n"
+
+	s += "Castle Rights: "
+	s += pos.castleRightString()
+	s += "\n"
+	s += "En Passant Square: "
+	enPassant, err := pos.EnPassant.MarshalText()
+	if err != nil {
+		enPassant = []byte{'-'}
+	}
+	s += string(enPassant)
+	s += "\n"
+	s += "Half Move: "
+	s += strconv.FormatUint(uint64(pos.HalfMove), 10)
+	s += "\n"
+	s += "Full Move: "
+	s += strconv.FormatUint(uint64(pos.FullMove), 10)
+	return s
+}
+
+// Piece gets the piece on the given square. [NoPiece] is returned if no piece is present, or square is invalid.
+func (pos *Position) Piece(s Square) Piece {
+	if pos.whitePawns.Square(s) == 1 {
+		return WhitePawn
+	}
+	if pos.whiteRooks.Square(s) == 1 {
+		return WhiteRook
+	}
+	if pos.whiteKnights.Square(s) == 1 {
+		return WhiteKnight
+	}
+	if pos.whiteBishops.Square(s) == 1 {
+		return WhiteBishop
+	}
+	if pos.whiteQueens.Square(s) == 1 {
+		return WhiteQueen
+	}
+	if pos.whiteKings.Square(s) == 1 {
+		return WhiteKing
+	}
+
+	if pos.blackPawns.Square(s) == 1 {
+		return BlackPawn
+	}
+	if pos.blackRooks.Square(s) == 1 {
+		return BlackRook
+	}
+	if pos.blackKnights.Square(s) == 1 {
+		return BlackKnight
+	}
+	if pos.blackBishops.Square(s) == 1 {
+		return BlackBishop
+	}
+	if pos.blackQueens.Square(s) == 1 {
+		return BlackQueen
+	}
+	if pos.blackKings.Square(s) == 1 {
+		return BlackKing
+	}
+
+	return NoPiece
+}
+
+// SetPiece sets p on square s. If p or s are invalid nothings happens.
+func (pos *Position) SetPiece(p Piece, s Square) {
+	pos.ClearPiece(s)
+
+	switch p {
+	case WhitePawn:
+		pos.whitePawns = pos.whitePawns.SetSquare(s)
+	case WhiteRook:
+		pos.whiteRooks = pos.whiteRooks.SetSquare(s)
+	case WhiteKnight:
+		pos.whiteKnights = pos.whiteKnights.SetSquare(s)
+	case WhiteBishop:
+		pos.whiteBishops = pos.whiteBishops.SetSquare(s)
+	case WhiteQueen:
+		pos.whiteQueens = pos.whiteQueens.SetSquare(s)
+	case WhiteKing:
+		pos.whiteKings = pos.whiteKings.SetSquare(s)
+
+	case BlackPawn:
+		pos.blackPawns = pos.blackPawns.SetSquare(s)
+	case BlackRook:
+		pos.blackRooks = pos.blackRooks.SetSquare(s)
+	case BlackKnight:
+		pos.blackKnights = pos.blackKnights.SetSquare(s)
+	case BlackBishop:
+		pos.blackBishops = pos.blackBishops.SetSquare(s)
+	case BlackQueen:
+		pos.blackQueens = pos.blackQueens.SetSquare(s)
+	case BlackKing:
+		pos.blackKings = pos.blackKings.SetSquare(s)
 	}
 }
 
-func checkValidWhiteEnPassant(p *Position) bool {
-	if p.EnPassant.Rank != Rank3 {
-		return false
-	}
-	if p.PieceAt(p.EnPassant) != NoPiece {
-		return false
-	}
-	expectedSquare := Square{p.EnPassant.File, p.EnPassant.Rank + 1}
-	return p.PieceAt(expectedSquare) == WhitePawn
+// ClearPiece removes any piece from the given square. Nothing happens if s is invalid.
+func (pos *Position) ClearPiece(s Square) {
+	pos.whitePawns = pos.whitePawns.ClearSquare(s)
+	pos.whiteRooks = pos.whiteRooks.ClearSquare(s)
+	pos.whiteKnights = pos.whiteKnights.ClearSquare(s)
+	pos.whiteBishops = pos.whiteBishops.ClearSquare(s)
+	pos.whiteQueens = pos.whiteQueens.ClearSquare(s)
+	pos.whiteKings = pos.whiteKings.ClearSquare(s)
+
+	pos.blackPawns = pos.blackPawns.ClearSquare(s)
+	pos.blackRooks = pos.blackRooks.ClearSquare(s)
+	pos.blackKnights = pos.blackKnights.ClearSquare(s)
+	pos.blackBishops = pos.blackBishops.ClearSquare(s)
+	pos.blackQueens = pos.blackQueens.ClearSquare(s)
+	pos.blackKings = pos.blackKings.ClearSquare(s)
 }
 
-func checkValidBlackEnPassant(p *Position) bool {
-	if p.EnPassant.Rank != Rank6 {
-		return false
+// Bitboard returns a bitboard for the given piece. If p is [NoPiece] then a bitboard with all the unoccupied squares is returned. If p is invalid 0 is returned. See also [Position.OccupiedBitboard] and [Position.ColorBitboard].
+func (pos *Position) Bitboard(p Piece) Bitboard {
+	switch p {
+	case WhitePawn:
+		return pos.whitePawns
+	case WhiteKnight:
+		return pos.whiteKnights
+	case WhiteBishop:
+		return pos.whiteBishops
+	case WhiteRook:
+		return pos.whiteRooks
+	case WhiteQueen:
+		return pos.whiteQueens
+	case WhiteKing:
+		return pos.whiteKings
+
+	case BlackPawn:
+		return pos.blackPawns
+	case BlackKnight:
+		return pos.blackKnights
+	case BlackBishop:
+		return pos.blackBishops
+	case BlackRook:
+		return pos.blackRooks
+	case BlackQueen:
+		return pos.blackQueens
+	case BlackKing:
+		return pos.blackKings
+
+	case NoPiece:
+		return ^(pos.whitePawns | pos.whiteKnights | pos.whiteBishops | pos.whiteRooks |
+			pos.whiteQueens | pos.whiteKings | pos.blackPawns | pos.blackKnights |
+			pos.blackBishops | pos.blackRooks | pos.blackQueens | pos.blackKings)
+
+	default:
+		return 0
 	}
-	if p.PieceAt(p.EnPassant) != NoPiece {
-		return false
-	}
-	expectedSquare := Square{p.EnPassant.File, p.EnPassant.Rank - 1}
-	return p.PieceAt(expectedSquare) == BlackPawn
 }
 
-func checkTurnIsSet(p *Position) bool {
-	return p.Turn == White || p.Turn == Black
+// OccupiedBitboard returns a bitboard indicating all the squares with a piece on them.
+func (pos *Position) OccupiedBitboard() Bitboard {
+	return pos.whitePawns | pos.whiteKnights | pos.whiteBishops | pos.whiteRooks | pos.whiteQueens | pos.whiteKings |
+		pos.blackPawns | pos.blackKnights | pos.blackBishops | pos.blackRooks | pos.blackQueens | pos.blackKings
 }
 
-func checkAllPiecesValid(p *Position) bool {
-	for _, piece := range p.Board {
-		if !isValidPiece(piece) {
-			return false
+// ColorBitboard returns a bitboard indicating all the squares occupied by pieces of a certain color. Returns 0 if NoColor or invalid color.
+func (pos *Position) ColorBitboard(c Color) Bitboard {
+	if c == White {
+		return pos.whitePawns | pos.whiteKnights | pos.whiteBishops | pos.whiteRooks | pos.whiteQueens | pos.whiteKings
+	} else if c == Black {
+		return pos.blackPawns | pos.blackKnights | pos.blackBishops | pos.blackRooks | pos.blackQueens | pos.blackKings
+	} else {
+		return 0
+	}
+}
+
+// IsCheck returns true if the side to move has a king under attack from an enemy piece. If side to move is not set false is returned.
+func (pos *Position) IsCheck() bool {
+	var attackingSide Color
+	if pos.SideToMove == White {
+		attackingSide = Black
+	} else if pos.SideToMove == Black {
+		attackingSide = White
+	} else {
+		return false
+	}
+
+	attackedSquares := pos.getAttackedSquares(attackingSide)
+	kingsInCheck := pos.Bitboard(Piece{pos.SideToMove, King}) & attackedSquares
+	return kingsInCheck > 0
+}
+
+// getAttackedSquares returns a bitboard with all the squares the specified color attacks.
+func (pos *Position) getAttackedSquares(side Color) Bitboard {
+	var attackedSquares Bitboard = 0
+
+	occupied := pos.OccupiedBitboard()
+	if side == White {
+		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).WhitePawnAttacks()
+	} else if side == Black {
+		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).BlackPawnAttacks()
+	}
+	attackedSquares |= pos.Bitboard(Piece{side, Rook}).RookAttacks(occupied)
+	attackedSquares |= pos.Bitboard(Piece{side, Knight}).KnightAttacks()
+	attackedSquares |= pos.Bitboard(Piece{side, Bishop}).BishopAttacks(occupied)
+	attackedSquares |= pos.Bitboard(Piece{side, Queen}).QueenAttacks(occupied)
+	attackedSquares |= pos.Bitboard(Piece{side, King}).KingAttacks()
+	return attackedSquares
+}
+
+// Move performs chess moves in such a way that if all moves are legal, the FEN will always be properly updated. The rules it follows are listed below.
+//
+//  1. By default the following happens:
+//
+//     a. The piece at the from square is moved to the to square and promoted. (This also includes moving NoPiece, in which case the promotion is not applied.)
+//
+//     b. The half move counter is incremented.
+//
+//     c. The side to move is flipped (or set to the opposite of the piece moved if not previously set [stays on NoColor if not set and side to move is not set]).
+//
+//     d. If the side to move flips from black to white then the full move counter is incremented.
+//
+//     e. En-passant is set to NoSquare.
+//
+//  2. If a pawn advances, or a piece is taken the half move counter is reset.
+//
+//  3. If a pawn advances two spaces forward from its starting rank en-passant is set to the square right behind its current position.
+//
+//  4. If a king or rook moves from their starting square (in standard chess, 960 is not supported) then the corresponding castle rights are set to false.
+//
+//  5. If one of the four possible castle moves if executed and the castle rights still exist, and there are no pieces in the way, then the appropriate castle move will be applied. (Check will not block a castle move)
+func (pos *Position) Move(m Move) {
+	pos.HalfMove = pos.HalfMove + 1
+
+	if pos.isCastle(m) {
+		pos.EnPassant = NoSquare
+		pos.performCastle(m)
+	} else if pos.isPawnMove(m) {
+		pos.performPawnMove(m)
+	} else {
+		pos.EnPassant = NoSquare
+		if pos.Piece(m.ToSquare) != NoPiece {
+			pos.HalfMove = 0
+		}
+		pos.updateCastleRights(m)
+		pos.SetPiece(pos.Piece(m.FromSquare), m.ToSquare)
+		pos.ClearPiece(m.FromSquare)
+	}
+
+	pos.promotePiece(m.ToSquare, m.Promotion)
+	pos.flipSide_incrementFullMove(m)
+}
+
+func (pos *Position) updateCastleRights(m Move) {
+	if m.FromSquare == E1 || m.FromSquare == A1 {
+		pos.WhiteQsCastle = false
+	}
+	if m.FromSquare == E1 || m.FromSquare == H1 {
+		pos.WhiteKsCastle = false
+	}
+	if m.FromSquare == E8 || m.FromSquare == A8 {
+		pos.BlackQsCastle = false
+	}
+	if m.FromSquare == E8 || m.FromSquare == H8 {
+		pos.BlackKsCastle = false
+	}
+}
+
+func (pos *Position) promotePiece(s Square, pt PieceType) {
+	if pt != NoPieceType {
+		piece := pos.Piece(s)
+		if piece != NoPiece {
+			piece.Type = pt
+		}
+		pos.SetPiece(piece, s)
+	}
+}
+
+func (pos *Position) isPawnMove(m Move) bool {
+	return pos.Piece(m.FromSquare).Type == Pawn
+}
+
+func (pos *Position) performPawnMove(m Move) {
+	pos.HalfMove = 0
+	pos.performPawnMove_takeEnPassant(m)
+	pos.performPawnMove_setEnPassant(m)
+	piece := pos.Piece(m.FromSquare)
+	pos.SetPiece(piece, m.ToSquare)
+	pos.ClearPiece(m.FromSquare)
+}
+
+func (pos *Position) performPawnMove_takeEnPassant(m Move) {
+	if m.ToSquare == pos.EnPassant {
+		if pos.SideToMove == White {
+			pos.ClearPiece(Square{m.ToSquare.File, m.ToSquare.Rank - 1})
+		} else if pos.SideToMove == Black {
+			pos.ClearPiece(Square{m.ToSquare.File, m.ToSquare.Rank + 1})
+		} else {
+			if pos.Piece(m.FromSquare).Color == White {
+				pos.ClearPiece(Square{m.ToSquare.File, m.ToSquare.Rank - 1})
+			} else if pos.Piece(m.FromSquare).Color == Black {
+				pos.ClearPiece(Square{m.ToSquare.File, m.ToSquare.Rank + 1})
+			}
 		}
 	}
-	return true
 }
 
-func findKing(p *Position, c Color) Square {
-	for index, piece := range p.Board {
-		if piece.Type == King && piece.Color == c {
-			return indexToSquare(index)
+func (pos *Position) performPawnMove_setEnPassant(m Move) {
+	pos.EnPassant = NoSquare
+	movingPiece := pos.Piece(m.FromSquare)
+	if m.FromSquare.File == m.ToSquare.File {
+		if m.FromSquare.Rank == 2 && m.ToSquare.Rank == 4 && movingPiece.Color == White {
+			pos.EnPassant = Square{m.FromSquare.File, m.FromSquare.Rank + 1}
+		} else if m.FromSquare.Rank == 7 && m.ToSquare.Rank == 5 && movingPiece.Color == Black {
+			pos.EnPassant = Square{m.FromSquare.File, m.FromSquare.Rank - 1}
 		}
 	}
-	return NoSquare
+}
+
+func (pos *Position) isCastle(m Move) bool {
+	switch m {
+	case Move{E1, G1, NoPieceType}: // White King-side castle
+		return pos.WhiteKsCastle &&
+			pos.Piece(E1) == WhiteKing &&
+			pos.Piece(H1) == WhiteRook &&
+			pos.Piece(F1) == NoPiece &&
+			pos.Piece(G1) == NoPiece
+	case Move{E1, C1, NoPieceType}: // White Queen-side castle
+		return pos.WhiteQsCastle &&
+			pos.Piece(E1) == WhiteKing &&
+			pos.Piece(A1) == WhiteRook &&
+			pos.Piece(D1) == NoPiece &&
+			pos.Piece(C1) == NoPiece &&
+			pos.Piece(B1) == NoPiece
+	case Move{E8, G8, NoPieceType}: // Black King-side castle
+		return pos.BlackKsCastle &&
+			pos.Piece(E8) == BlackKing &&
+			pos.Piece(H8) == BlackRook &&
+			pos.Piece(F8) == NoPiece &&
+			pos.Piece(G8) == NoPiece
+	case Move{E8, C8, NoPieceType}: // Black Queen-side castle
+		return pos.BlackQsCastle &&
+			pos.Piece(E8) == BlackKing &&
+			pos.Piece(A8) == BlackRook &&
+			pos.Piece(D8) == NoPiece &&
+			pos.Piece(C8) == NoPiece &&
+			pos.Piece(B8) == NoPiece
+	default:
+		return false
+	}
+}
+
+func (pos *Position) performCastle(m Move) {
+	switch m {
+	case Move{E1, G1, NoPieceType}:
+		pos.SetPiece(WhiteKing, G1)
+		pos.ClearPiece(E1)
+		pos.SetPiece(WhiteRook, F1)
+		pos.ClearPiece(H1)
+		pos.WhiteKsCastle = false
+		pos.WhiteQsCastle = false
+	case Move{E1, C1, NoPieceType}:
+		pos.SetPiece(WhiteKing, C1)
+		pos.ClearPiece(E1)
+		pos.SetPiece(WhiteRook, D1)
+		pos.ClearPiece(A1)
+		pos.WhiteKsCastle = false
+		pos.WhiteQsCastle = false
+	case Move{E8, G8, NoPieceType}:
+		pos.SetPiece(BlackKing, G8)
+		pos.ClearPiece(E8)
+		pos.SetPiece(BlackRook, F8)
+		pos.ClearPiece(H8)
+		pos.BlackKsCastle = false
+		pos.BlackQsCastle = false
+	case Move{E8, C8, NoPieceType}:
+		pos.SetPiece(BlackKing, C8)
+		pos.ClearPiece(E8)
+		pos.SetPiece(BlackRook, D8)
+		pos.ClearPiece(A8)
+		pos.BlackKsCastle = false
+		pos.BlackQsCastle = false
+	}
+}
+
+func (pos *Position) flipSide_incrementFullMove(m Move) {
+	if pos.SideToMove == Black {
+		pos.FullMove++
+		pos.SideToMove = White
+	} else if pos.SideToMove == White {
+		pos.SideToMove = Black
+	} else {
+		colorMoved := pos.Piece(m.ToSquare).Color
+		if colorMoved == Black {
+			pos.FullMove++
+			pos.SideToMove = White
+		} else if colorMoved == White {
+			pos.SideToMove = Black
+		}
+	}
 }
