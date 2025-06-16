@@ -32,5 +32,5 @@ go.work.sum
 testPGNs/*.pgn
 testdata/fuzz/
 testdata/extra_pgns
-
 todo
+benchmarkdata.csv

@@ -545,3 +545,11 @@ func FuzzPositionUnmarshal(f *testing.F) {
 		// Make sure it doesn't panic
 	})
 }
+
+func BenchmarkFENUnmarshal(b *testing.B) {
+	fen := []byte(DefaultFEN)
+	for b.Loop() {
+		pos := &Position{}
+		pos.UnmarshalText(fen)
+	}
+}
