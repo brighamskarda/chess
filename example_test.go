@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/brighamskarda/chess"
+	"github.com/brighamskarda/chess/v2"
 )
 
 func ExampleBitboard() {

@@ -35,7 +35,7 @@ I'm open to suggestions and contributions. Feel free to post them on github issu
 
 ## Usage
 
-You can find the full documentation at <https://pkg.go.dev/github.com/brighamskarda/chess>. Here are a few useful tips though:
+You can find the full documentation at <https://pkg.go.dev/github.com/brighamskarda/chess/v2>. Here are a few useful tips though:
 
 - Use the **Game** type to play, and keep track of your games. This struct is how you can read and manipulate PGN's.
 - Use the **Position** type for high performance applications. Using Position.Move is much faster than Game.Move since it doesn't validate the move, or keep a history.
