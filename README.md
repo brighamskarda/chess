@@ -1,5 +1,7 @@
 # brighamskarda/chess
 
+**Version 2 of this library is now released, please use that instead. <https://github.com/brighamskarda/chess>**
+
 I used this project to learn GoLang. This library supports all of the following features:
 
 - FEN parsing and generation
@@ -27,4 +29,4 @@ The hope is that this will speed up the move generating portions of the library.
 
 ## Contact info
 
-I'm very happy to consider changes to the API to make things *feel better*. Feel free to email me, or post an issue. I'm even open to pull requests should you feel the urge to contribute.
+I'm very happy to consider changes to the API to make things _feel better_. Feel free to email me, or post an issue. I'm even open to pull requests should you feel the urge to contribute.
