@@ -18,7 +18,13 @@ package chess
 // Many of these tests were converted from V1 of the library, as such their naming and organization may not be the tidiest.
 
 import (
+	"bufio"
+	"bytes"
+	"errors"
+	"fmt"
+	"os"
 	"slices"
+	"strconv"
 	"testing"
 )
 
@@ -719,6 +725,124 @@ func TestGenerateCastleMovesBlack(t *testing.T) {
 	if !slices.Contains(moves, Move{E8, G8, NoPieceType}) {
 		t.Errorf("incorrect result for black king-side castle: white knight on F7: expected %v, got %v", expectedMoves, moves)
 	}
+}
+
+type perftTester struct {
+	pos *Position
+	// nodes are the number of leaf nodes at a certain depth. expectedNodes[0] is the number of moves generated from the starting position.
+	expectedNodes []uint64
+	actualNodes   []uint64
+}
+
+func (p *perftTester) UnmarshalText(text []byte) error {
+	fields := bytes.Fields(text)
+	if len(fields) < 7 {
+		return errors.New("could not unmarshal perft, has fewer than 7 fields")
+	}
+
+	fen := combineFenFields(fields)
+	p.pos = &Position{}
+	err := p.pos.UnmarshalText(fen)
+	if err != nil {
+		return fmt.Errorf("could not unmarshal perft: %w", err)
+	}
+
+	p.expectedNodes = []uint64{}
+	for _, field := range fields[6:] {
+		numNodes, err := strconv.ParseUint(string(field), 10, 64)
+		if err != nil {
+			return fmt.Errorf("could not unmarshal perft: %w", err)
+		}
+		p.expectedNodes = append(p.expectedNodes, numNodes)
+	}
+	return nil
+}
+
+func combineFenFields(fields [][]byte) []byte {
+	fen := []byte{}
+	fen = append(fen, fields[0]...)
+	fen = append(fen, ' ')
+	fen = append(fen, fields[1]...)
+	fen = append(fen, ' ')
+	fen = append(fen, fields[2]...)
+	fen = append(fen, ' ')
+	fen = append(fen, fields[3]...)
+	fen = append(fen, ' ')
+	fen = append(fen, fields[4]...)
+	fen = append(fen, ' ')
+	fen = append(fen, fields[5]...)
+	return fen
+}
+
+func (p *perftTester) Test(t *testing.T) {
+	p.actualNodes = make([]uint64, len(p.expectedNodes))
+	p.countNodes(0, p.pos)
+	if !slices.Equal(p.actualNodes, p.expectedNodes) {
+		t.Errorf("perft node counts do not match:\nexpected: %v\nactual: %v", p.expectedNodes, p.actualNodes)
+	}
+}
+
+func (p *perftTester) countNodes(currentDepth int, currentPos *Position) {
+	legalMoves := LegalMoves(currentPos)
+	p.actualNodes[currentDepth] += uint64(len(legalMoves))
+	if currentDepth == len(p.expectedNodes)-1 {
+		return
+	}
+
+	for _, m := range legalMoves {
+		posCopy := currentPos.Copy()
+		posCopy.Move(m)
+		p.countNodes(currentDepth+1, posCopy)
+	}
+}
+
+func TestMovegenPerft(t *testing.T) {
+	perftTesters, err := parsePerftFile()
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	for i, tester := range perftTesters {
+		t.Logf("perft test %d/%d", i, len(perftTesters))
+		name, _ := tester.pos.MarshalText()
+		t.Run(string(name), func(t *testing.T) {
+			tester.Test(t)
+		})
+	}
+}
+
+func parsePerftFile() ([]*perftTester, error) {
+	f, err := os.Open("./testdata/perft.epd")
+	if err != nil {
+		return nil, fmt.Errorf("could not parse perft file: %w", err)
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	// ignore first line
+	if !scanner.Scan() {
+		return nil, fmt.Errorf("could not parse perft file: %w", scanner.Err())
+	}
+
+	perftTesters := []*perftTester{}
+	for scanner.Scan() {
+		perftText := scanner.Bytes()
+		perftText = removePerftComment(perftText)
+		newPerftTester := &perftTester{}
+		if err := newPerftTester.UnmarshalText(perftText); err != nil {
+			return nil, fmt.Errorf("could not parse perft file: %w", err)
+		}
+		perftTesters = append(perftTesters, newPerftTester)
+	}
+
+	return perftTesters, nil
+}
+
+func removePerftComment(perftText []byte) []byte {
+	index := bytes.Index(perftText, []byte{'/', '/'})
+	if index == -1 {
+		return perftText
+	}
+	return perftText[0:index]
 }
 
 func BenchmarkGeneratePseudoLegalMoves(b *testing.B) {
