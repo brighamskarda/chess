@@ -1757,7 +1757,7 @@ func TestRealPGNs(t *testing.T) {
 	}
 
 	for _, fileEntry := range files {
-		if fileEntry.IsDir() {
+		if fileEntry.IsDir() || fileEntry.Name() == ".gitkeep" {
 			continue
 		}
 
@@ -1856,5 +1856,27 @@ func TestGameMarshal_NoMoves(t *testing.T) {
 1/2-1/2`
 	if string(actual) != expected {
 		t.Errorf("output did not match expected. Expected:\n%s\n\nActual:\n%s", expected, actual)
+	}
+}
+
+func TestParsePgn_NotAPgn(t *testing.T) {
+	pgn := []byte(`This text represents a file that is not a pgn`)
+	_, err := ParsePGN(bytes.NewReader(pgn))
+	if err == nil {
+		t.Error("did not get error for reader that does not represent a pgn")
+	}
+}
+
+func TestParsePgn_PartialPgn(t *testing.T) {
+	pgn := []byte(`[Event "?"]
+[Site "https://github.com/brighamskarda/chess"]
+[Date "2025.04.09"]
+[Round "1"]
+[White "?"]
+[Black "?"]
+[Result "1/2-1/2"]`)
+	_, err := ParsePGN(bytes.NewReader(pgn))
+	if err == nil {
+		t.Error("did not get error for partial pgn")
 	}
 }

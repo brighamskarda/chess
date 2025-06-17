@@ -757,11 +757,11 @@ func extractSingleGame(bufrd *bufio.Reader) ([]byte, error) {
 	// get tag section
 	for {
 		buf, err := bufrd.ReadBytes('\n')
+		pgn = append(pgn, buf...)
 		if err != nil {
 			return pgn, err
 		}
 
-		pgn = append(pgn, buf...)
 		if isEmptyLine(buf) {
 			break
 		}
@@ -771,11 +771,11 @@ func extractSingleGame(bufrd *bufio.Reader) ([]byte, error) {
 	reachedEOF := false
 	for {
 		buf, err := bufrd.ReadBytes('\n')
+		pgn = append(pgn, buf...)
 		if err != nil && err != io.EOF {
 			return pgn, err
 		}
 
-		pgn = append(pgn, buf...)
 		if err == io.EOF {
 			reachedEOF = true
 			break
