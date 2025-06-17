@@ -389,7 +389,8 @@ func castleMoves(pos *Position) []Move {
 	moves := make([]Move, 0)
 	occupied := pos.OccupiedBitboard()
 
-	if pos.SideToMove == White {
+	switch pos.SideToMove {
+	case White:
 		attacked := pos.getAttackedSquares(Black)
 		if pos.WhiteKsCastle &&
 			pos.Piece(E1) == WhiteKing &&
@@ -412,7 +413,7 @@ func castleMoves(pos *Position) []Move {
 			attacked.Square(C1) == 0 {
 			moves = append(moves, Move{E1, C1, NoPieceType})
 		}
-	} else if pos.SideToMove == Black {
+	case Black:
 		attacked := pos.getAttackedSquares(White)
 		if pos.BlackKsCastle &&
 			pos.Piece(E8) == BlackKing &&

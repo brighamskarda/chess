@@ -904,9 +904,10 @@ func (g *Game) setResult() {
 	if g.IsStalemate() {
 		g.Result = Draw
 	} else if g.IsCheckmate() {
-		if g.pos.SideToMove == White {
+		switch g.pos.SideToMove {
+		case White:
 			g.Result = BlackWins
-		} else if g.pos.SideToMove == Black {
+		case Black:
 			g.Result = WhiteWins
 		}
 	} else {

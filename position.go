@@ -357,11 +357,12 @@ func (pos *Position) prettyBoardStringBlack() string {
 func (pos *Position) extraInfo() string {
 	s := ""
 	s += "Side To Move: "
-	if pos.SideToMove == White {
+	switch pos.SideToMove {
+	case White:
 		s += "White"
-	} else if pos.SideToMove == Black {
+	case Black:
 		s += "Black"
-	} else {
+	default:
 		s += "-"
 	}
 	s += "\n"
@@ -524,11 +525,12 @@ func (pos *Position) OccupiedBitboard() Bitboard {
 
 // ColorBitboard returns a bitboard indicating all the squares occupied by pieces of a certain color. Returns 0 if NoColor or invalid color.
 func (pos *Position) ColorBitboard(c Color) Bitboard {
-	if c == White {
+	switch c {
+	case White:
 		return pos.whitePawns | pos.whiteKnights | pos.whiteBishops | pos.whiteRooks | pos.whiteQueens | pos.whiteKings
-	} else if c == Black {
+	case Black:
 		return pos.blackPawns | pos.blackKnights | pos.blackBishops | pos.blackRooks | pos.blackQueens | pos.blackKings
-	} else {
+	default:
 		return 0
 	}
 }
@@ -536,11 +538,12 @@ func (pos *Position) ColorBitboard(c Color) Bitboard {
 // IsCheck returns true if the side to move has a king under attack from an enemy piece. If side to move is not set false is returned.
 func (pos *Position) IsCheck() bool {
 	var attackingSide Color
-	if pos.SideToMove == White {
+	switch pos.SideToMove {
+	case White:
 		attackingSide = Black
-	} else if pos.SideToMove == Black {
+	case Black:
 		attackingSide = White
-	} else {
+	default:
 		return false
 	}
 
@@ -554,9 +557,10 @@ func (pos *Position) getAttackedSquares(side Color) Bitboard {
 	var attackedSquares Bitboard = 0
 
 	occupied := pos.OccupiedBitboard()
-	if side == White {
+	switch side {
+	case White:
 		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).WhitePawnAttacks()
-	} else if side == Black {
+	case Black:
 		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).BlackPawnAttacks()
 	}
 	attackedSquares |= pos.Bitboard(Piece{side, Rook}).RookAttacks(occupied)
@@ -650,11 +654,12 @@ func (pos *Position) performPawnMove(m Move) {
 
 func (pos *Position) performPawnMove_takeEnPassant(m Move) {
 	if m.ToSquare == pos.EnPassant {
-		if pos.SideToMove == White {
+		switch pos.SideToMove {
+		case White:
 			pos.ClearPiece(Square{m.ToSquare.File, m.ToSquare.Rank - 1})
-		} else if pos.SideToMove == Black {
+		case Black:
 			pos.ClearPiece(Square{m.ToSquare.File, m.ToSquare.Rank + 1})
-		} else {
+		default:
 			if pos.Piece(m.FromSquare).Color == White {
 				pos.ClearPiece(Square{m.ToSquare.File, m.ToSquare.Rank - 1})
 			} else if pos.Piece(m.FromSquare).Color == Black {
@@ -743,17 +748,19 @@ func (pos *Position) performCastle(m Move) {
 }
 
 func (pos *Position) flipSide_incrementFullMove(m Move) {
-	if pos.SideToMove == Black {
+	switch pos.SideToMove {
+	case Black:
 		pos.FullMove++
 		pos.SideToMove = White
-	} else if pos.SideToMove == White {
+	case White:
 		pos.SideToMove = Black
-	} else {
+	default:
 		colorMoved := pos.Piece(m.ToSquare).Color
-		if colorMoved == Black {
+		switch colorMoved {
+		case Black:
 			pos.FullMove++
 			pos.SideToMove = White
-		} else if colorMoved == White {
+		case White:
 			pos.SideToMove = Black
 		}
 	}
