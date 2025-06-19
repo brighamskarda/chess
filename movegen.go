@@ -47,14 +47,13 @@ func pawnMoves(pos *Position) []Move {
 func whitePawnMoves(pos *Position) []Move {
 	moves := make([]Move, 0)
 
-	whitePawns := pos.Bitboard(WhitePawn)
 	occupied := pos.OccupiedBitboard()
 	enemies := pos.ColorBitboard(Black) | (1 << squareToIndex(pos.EnPassant))
 
-	moves = append(moves, whitePawnsMoveForward(whitePawns, occupied)...)
-	moves = append(moves, whitePawnsMoveForward2(whitePawns, occupied)...)
-	moves = append(moves, whitePawnsTakeNE(whitePawns, enemies)...)
-	moves = append(moves, whitePawnsTakeNW(whitePawns, enemies)...)
+	moves = append(moves, whitePawnsMoveForward(pos.whitePawns, occupied)...)
+	moves = append(moves, whitePawnsMoveForward2(pos.whitePawns, occupied)...)
+	moves = append(moves, whitePawnsTakeNE(pos.whitePawns, enemies)...)
+	moves = append(moves, whitePawnsTakeNW(pos.whitePawns, enemies)...)
 	includeWhitePawnPromotions(&moves)
 	return moves
 }
@@ -132,14 +131,13 @@ func includeWhitePawnPromotions(moves *[]Move) {
 func blackPawnMoves(pos *Position) []Move {
 	moves := make([]Move, 0)
 
-	blackPawns := pos.Bitboard(BlackPawn)
 	occupied := pos.OccupiedBitboard()
 	enemies := pos.ColorBitboard(White) | (1 << squareToIndex(pos.EnPassant))
 
-	moves = append(moves, blackPawnsMoveForward(blackPawns, occupied)...)
-	moves = append(moves, blackPawnsMoveForward2(blackPawns, occupied)...)
-	moves = append(moves, blackPawnsTakeSE(blackPawns, enemies)...)
-	moves = append(moves, blackPawnsTakeSW(blackPawns, enemies)...)
+	moves = append(moves, blackPawnsMoveForward(pos.blackPawns, occupied)...)
+	moves = append(moves, blackPawnsMoveForward2(pos.blackPawns, occupied)...)
+	moves = append(moves, blackPawnsTakeSE(pos.blackPawns, enemies)...)
+	moves = append(moves, blackPawnsTakeSW(pos.blackPawns, enemies)...)
 	includeBlackPawnPromotions(&moves)
 	return moves
 }
@@ -221,10 +219,10 @@ func rookMoves(pos *Position) []Move {
 	var allies Bitboard
 	switch pos.SideToMove {
 	case White:
-		rooks = pos.Bitboard(WhiteRook)
+		rooks = pos.whiteRooks
 		allies = pos.ColorBitboard(White)
 	case Black:
-		rooks = pos.Bitboard(BlackRook)
+		rooks = pos.blackRooks
 		allies = pos.ColorBitboard(Black)
 	default:
 		return moves
@@ -254,10 +252,10 @@ func knightMoves(pos *Position) []Move {
 	var allies Bitboard
 	switch pos.SideToMove {
 	case White:
-		knights = pos.Bitboard(WhiteKnight)
+		knights = pos.whiteKnights
 		allies = pos.ColorBitboard(White)
 	case Black:
-		knights = pos.Bitboard(BlackKnight)
+		knights = pos.blackKnights
 		allies = pos.ColorBitboard(Black)
 	default:
 		return moves
@@ -288,10 +286,10 @@ func bishopMoves(pos *Position) []Move {
 	var allies Bitboard
 	switch pos.SideToMove {
 	case White:
-		bishops = pos.Bitboard(WhiteBishop)
+		bishops = pos.whiteBishops
 		allies = pos.ColorBitboard(White)
 	case Black:
-		bishops = pos.Bitboard(BlackBishop)
+		bishops = pos.blackBishops
 		allies = pos.ColorBitboard(Black)
 	default:
 		return moves
@@ -322,10 +320,10 @@ func queenMoves(pos *Position) []Move {
 	var allies Bitboard
 	switch pos.SideToMove {
 	case White:
-		queens = pos.Bitboard(WhiteQueen)
+		queens = pos.whiteQueens
 		allies = pos.ColorBitboard(White)
 	case Black:
-		queens = pos.Bitboard(BlackQueen)
+		queens = pos.blackQueens
 		allies = pos.ColorBitboard(Black)
 	default:
 		return moves
@@ -356,10 +354,10 @@ func kingMoves(pos *Position) []Move {
 	var allies Bitboard
 	switch pos.SideToMove {
 	case White:
-		kings = pos.Bitboard(WhiteKing)
+		kings = pos.whiteKings
 		allies = pos.ColorBitboard(White)
 	case Black:
-		kings = pos.Bitboard(BlackKing)
+		kings = pos.blackKings
 		allies = pos.ColorBitboard(Black)
 	default:
 		return moves

@@ -568,15 +568,19 @@ func (pos *Position) getAttackedSquares(side Color) Bitboard {
 	occupied := pos.OccupiedBitboard()
 	switch side {
 	case White:
-		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).WhitePawnAttacks()
+		attackedSquares |= pos.whitePawns.WhitePawnAttacks()
+		attackedSquares |= (pos.whiteRooks | pos.whiteQueens).RookAttacks(occupied)
+		attackedSquares |= pos.whiteKnights.KnightAttacks()
+		attackedSquares |= (pos.whiteBishops | pos.whiteQueens).BishopAttacks(occupied)
+		attackedSquares |= pos.whiteKings.KingAttacks()
+
 	case Black:
-		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).BlackPawnAttacks()
+		attackedSquares |= pos.blackPawns.BlackPawnAttacks()
+		attackedSquares |= (pos.blackRooks | pos.blackQueens).RookAttacks(occupied)
+		attackedSquares |= pos.blackKnights.KnightAttacks()
+		attackedSquares |= (pos.blackBishops | pos.blackQueens).BishopAttacks(occupied)
+		attackedSquares |= pos.blackKings.KingAttacks()
 	}
-	queenBb := pos.Bitboard(Piece{side, Queen})
-	attackedSquares |= (pos.Bitboard(Piece{side, Rook}) | queenBb).RookAttacks(occupied)
-	attackedSquares |= pos.Bitboard(Piece{side, Knight}).KnightAttacks()
-	attackedSquares |= (pos.Bitboard(Piece{side, Bishop}) | queenBb).BishopAttacks(occupied)
-	attackedSquares |= pos.Bitboard(Piece{side, King}).KingAttacks()
 	return attackedSquares
 }
 
