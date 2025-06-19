@@ -22,13 +22,19 @@ func PseudoLegalMoves(pos *Position) []Move {
 	if pos.SideToMove != White && pos.SideToMove != Black {
 		return nil
 	}
-	moves := make([]Move, 0)
-	moves = append(moves, pawnMoves(pos)...)
-	moves = append(moves, rookMoves(pos)...)
-	moves = append(moves, knightMoves(pos)...)
-	moves = append(moves, bishopMoves(pos)...)
-	moves = append(moves, queenMoves(pos)...)
-	moves = append(moves, kingMoves(pos)...)
+	pawnMoves := pawnMoves(pos)
+	rookMoves := rookMoves(pos)
+	knightMoves := knightMoves(pos)
+	bishopMoves := bishopMoves(pos)
+	queenMoves := queenMoves(pos)
+	kingMoves := kingMoves(pos)
+	moves := make([]Move, 0, len(pawnMoves)+len(rookMoves)+len(knightMoves)+len(bishopMoves)+len(queenMoves)+len(kingMoves))
+	moves = append(moves, pawnMoves...)
+	moves = append(moves, rookMoves...)
+	moves = append(moves, knightMoves...)
+	moves = append(moves, bishopMoves...)
+	moves = append(moves, queenMoves...)
+	moves = append(moves, kingMoves...)
 	return moves
 }
 
@@ -45,22 +51,25 @@ func pawnMoves(pos *Position) []Move {
 }
 
 func whitePawnMoves(pos *Position) []Move {
-	moves := make([]Move, 0)
-
 	occupied := pos.OccupiedBitboard()
 	enemies := pos.ColorBitboard(Black) | (1 << squareToIndex(pos.EnPassant))
 
-	moves = append(moves, whitePawnsMoveForward(pos.whitePawns, occupied)...)
-	moves = append(moves, whitePawnsMoveForward2(pos.whitePawns, occupied)...)
-	moves = append(moves, whitePawnsTakeNE(pos.whitePawns, enemies)...)
-	moves = append(moves, whitePawnsTakeNW(pos.whitePawns, enemies)...)
+	forward1 := whitePawnsMoveForward(pos.whitePawns, occupied)
+	forward2 := whitePawnsMoveForward2(pos.whitePawns, occupied)
+	takeNE := whitePawnsTakeNE(pos.whitePawns, enemies)
+	takeNW := whitePawnsTakeNW(pos.whitePawns, enemies)
+	moves := make([]Move, 0, len(forward1)+len(forward2)+len(takeNE)+len(takeNW)+8) // 8 for possible promotions
+	moves = append(moves, forward1...)
+	moves = append(moves, forward2...)
+	moves = append(moves, takeNE...)
+	moves = append(moves, takeNW...)
 	includeWhitePawnPromotions(&moves)
 	return moves
 }
 
 func whitePawnsMoveForward(whitePawns Bitboard, occupied Bitboard) []Move {
-	moves := make([]Move, 0)
 	moveForward := (whitePawns << 8) &^ occupied
+	moves := make([]Move, 0, bits.OnesCount64(uint64(moveForward)))
 
 	for moveForward != 0 {
 		squareIndex := bits.TrailingZeros64(uint64(moveForward))
@@ -72,8 +81,8 @@ func whitePawnsMoveForward(whitePawns Bitboard, occupied Bitboard) []Move {
 }
 
 func whitePawnsMoveForward2(whitePawns Bitboard, occupied Bitboard) []Move {
-	moves := make([]Move, 0)
 	moveForward2 := (whitePawns << 16) &^ occupied
+	moves := make([]Move, 0, bits.OnesCount64(uint64(moveForward2)))
 
 	for moveForward2 != 0 {
 		squareIndex := bits.TrailingZeros64(uint64(moveForward2))
@@ -87,8 +96,8 @@ func whitePawnsMoveForward2(whitePawns Bitboard, occupied Bitboard) []Move {
 }
 
 func whitePawnsTakeNE(whitePawns Bitboard, enemies Bitboard) []Move {
-	moves := make([]Move, 0)
 	neAttacks := whitePawns.pawnAttacksNE() & enemies
+	moves := make([]Move, 0, bits.OnesCount64(uint64(neAttacks)))
 
 	for neAttacks != 0 {
 		squareIndex := bits.TrailingZeros64(uint64(neAttacks))
@@ -100,12 +109,12 @@ func whitePawnsTakeNE(whitePawns Bitboard, enemies Bitboard) []Move {
 }
 
 func whitePawnsTakeNW(whitePawns Bitboard, enemies Bitboard) []Move {
-	moves := make([]Move, 0)
-	neAttacks := whitePawns.pawnAttacksNW() & enemies
+	nwAttacks := whitePawns.pawnAttacksNW() & enemies
+	moves := make([]Move, 0, bits.OnesCount64(uint64(nwAttacks)))
 
-	for neAttacks != 0 {
-		squareIndex := bits.TrailingZeros64(uint64(neAttacks))
-		neAttacks ^= 1 << squareIndex
+	for nwAttacks != 0 {
+		squareIndex := bits.TrailingZeros64(uint64(nwAttacks))
+		nwAttacks ^= 1 << squareIndex
 		square := indexToSquare(squareIndex)
 		moves = append(moves, Move{Square{square.File + 1, square.Rank - 1}, square, NoPieceType})
 	}
@@ -129,22 +138,26 @@ func includeWhitePawnPromotions(moves *[]Move) {
 }
 
 func blackPawnMoves(pos *Position) []Move {
-	moves := make([]Move, 0)
-
 	occupied := pos.OccupiedBitboard()
 	enemies := pos.ColorBitboard(White) | (1 << squareToIndex(pos.EnPassant))
 
-	moves = append(moves, blackPawnsMoveForward(pos.blackPawns, occupied)...)
-	moves = append(moves, blackPawnsMoveForward2(pos.blackPawns, occupied)...)
-	moves = append(moves, blackPawnsTakeSE(pos.blackPawns, enemies)...)
-	moves = append(moves, blackPawnsTakeSW(pos.blackPawns, enemies)...)
+	forward1 := blackPawnsMoveForward(pos.blackPawns, occupied)
+	forward2 := blackPawnsMoveForward2(pos.blackPawns, occupied)
+	takeSE := blackPawnsTakeSE(pos.blackPawns, enemies)
+	takeSW := blackPawnsTakeSW(pos.blackPawns, enemies)
+
+	moves := make([]Move, 0, len(forward1)+len(forward2)+len(takeSE)+len(takeSW)+8) // 8 for possible promotions
+	moves = append(moves, forward1...)
+	moves = append(moves, forward2...)
+	moves = append(moves, takeSE...)
+	moves = append(moves, takeSW...)
 	includeBlackPawnPromotions(&moves)
 	return moves
 }
 
 func blackPawnsMoveForward(blackPawns Bitboard, occupied Bitboard) []Move {
-	moves := make([]Move, 0)
 	moveForward := (blackPawns >> 8) &^ occupied
+	moves := make([]Move, 0, bits.OnesCount64(uint64(moveForward)))
 
 	for moveForward != 0 {
 		squareIndex := bits.TrailingZeros64(uint64(moveForward))
@@ -156,8 +169,8 @@ func blackPawnsMoveForward(blackPawns Bitboard, occupied Bitboard) []Move {
 }
 
 func blackPawnsMoveForward2(blackPawns Bitboard, occupied Bitboard) []Move {
-	moves := make([]Move, 0)
 	moveForward2 := (blackPawns >> 16) &^ occupied
+	moves := make([]Move, 0, bits.OnesCount64(uint64(moveForward2)))
 
 	for moveForward2 != 0 {
 		squareIndex := bits.TrailingZeros64(uint64(moveForward2))
@@ -171,8 +184,8 @@ func blackPawnsMoveForward2(blackPawns Bitboard, occupied Bitboard) []Move {
 }
 
 func blackPawnsTakeSE(blackPawns Bitboard, enemies Bitboard) []Move {
-	moves := make([]Move, 0)
 	seAttacks := blackPawns.pawnAttacksSE() & enemies
+	moves := make([]Move, 0, bits.OnesCount64(uint64(seAttacks)))
 
 	for seAttacks != 0 {
 		squareIndex := bits.TrailingZeros64(uint64(seAttacks))
@@ -184,8 +197,8 @@ func blackPawnsTakeSE(blackPawns Bitboard, enemies Bitboard) []Move {
 }
 
 func blackPawnsTakeSW(blackPawns Bitboard, enemies Bitboard) []Move {
-	moves := make([]Move, 0)
 	swAttacks := blackPawns.pawnAttacksSW() & enemies
+	moves := make([]Move, 0, bits.OnesCount64(uint64(swAttacks)))
 
 	for swAttacks != 0 {
 		squareIndex := bits.TrailingZeros64(uint64(swAttacks))
@@ -197,8 +210,7 @@ func blackPawnsTakeSW(blackPawns Bitboard, enemies Bitboard) []Move {
 }
 
 func includeBlackPawnPromotions(moves *[]Move) {
-	numMoves := len(*moves)
-	for i := 0; i < numMoves; i++ {
+	for i := range *moves {
 		if (*moves)[i].ToSquare.Rank == Rank1 {
 			moveCopy := (*moves)[i]
 			(*moves)[i].Promotion = Queen
@@ -213,7 +225,6 @@ func includeBlackPawnPromotions(moves *[]Move) {
 }
 
 func rookMoves(pos *Position) []Move {
-	moves := make([]Move, 0)
 	var rooks Bitboard
 	var occupied Bitboard = pos.OccupiedBitboard()
 	var allies Bitboard
@@ -225,8 +236,9 @@ func rookMoves(pos *Position) []Move {
 		rooks = pos.blackRooks
 		allies = pos.ColorBitboard(Black)
 	default:
-		return moves
+		return []Move{}
 	}
+	moves := make([]Move, 0, bits.OnesCount64(uint64(rooks))*10)
 
 	for rooks != 0 {
 		singleRookIndex := bits.TrailingZeros64(uint64(rooks))
@@ -247,7 +259,6 @@ func rookMoves(pos *Position) []Move {
 }
 
 func knightMoves(pos *Position) []Move {
-	moves := make([]Move, 0)
 	var knights Bitboard
 	var allies Bitboard
 	switch pos.SideToMove {
@@ -258,8 +269,9 @@ func knightMoves(pos *Position) []Move {
 		knights = pos.blackKnights
 		allies = pos.ColorBitboard(Black)
 	default:
-		return moves
+		return []Move{}
 	}
+	moves := make([]Move, 0, bits.OnesCount64(uint64(knights))*8)
 
 	for knights != 0 {
 		singleKnightIndex := bits.TrailingZeros64(uint64(knights))
@@ -280,7 +292,6 @@ func knightMoves(pos *Position) []Move {
 }
 
 func bishopMoves(pos *Position) []Move {
-	moves := make([]Move, 0)
 	var bishops Bitboard
 	var occupied Bitboard = pos.OccupiedBitboard()
 	var allies Bitboard
@@ -292,8 +303,9 @@ func bishopMoves(pos *Position) []Move {
 		bishops = pos.blackBishops
 		allies = pos.ColorBitboard(Black)
 	default:
-		return moves
+		return []Move{}
 	}
+	moves := make([]Move, 0, bits.OnesCount64(uint64(bishops))*10)
 
 	for bishops != 0 {
 		singleBishopIndex := bits.TrailingZeros64(uint64(bishops))
@@ -314,7 +326,6 @@ func bishopMoves(pos *Position) []Move {
 }
 
 func queenMoves(pos *Position) []Move {
-	moves := make([]Move, 0)
 	var queens Bitboard
 	var occupied Bitboard = pos.OccupiedBitboard()
 	var allies Bitboard
@@ -326,8 +337,9 @@ func queenMoves(pos *Position) []Move {
 		queens = pos.blackQueens
 		allies = pos.ColorBitboard(Black)
 	default:
-		return moves
+		return []Move{}
 	}
+	moves := make([]Move, 0, bits.OnesCount64(uint64(queens))*15)
 
 	for queens != 0 {
 		singleQueenIndex := bits.TrailingZeros64(uint64(queens))
@@ -349,7 +361,7 @@ func queenMoves(pos *Position) []Move {
 }
 
 func kingMoves(pos *Position) []Move {
-	moves := make([]Move, 0)
+	moves := make([]Move, 0, 10) // 10 is the most moves a king can ever make
 	var kings Bitboard
 	var allies Bitboard
 	switch pos.SideToMove {
@@ -442,7 +454,7 @@ func castleMoves(pos *Position) []Move {
 // LegalMoves returns all legal moves for pos. Returns nil if moves could not be generated (for example if pos.SideToMove was not set). Returns an empty slice if move generation was successful, but no moves were found.
 func LegalMoves(pos *Position) []Move {
 	pseudoLegalMoves := PseudoLegalMoves(pos)
-	legalMoves := make([]Move, 0)
+	legalMoves := make([]Move, 0, len(pseudoLegalMoves))
 	for _, m := range pseudoLegalMoves {
 		tempPos := pos.Copy()
 		tempPos.Move(m)
