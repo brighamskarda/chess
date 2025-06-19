@@ -387,6 +387,9 @@ func (pos *Position) extraInfo() string {
 
 // Piece gets the piece on the given square. [NoPiece] is returned if no piece is present, or square is invalid.
 func (pos *Position) Piece(s Square) Piece {
+	if !squareOnBoard(s) {
+		return NoPiece
+	}
 	if pos.whitePawns.Square(s) == 1 {
 		return WhitePawn
 	}
@@ -430,6 +433,9 @@ func (pos *Position) Piece(s Square) Piece {
 
 // SetPiece sets p on square s. If p or s are invalid nothings happens.
 func (pos *Position) SetPiece(p Piece, s Square) {
+	if !squareOnBoard(s) {
+		return
+	}
 	pos.ClearPiece(s)
 
 	switch p {
@@ -463,6 +469,9 @@ func (pos *Position) SetPiece(p Piece, s Square) {
 
 // ClearPiece removes any piece from the given square. Nothing happens if s is invalid.
 func (pos *Position) ClearPiece(s Square) {
+	if !squareOnBoard(s) {
+		return
+	}
 	pos.whitePawns = pos.whitePawns.ClearSquare(s)
 	pos.whiteRooks = pos.whiteRooks.ClearSquare(s)
 	pos.whiteKnights = pos.whiteKnights.ClearSquare(s)
@@ -563,10 +572,10 @@ func (pos *Position) getAttackedSquares(side Color) Bitboard {
 	case Black:
 		attackedSquares |= pos.Bitboard(Piece{side, Pawn}).BlackPawnAttacks()
 	}
-	attackedSquares |= pos.Bitboard(Piece{side, Rook}).RookAttacks(occupied)
+	queenBb := pos.Bitboard(Piece{side, Queen})
+	attackedSquares |= (pos.Bitboard(Piece{side, Rook}) | queenBb).RookAttacks(occupied)
 	attackedSquares |= pos.Bitboard(Piece{side, Knight}).KnightAttacks()
-	attackedSquares |= pos.Bitboard(Piece{side, Bishop}).BishopAttacks(occupied)
-	attackedSquares |= pos.Bitboard(Piece{side, Queen}).QueenAttacks(occupied)
+	attackedSquares |= (pos.Bitboard(Piece{side, Bishop}) | queenBb).BishopAttacks(occupied)
 	attackedSquares |= pos.Bitboard(Piece{side, King}).KingAttacks()
 	return attackedSquares
 }

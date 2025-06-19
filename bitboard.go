@@ -44,27 +44,18 @@ func (bb Bitboard) ClearBit(index uint8) Bitboard {
 	return bb & ^(1 << index)
 }
 
-// Square returns a 1 if the bit representing the specified square is set, otherwise 0. If s is not on the board 0 is returned.
+// Square returns a 1 if the bit representing the specified square is set, otherwise 0. If s is [NoSquare] 0 is returned. If s is malformed results are undefined.
 func (bb Bitboard) Square(s Square) uint8 {
-	if !squareOnBoard(s) {
-		return 0
-	}
 	return bb.Bit(squareToIndex(s))
 }
 
-// SetSquare returns a copy of bb with the specified square set to 1. Nothing is different if s is not on the board, or the bit is already set.
+// SetSquare returns a copy of bb with the specified square set to 1. Nothing is different if s is [NoSquare], or the bit is already set. If s is malformed results are undefined.
 func (bb Bitboard) SetSquare(s Square) Bitboard {
-	if !squareOnBoard(s) {
-		return bb
-	}
 	return bb.SetBit(squareToIndex(s))
 }
 
-// ClearSquare returns a copy of bb with the specified square cleared to 0. Nothing is different if s is not on the board, or the bit is already cleared.
+// ClearSquare returns a copy of bb with the specified square cleared to 0. Nothing is different if s is [NoSquare], or the bit is already cleared. If s is malformed results are undefined.
 func (bb Bitboard) ClearSquare(s Square) Bitboard {
-	if !squareOnBoard(s) {
-		return bb
-	}
 	return bb.ClearBit(squareToIndex(s))
 }
 

@@ -862,3 +862,16 @@ func BenchmarkGenerateLegalMoves(b *testing.B) {
 		LegalMoves(pos)
 	}
 }
+
+func BenchmarkPerft6(b *testing.B) {
+	startPos := &Position{}
+	startPos.UnmarshalText([]byte(DefaultFEN))
+	for b.Loop() {
+		perftTester := &perftTester{
+			pos:           startPos.Copy(),
+			expectedNodes: []uint64{20, 400, 8902, 197281, 4865609, 119060324},
+			actualNodes:   []uint64{0, 0, 0, 0, 0, 0},
+		}
+		perftTester.Test(nil)
+	}
+}

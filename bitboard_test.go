@@ -58,9 +58,6 @@ func TestBitboardSquareFullBb(t *testing.T) {
 	if bb.Square(Square{FileH, 9}) != 0 {
 		t.Errorf("incorrect result for full bitboard: expected square h- to be 0")
 	}
-	if bb.Square(Square{0xFF, Rank8}) != 0 {
-		t.Errorf("incorrect result for full bitboard: expected square -8 to be 0")
-	}
 }
 
 func TestBitboardSquareEmptyBb(t *testing.T) {
