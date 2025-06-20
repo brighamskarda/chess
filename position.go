@@ -556,14 +556,14 @@ func (pos *Position) IsCheck() bool {
 	case White:
 		return pos.whiteKings&pos.blackPawns.BlackPawnAttacks() > 0 ||
 			pos.whiteKings&pos.blackKnights.KnightAttacks() > 0 ||
-			pos.whiteKings&(pos.blackRooks|pos.blackQueens).RookAttacks(occupied) > 0 ||
 			pos.whiteKings&(pos.blackBishops|pos.blackQueens).BishopAttacks(occupied) > 0 ||
+			pos.whiteKings&(pos.blackRooks|pos.blackQueens).RookAttacks(occupied) > 0 ||
 			pos.whiteKings&pos.blackKings.KingAttacks() > 0
 	case Black:
 		return pos.blackKings&pos.whitePawns.WhitePawnAttacks() > 0 ||
 			pos.blackKings&pos.whiteKnights.KnightAttacks() > 0 ||
-			pos.blackKings&(pos.whiteRooks|pos.whiteQueens).RookAttacks(occupied) > 0 ||
 			pos.blackKings&(pos.whiteBishops|pos.whiteQueens).BishopAttacks(occupied) > 0 ||
+			pos.blackKings&(pos.whiteRooks|pos.whiteQueens).RookAttacks(occupied) > 0 ||
 			pos.blackKings&pos.whiteKings.KingAttacks() > 0
 	default:
 		return false

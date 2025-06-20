@@ -115,12 +115,12 @@ func (bb Bitboard) RookAttacks(occupied Bitboard) Bitboard {
 	for bb != 0 {
 		singleRookBb := Bitboard(1 << bits.TrailingZeros(uint(bb)))
 		bb ^= singleRookBb
-		attacks |= singleRookBb.singleRookRankAttacks(occupied)
+		attacks |= singleRookBb.singleRookAttacks(occupied)
 	}
 	return attacks
 }
 
-func (bb Bitboard) singleRookRankAttacks(occupied Bitboard) Bitboard {
+func (bb Bitboard) singleRookAttacks(occupied Bitboard) Bitboard {
 	startIndex := uint8(bits.TrailingZeros64(uint64(bb)))
 
 	var attacks Bitboard = 0
