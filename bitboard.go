@@ -111,22 +111,52 @@ func (bb Bitboard) pawnAttacksSW() Bitboard {
 
 // RookAttacks returns a bitboard indicating all the squares attacked by bb assuming it's a bitboard of rooks. occupied should indicate all squares on the board occupied by either color, including the rooks that are moving.
 func (bb Bitboard) RookAttacks(occupied Bitboard) Bitboard {
-	var movesRight Bitboard = (occupied ^
-		(occupied | 0x101010101010101 - 2*bb)) & ^Bitboard(0x101010101010101)
+	var attacks Bitboard = 0
+	for bb != 0 {
+		singleRookBb := Bitboard(1 << bits.TrailingZeros(uint(bb)))
+		bb ^= singleRookBb
+		attacks |= singleRookBb.singleRookRankAttacks(occupied)
+	}
+	return attacks
+}
 
-	occupied_reverse := bits.Reverse64(uint64(occupied))
-	var movesLeft Bitboard = Bitboard(bits.Reverse64((occupied_reverse ^ (occupied_reverse | 0x101010101010101 - 2*bits.Reverse64(uint64(bb)))) & ^uint64(0x101010101010101)))
+func (bb Bitboard) singleRookRankAttacks(occupied Bitboard) Bitboard {
+	startIndex := uint8(bits.TrailingZeros64(uint64(bb)))
 
-	ccRook := bb.rotate90CC()
-	ccOccupied := occupied.rotate90CC()
+	var attacks Bitboard = 0
+	// Do moves right
+	for currentIndex := startIndex + 1; currentIndex%8 != 0; currentIndex++ {
+		attacks |= 1 << currentIndex
+		if occupied.Bit(currentIndex) == 1 {
+			break
+		}
+	}
 
-	var movesDown Bitboard = ((ccOccupied ^ ((ccOccupied | 0x101010101010101) - 2*ccRook)) & ^Bitboard(0x101010101010101)).rotate90C()
+	// Do moves left
+	for currentIndex := startIndex - 1; (currentIndex+1)%8 != 0; currentIndex-- {
+		attacks |= 1 << currentIndex
+		if occupied.Bit(currentIndex) == 1 {
+			break
+		}
+	}
 
-	cRook := bb.rotate90C()
-	cOccupied := occupied.rotate90C()
+	// Do moves up
+	for currentIndex := startIndex + 8; currentIndex < 64; currentIndex += 8 {
+		attacks |= 1 << currentIndex
+		if occupied.Bit(currentIndex) == 1 {
+			break
+		}
+	}
 
-	var movesUp Bitboard = ((cOccupied ^ ((cOccupied | 0x101010101010101) - 2*cRook)) & ^Bitboard(0x101010101010101)).rotate90CC()
-	return movesLeft | movesRight | movesDown | movesUp
+	// Do moves down
+	for currentIndex := startIndex - 8; currentIndex < 64; currentIndex -= 8 {
+		attacks |= 1 << currentIndex
+		if occupied.Bit(currentIndex) == 1 {
+			break
+		}
+	}
+
+	return attacks
 }
 
 // KnightAttacks returns a bitboard indicating all the squares attacked by bb assuming it's a bitboard of knights.
@@ -143,6 +173,7 @@ func (bb Bitboard) KnightAttacks() Bitboard {
 
 // BishopAttacks returns a bitboard indicating all the squares attacked by bb assuming it's a bitboard of bishops. occupied should indicate all squares on the board occupied by either color, including the bishops that are moving.
 func (bb Bitboard) BishopAttacks(occupied Bitboard) Bitboard {
+	// I use hyperbola quintessence for this move generation.
 	var attacks Bitboard = 0
 	for bb != 0 {
 		singleBishop := bb & -bb
