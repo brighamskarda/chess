@@ -27,11 +27,10 @@ type Bitboard uint64
 
 // Bit returns a 1 if the bit at the specified index is set, otherwise 0. If index > 63, 0 is always returned. Index 0 is the rightmost bit.
 func (bb Bitboard) Bit(index uint8) uint8 {
-	if bb&(1<<index) > 0 {
-		return 1
-	} else {
+	if index > 63 {
 		return 0
 	}
+	return uint8((bb >> index) & 1)
 }
 
 // SetBit returns a copy of bb with the specified bit set to 1. If index > 63 or the bit is already set, nothing is different. Index 0 is the rightmost bit.
@@ -111,52 +110,22 @@ func (bb Bitboard) pawnAttacksSW() Bitboard {
 
 // RookAttacks returns a bitboard indicating all the squares attacked by bb assuming it's a bitboard of rooks. occupied should indicate all squares on the board occupied by either color, including the rooks that are moving.
 func (bb Bitboard) RookAttacks(occupied Bitboard) Bitboard {
+	initSliderAttacks()
+
 	var attacks Bitboard = 0
 	for bb != 0 {
-		singleRookBb := Bitboard(1 << bits.TrailingZeros(uint(bb)))
-		bb ^= singleRookBb
-		attacks |= singleRookBb.singleRookAttacks(occupied)
+		index := bits.TrailingZeros(uint(bb))
+		bb ^= (1 << index)
+		attacks |= singleRookAttacks(index, occupied)
 	}
 	return attacks
 }
 
-func (bb Bitboard) singleRookAttacks(occupied Bitboard) Bitboard {
-	startIndex := uint8(bits.TrailingZeros64(uint64(bb)))
-
-	var attacks Bitboard = 0
-	// Do moves right
-	for currentIndex := startIndex + 1; currentIndex%8 != 0; currentIndex++ {
-		attacks |= 1 << currentIndex
-		if occupied.Bit(currentIndex) == 1 {
-			break
-		}
-	}
-
-	// Do moves left
-	for currentIndex := startIndex - 1; (currentIndex+1)%8 != 0; currentIndex-- {
-		attacks |= 1 << currentIndex
-		if occupied.Bit(currentIndex) == 1 {
-			break
-		}
-	}
-
-	// Do moves up
-	for currentIndex := startIndex + 8; currentIndex < 64; currentIndex += 8 {
-		attacks |= 1 << currentIndex
-		if occupied.Bit(currentIndex) == 1 {
-			break
-		}
-	}
-
-	// Do moves down
-	for currentIndex := startIndex - 8; currentIndex < 64; currentIndex -= 8 {
-		attacks |= 1 << currentIndex
-		if occupied.Bit(currentIndex) == 1 {
-			break
-		}
-	}
-
-	return attacks
+func singleRookAttacks(square int, occupied Bitboard) Bitboard {
+	occupied &= Bitboard(rookMasks[square])
+	occupied *= Bitboard(rookMagics[square])
+	occupied >>= 64 - rookRelevantBits[square]
+	return Bitboard(rookAttacks[square][occupied])
 }
 
 // KnightAttacks returns a bitboard indicating all the squares attacked by bb assuming it's a bitboard of knights.
@@ -173,96 +142,22 @@ func (bb Bitboard) KnightAttacks() Bitboard {
 
 // BishopAttacks returns a bitboard indicating all the squares attacked by bb assuming it's a bitboard of bishops. occupied should indicate all squares on the board occupied by either color, including the bishops that are moving.
 func (bb Bitboard) BishopAttacks(occupied Bitboard) Bitboard {
-	// I use hyperbola quintessence for this move generation.
+	initSliderAttacks()
+
 	var attacks Bitboard = 0
 	for bb != 0 {
-		singleBishop := bb & -bb
-		bb ^= singleBishop
-		attacks |= singleBishop.diagonalAttacks(occupied) | singleBishop.antiDiagonalAttacks(occupied)
+		index := bits.TrailingZeros(uint(bb))
+		bb ^= (1 << index)
+		attacks |= singleBishopAttacks(index, occupied)
 	}
 	return attacks
 }
 
-func (bb Bitboard) diagonalAttacks(occupied Bitboard) Bitboard {
-	diagonalMask := getDiagonalMask(bb)
-	forward := occupied & diagonalMask
-	reverse := Bitboard(bits.ReverseBytes64(uint64(forward)))
-
-	forward -= 2 * bb
-	reverse -= 2 * Bitboard(bits.ReverseBytes64(uint64(bb)))
-
-	forward ^= Bitboard(bits.ReverseBytes64(uint64(reverse)))
-	forward &= diagonalMask
-
-	return forward
-}
-
-func (bb Bitboard) antiDiagonalAttacks(occupied Bitboard) Bitboard {
-	diagonalMask := getAntiDiagonalMask(bb)
-	forward := occupied & diagonalMask
-	reverse := Bitboard(bits.ReverseBytes64(uint64(forward)))
-
-	forward -= 2 * bb
-	reverse -= 2 * Bitboard(bits.ReverseBytes64(uint64(bb)))
-
-	forward ^= Bitboard(bits.ReverseBytes64(uint64(reverse)))
-	forward &= diagonalMask
-
-	return forward
-}
-
-var diagonalMasks []Bitboard
-
-func getDiagonalMask(bb Bitboard) Bitboard {
-	if diagonalMasks == nil {
-		initializeDiagonalMasks()
-	}
-	return diagonalMasks[bits.TrailingZeros64(uint64(bb))]
-}
-
-func initializeDiagonalMasks() {
-	diagonalMasks = make([]Bitboard, 0, 64)
-	for i := range 64 {
-		rank := Rank(i / 8)
-		file := File(i % 8)
-		diff := int(file) - int(rank)
-
-		var mask Bitboard = 0
-
-		for r, f := 0, diff; r < 8; r, f = r+1, f+1 {
-			if f >= 0 && f < 8 {
-				mask = mask.SetSquare(Square{File: File(f + 1), Rank: Rank(r + 1)})
-			}
-		}
-		diagonalMasks = append(diagonalMasks, mask)
-	}
-}
-
-var antiDiagonalMasks []Bitboard
-
-func getAntiDiagonalMask(bb Bitboard) Bitboard {
-	if antiDiagonalMasks == nil {
-		initializeAntiDiagonalMasks()
-	}
-	return antiDiagonalMasks[bits.TrailingZeros64(uint64(bb))]
-}
-
-func initializeAntiDiagonalMasks() {
-	antiDiagonalMasks = make([]Bitboard, 0, 64)
-	for i := range 64 {
-		rank := Rank(i / 8)
-		file := File(i % 8)
-		sum := int(file) + int(rank)
-
-		var mask Bitboard = 0
-
-		for r, f := 0, sum; r < 8 && f >= 0; r, f = r+1, f-1 {
-			if f < 8 {
-				mask = mask.SetSquare(Square{File: File(f + 1), Rank: Rank(r + 1)})
-			}
-		}
-		antiDiagonalMasks = append(antiDiagonalMasks, mask)
-	}
+func singleBishopAttacks(square int, occupied Bitboard) Bitboard {
+	occupied &= Bitboard(bishopMasks[square])
+	occupied *= Bitboard(bishopMagics[square])
+	occupied >>= 64 - bishopRelevantBits[square]
+	return Bitboard(bishopAttacks[square][occupied])
 }
 
 // QueenAttacks returns a bitboard indicating all the squares attacked by bb assuming it's a bitboard of queens. occupied should indicate all squares on the board occupied by either color, including the queens that are moving.
@@ -283,30 +178,4 @@ func (bb Bitboard) KingAttacks() Bitboard {
 		((bb << 7) & 0x7f7f7f7f7f7f7f7f) |
 		(bb << 8) |
 		((bb << 9) & 0xfefefefefefefefe)
-}
-
-// flipVert flips a bitboard vertically.
-func (bb Bitboard) flipVert() Bitboard {
-	return Bitboard(bits.ReverseBytes64(uint64(bb)))
-}
-
-// flipDiagA1H8 flips a board diagonally over the A1H8 line.
-func (bb Bitboard) flipDiagA1H8() Bitboard {
-	t := 0x0f0f0f0f00000000 & (bb ^ (bb << 28))
-	bb ^= t ^ (t >> 28)
-	t = 0x3333000033330000 & (bb ^ (bb << 14))
-	bb ^= t ^ (t >> 14)
-	t = 0x5500550055005500 & (bb ^ (bb << 7))
-	bb ^= t ^ (t >> 7)
-	return bb
-}
-
-// rotate90CC rotates a bitboard 90 degrees counter clockwise.
-func (bb Bitboard) rotate90CC() Bitboard {
-	return bb.flipVert().flipDiagA1H8()
-}
-
-// rotate90C rotates a bitboard 90 degrees clockwise.
-func (bb Bitboard) rotate90C() Bitboard {
-	return bb.flipDiagA1H8().flipVert()
 }

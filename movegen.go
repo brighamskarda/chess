@@ -57,174 +57,134 @@ func whitePawnMoves(pos *Position) []Move {
 	occupied := pos.OccupiedBitboard()
 	enemies := pos.ColorBitboard(Black) | (1 << squareToIndex(pos.EnPassant))
 
-	forward1 := whitePawnsMoveForward(pos.whitePawns, occupied)
-	forward2 := whitePawnsMoveForward2(pos.whitePawns, occupied)
-	takeNE := whitePawnsTakeNE(pos.whitePawns, enemies)
-	takeNW := whitePawnsTakeNW(pos.whitePawns, enemies)
-	moves := make([]Move, 0, len(forward1)+len(forward2)+len(takeNE)+len(takeNW)+8) // 8 for possible promotions
-	moves = append(moves, forward1...)
-	moves = append(moves, forward2...)
-	moves = append(moves, takeNE...)
-	moves = append(moves, takeNW...)
-	includeWhitePawnPromotions(&moves)
-	return moves
-}
+	moves := make([]Move, 0, 32)
 
-func whitePawnsMoveForward(whitePawns Bitboard, occupied Bitboard) []Move {
-	moveForward := (whitePawns << 8) &^ occupied
-	moves := make([]Move, 0, bits.OnesCount64(uint64(moveForward)))
-
-	for moveForward != 0 {
-		squareIndex := bits.TrailingZeros64(uint64(moveForward))
-		moveForward ^= 1 << squareIndex
-		square := indexToSquare(squareIndex)
-		moves = append(moves, Move{Square{square.File, square.Rank - 1}, square, NoPieceType})
+	// Forward 1 square
+	moveForward := (pos.whitePawns << 8) &^ occupied
+	for mf := moveForward; mf != 0; {
+		squareIndex := bits.TrailingZeros64(uint64(mf))
+		mf ^= 1 << squareIndex
+		to := indexToSquare(squareIndex)
+		from := Square{to.File, to.Rank - 1}
+		moves = append(moves, Move{FromSquare: from, ToSquare: to, Promotion: NoPieceType})
 	}
-	return moves
-}
 
-func whitePawnsMoveForward2(whitePawns Bitboard, occupied Bitboard) []Move {
-	moveForward2 := (whitePawns << 16) &^ occupied
-	moves := make([]Move, 0, bits.OnesCount64(uint64(moveForward2)))
-
-	for moveForward2 != 0 {
-		squareIndex := bits.TrailingZeros64(uint64(moveForward2))
-		moveForward2 ^= 1 << squareIndex
-		square := indexToSquare(squareIndex)
-		if square.Rank == Rank4 && occupied.Square(Square{square.File, Rank3}) == 0 {
-			moves = append(moves, Move{Square{square.File, square.Rank - 2}, square, NoPieceType})
+	// Forward 2 squares
+	moveForward2 := (pos.whitePawns << 16) &^ occupied
+	for mf2 := moveForward2; mf2 != 0; {
+		squareIndex := bits.TrailingZeros64(uint64(mf2))
+		mf2 ^= 1 << squareIndex
+		to := indexToSquare(squareIndex)
+		mid := Square{to.File, to.Rank - 1}
+		from := Square{to.File, to.Rank - 2}
+		if occupied.Square(mid) == 0 && from.Rank == Rank2 {
+			moves = append(moves, Move{FromSquare: from, ToSquare: to, Promotion: NoPieceType})
 		}
 	}
-	return moves
-}
 
-func whitePawnsTakeNE(whitePawns Bitboard, enemies Bitboard) []Move {
-	neAttacks := whitePawns.pawnAttacksNE() & enemies
-	moves := make([]Move, 0, bits.OnesCount64(uint64(neAttacks)))
-
-	for neAttacks != 0 {
-		squareIndex := bits.TrailingZeros64(uint64(neAttacks))
-		neAttacks ^= 1 << squareIndex
-		square := indexToSquare(squareIndex)
-		moves = append(moves, Move{Square{square.File - 1, square.Rank - 1}, square, NoPieceType})
+	// Take NE
+	neAttacks := pos.whitePawns.pawnAttacksNE() & enemies
+	for ne := neAttacks; ne != 0; {
+		squareIndex := bits.TrailingZeros64(uint64(ne))
+		ne ^= 1 << squareIndex
+		to := indexToSquare(squareIndex)
+		from := Square{to.File - 1, to.Rank - 1}
+		moves = append(moves, Move{FromSquare: from, ToSquare: to, Promotion: NoPieceType})
 	}
-	return moves
-}
 
-func whitePawnsTakeNW(whitePawns Bitboard, enemies Bitboard) []Move {
-	nwAttacks := whitePawns.pawnAttacksNW() & enemies
-	moves := make([]Move, 0, bits.OnesCount64(uint64(nwAttacks)))
-
-	for nwAttacks != 0 {
-		squareIndex := bits.TrailingZeros64(uint64(nwAttacks))
-		nwAttacks ^= 1 << squareIndex
-		square := indexToSquare(squareIndex)
-		moves = append(moves, Move{Square{square.File + 1, square.Rank - 1}, square, NoPieceType})
+	// Take NW
+	nwAttacks := pos.whitePawns.pawnAttacksNW() & enemies
+	for nw := nwAttacks; nw != 0; {
+		squareIndex := bits.TrailingZeros64(uint64(nw))
+		nw ^= 1 << squareIndex
+		to := indexToSquare(squareIndex)
+		from := Square{to.File + 1, to.Rank - 1}
+		moves = append(moves, Move{FromSquare: from, ToSquare: to, Promotion: NoPieceType})
 	}
-	return moves
-}
 
-func includeWhitePawnPromotions(moves *[]Move) {
-	numMoves := len(*moves)
-	for i := range numMoves {
-		if (*moves)[i].ToSquare.Rank == Rank8 {
-			moveCopy := (*moves)[i]
-			(*moves)[i].Promotion = Queen
-			moveCopy.Promotion = Rook
-			*moves = append(*moves, moveCopy)
-			moveCopy.Promotion = Knight
-			*moves = append(*moves, moveCopy)
-			moveCopy.Promotion = Bishop
-			*moves = append(*moves, moveCopy)
+	// Handle promotions
+	numMoves := len(moves)
+	for i := 0; i < numMoves; i++ {
+		if moves[i].ToSquare.Rank == Rank8 {
+			base := moves[i]
+			moves[i].Promotion = Queen
+
+			for _, promo := range []PieceType{Rook, Knight, Bishop} {
+				copy := base
+				copy.Promotion = promo
+				moves = append(moves, copy)
+			}
 		}
 	}
+
+	return moves
 }
 
 func blackPawnMoves(pos *Position) []Move {
 	occupied := pos.OccupiedBitboard()
 	enemies := pos.ColorBitboard(White) | (1 << squareToIndex(pos.EnPassant))
 
-	forward1 := blackPawnsMoveForward(pos.blackPawns, occupied)
-	forward2 := blackPawnsMoveForward2(pos.blackPawns, occupied)
-	takeSE := blackPawnsTakeSE(pos.blackPawns, enemies)
-	takeSW := blackPawnsTakeSW(pos.blackPawns, enemies)
+	moves := make([]Move, 0, 32)
 
-	moves := make([]Move, 0, len(forward1)+len(forward2)+len(takeSE)+len(takeSW)+8) // 8 for possible promotions
-	moves = append(moves, forward1...)
-	moves = append(moves, forward2...)
-	moves = append(moves, takeSE...)
-	moves = append(moves, takeSW...)
-	includeBlackPawnPromotions(&moves)
-	return moves
-}
-
-func blackPawnsMoveForward(blackPawns Bitboard, occupied Bitboard) []Move {
-	moveForward := (blackPawns >> 8) &^ occupied
-	moves := make([]Move, 0, bits.OnesCount64(uint64(moveForward)))
-
-	for moveForward != 0 {
-		squareIndex := bits.TrailingZeros64(uint64(moveForward))
-		moveForward ^= 1 << squareIndex
-		square := indexToSquare(squareIndex)
-		moves = append(moves, Move{Square{square.File, square.Rank + 1}, square, NoPieceType})
+	// Forward 1 square
+	moveForward := (pos.blackPawns >> 8) &^ occupied
+	for mf := moveForward; mf != 0; {
+		squareIndex := bits.TrailingZeros64(uint64(mf))
+		mf ^= 1 << squareIndex
+		to := indexToSquare(squareIndex)
+		from := Square{to.File, to.Rank + 1}
+		moves = append(moves, Move{FromSquare: from, ToSquare: to, Promotion: NoPieceType})
 	}
-	return moves
-}
 
-func blackPawnsMoveForward2(blackPawns Bitboard, occupied Bitboard) []Move {
-	moveForward2 := (blackPawns >> 16) &^ occupied
-	moves := make([]Move, 0, bits.OnesCount64(uint64(moveForward2)))
-
-	for moveForward2 != 0 {
-		squareIndex := bits.TrailingZeros64(uint64(moveForward2))
-		moveForward2 ^= 1 << squareIndex
-		square := indexToSquare(squareIndex)
-		if square.Rank == Rank5 && occupied.Square(Square{square.File, Rank6}) == 0 {
-			moves = append(moves, Move{Square{square.File, square.Rank + 2}, square, NoPieceType})
+	// Forward 2 squares
+	moveForward2 := (pos.blackPawns >> 16) &^ occupied
+	for mf2 := moveForward2; mf2 != 0; {
+		squareIndex := bits.TrailingZeros64(uint64(mf2))
+		mf2 ^= 1 << squareIndex
+		to := indexToSquare(squareIndex)
+		mid := Square{to.File, to.Rank + 1}
+		from := Square{to.File, to.Rank + 2}
+		if occupied.Square(mid) == 0 && from.Rank == Rank7 {
+			moves = append(moves, Move{FromSquare: from, ToSquare: to, Promotion: NoPieceType})
 		}
 	}
-	return moves
-}
 
-func blackPawnsTakeSE(blackPawns Bitboard, enemies Bitboard) []Move {
-	seAttacks := blackPawns.pawnAttacksSE() & enemies
-	moves := make([]Move, 0, bits.OnesCount64(uint64(seAttacks)))
-
-	for seAttacks != 0 {
-		squareIndex := bits.TrailingZeros64(uint64(seAttacks))
-		seAttacks ^= 1 << squareIndex
-		square := indexToSquare(squareIndex)
-		moves = append(moves, Move{Square{square.File - 1, square.Rank + 1}, square, NoPieceType})
+	// Take SE
+	seAttacks := pos.blackPawns.pawnAttacksSE() & enemies
+	for se := seAttacks; se != 0; {
+		squareIndex := bits.TrailingZeros64(uint64(se))
+		se ^= 1 << squareIndex
+		to := indexToSquare(squareIndex)
+		from := Square{to.File - 1, to.Rank + 1}
+		moves = append(moves, Move{FromSquare: from, ToSquare: to, Promotion: NoPieceType})
 	}
-	return moves
-}
 
-func blackPawnsTakeSW(blackPawns Bitboard, enemies Bitboard) []Move {
-	swAttacks := blackPawns.pawnAttacksSW() & enemies
-	moves := make([]Move, 0, bits.OnesCount64(uint64(swAttacks)))
-
-	for swAttacks != 0 {
-		squareIndex := bits.TrailingZeros64(uint64(swAttacks))
-		swAttacks ^= 1 << squareIndex
-		square := indexToSquare(squareIndex)
-		moves = append(moves, Move{Square{square.File + 1, square.Rank + 1}, square, NoPieceType})
+	// Take SW
+	swAttacks := pos.blackPawns.pawnAttacksSW() & enemies
+	for sw := swAttacks; sw != 0; {
+		squareIndex := bits.TrailingZeros64(uint64(sw))
+		sw ^= 1 << squareIndex
+		to := indexToSquare(squareIndex)
+		from := Square{to.File + 1, to.Rank + 1}
+		moves = append(moves, Move{FromSquare: from, ToSquare: to, Promotion: NoPieceType})
 	}
-	return moves
-}
 
-func includeBlackPawnPromotions(moves *[]Move) {
-	for i := range *moves {
-		if (*moves)[i].ToSquare.Rank == Rank1 {
-			moveCopy := (*moves)[i]
-			(*moves)[i].Promotion = Queen
-			moveCopy.Promotion = Rook
-			*moves = append(*moves, moveCopy)
-			moveCopy.Promotion = Knight
-			*moves = append(*moves, moveCopy)
-			moveCopy.Promotion = Bishop
-			*moves = append(*moves, moveCopy)
+	// Promotions
+	numMoves := len(moves)
+	for i := 0; i < numMoves; i++ {
+		if moves[i].ToSquare.Rank == Rank1 {
+			base := moves[i]
+			moves[i].Promotion = Queen
+
+			for _, promo := range []PieceType{Rook, Knight, Bishop} {
+				copy := base
+				copy.Promotion = promo
+				moves = append(moves, copy)
+			}
 		}
 	}
+
+	return moves
 }
 
 func rookMoves(pos *Position) []Move {
