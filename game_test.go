@@ -194,10 +194,10 @@ func TestGameMoveUCI(t *testing.T) {
 func TestAnnotateMove(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	if g.AnnotateMove(0, 3) != nil {
@@ -218,10 +218,10 @@ func TestAnnotateMove(t *testing.T) {
 func TestAnnotateMoveError(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	if g.AnnotateMove(-1, 3) == nil {
@@ -242,10 +242,10 @@ func TestAnnotateMoveError(t *testing.T) {
 func TestMoveSAN(t *testing.T) {
 	g := NewGame()
 	if g.MoveSAN("e4") != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.MoveSAN("Nc6") != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	if s, _ := g.Position().MarshalText(); string(s) != "r1bqkbnr/pppppppp/2n5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2" {
@@ -256,10 +256,10 @@ func TestMoveSAN(t *testing.T) {
 func TestPositionPly(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	ply := 0
@@ -287,13 +287,13 @@ func TestPositionPly(t *testing.T) {
 func TestPositionPly_AltStart(t *testing.T) {
 	g, err := NewGameFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBN1 w Qkq - 0 1")
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	ply := 0
@@ -321,10 +321,10 @@ func TestPositionPly_AltStart(t *testing.T) {
 func TestPositionPlyError(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	if g.PositionPly(-1) != nil {
@@ -338,10 +338,10 @@ func TestPositionPlyError(t *testing.T) {
 func TestCommentAfterMove(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	g.CommentAfterMove(0, "comment 1")
@@ -358,10 +358,10 @@ func TestCommentAfterMove(t *testing.T) {
 func TestCommentAfterMoveErr(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	if g.CommentAfterMove(0, "comment 1") != nil {
@@ -378,10 +378,10 @@ func TestCommentAfterMoveErr(t *testing.T) {
 func TestCommentBeforeMove(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	g.CommentBeforeMove(0, "comment 1")
@@ -398,10 +398,10 @@ func TestCommentBeforeMove(t *testing.T) {
 func TestCommentBeforeMoveErr(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	if g.CommentBeforeMove(0, "comment 1") != nil {
@@ -418,10 +418,10 @@ func TestCommentBeforeMoveErr(t *testing.T) {
 func TestDeleteCommentBefore(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	g.CommentBeforeMove(0, "comment 1")
@@ -454,10 +454,10 @@ func TestDeleteCommentBefore(t *testing.T) {
 func TestDeleteCommentBeforeError(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	g.CommentBeforeMove(0, "comment 1")
@@ -483,10 +483,10 @@ func TestDeleteCommentBeforeError(t *testing.T) {
 func TestDeleteCommentAfter(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	g.CommentAfterMove(0, "comment 1")
@@ -519,10 +519,10 @@ func TestDeleteCommentAfter(t *testing.T) {
 func TestDeleteCommentAfterError(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	g.CommentAfterMove(0, "comment 1")
@@ -852,7 +852,7 @@ func TestGameMarshalText_AltStart(t *testing.T) {
 
 	for _, m := range moves {
 		if g.MoveSAN(m) != nil {
-			t.Fail()
+			t.Fatal()
 		}
 	}
 	g.Date = "2025.04.09"
@@ -1465,7 +1465,7 @@ func TestBlackStart_altPos(t *testing.T) {
 1... Nd5 2. e3 Qf6 3. Bd2 O-O 4. O-O-O Nc6 5. Be2 b6 6. Nh3 Rb8 7. Rhf1 *
 `))
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 }
 

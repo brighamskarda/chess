@@ -390,41 +390,41 @@ func (pos *Position) Piece(s Square) Piece {
 	if !squareOnBoard(s) {
 		return NoPiece
 	}
-	if pos.whitePawns.Square(s) == 1 {
+	squareIndex := squareToIndex(s)
+	if pos.whitePawns.Bit(squareIndex) == 1 {
 		return WhitePawn
 	}
-	if pos.whiteRooks.Square(s) == 1 {
-		return WhiteRook
-	}
-	if pos.whiteKnights.Square(s) == 1 {
-		return WhiteKnight
-	}
-	if pos.whiteBishops.Square(s) == 1 {
-		return WhiteBishop
-	}
-	if pos.whiteQueens.Square(s) == 1 {
-		return WhiteQueen
-	}
-	if pos.whiteKings.Square(s) == 1 {
-		return WhiteKing
-	}
-
-	if pos.blackPawns.Square(s) == 1 {
+	if pos.blackPawns.Bit(squareIndex) == 1 {
 		return BlackPawn
 	}
-	if pos.blackRooks.Square(s) == 1 {
+	if pos.whiteRooks.Bit(squareIndex) == 1 {
+		return WhiteRook
+	}
+	if pos.whiteKnights.Bit(squareIndex) == 1 {
+		return WhiteKnight
+	}
+	if pos.whiteBishops.Bit(squareIndex) == 1 {
+		return WhiteBishop
+	}
+	if pos.blackRooks.Bit(squareIndex) == 1 {
 		return BlackRook
 	}
-	if pos.blackKnights.Square(s) == 1 {
+	if pos.blackKnights.Bit(squareIndex) == 1 {
 		return BlackKnight
 	}
-	if pos.blackBishops.Square(s) == 1 {
+	if pos.blackBishops.Bit(squareIndex) == 1 {
 		return BlackBishop
 	}
-	if pos.blackQueens.Square(s) == 1 {
+	if pos.whiteQueens.Bit(squareIndex) == 1 {
+		return WhiteQueen
+	}
+	if pos.blackQueens.Bit(squareIndex) == 1 {
 		return BlackQueen
 	}
-	if pos.blackKings.Square(s) == 1 {
+	if pos.whiteKings.Bit(squareIndex) == 1 {
+		return WhiteKing
+	}
+	if pos.blackKings.Bit(squareIndex) == 1 {
 		return BlackKing
 	}
 
@@ -436,34 +436,36 @@ func (pos *Position) SetPiece(p Piece, s Square) {
 	if !squareOnBoard(s) {
 		return
 	}
+	squareIndex := squareToIndex(s)
+
 	pos.ClearPiece(s)
 
 	switch p {
 	case WhitePawn:
-		pos.whitePawns = pos.whitePawns.SetSquare(s)
+		pos.whitePawns = pos.whitePawns.SetBit(squareIndex)
 	case WhiteRook:
-		pos.whiteRooks = pos.whiteRooks.SetSquare(s)
+		pos.whiteRooks = pos.whiteRooks.SetBit(squareIndex)
 	case WhiteKnight:
-		pos.whiteKnights = pos.whiteKnights.SetSquare(s)
+		pos.whiteKnights = pos.whiteKnights.SetBit(squareIndex)
 	case WhiteBishop:
-		pos.whiteBishops = pos.whiteBishops.SetSquare(s)
+		pos.whiteBishops = pos.whiteBishops.SetBit(squareIndex)
 	case WhiteQueen:
-		pos.whiteQueens = pos.whiteQueens.SetSquare(s)
+		pos.whiteQueens = pos.whiteQueens.SetBit(squareIndex)
 	case WhiteKing:
-		pos.whiteKings = pos.whiteKings.SetSquare(s)
+		pos.whiteKings = pos.whiteKings.SetBit(squareIndex)
 
 	case BlackPawn:
-		pos.blackPawns = pos.blackPawns.SetSquare(s)
+		pos.blackPawns = pos.blackPawns.SetBit(squareIndex)
 	case BlackRook:
-		pos.blackRooks = pos.blackRooks.SetSquare(s)
+		pos.blackRooks = pos.blackRooks.SetBit(squareIndex)
 	case BlackKnight:
-		pos.blackKnights = pos.blackKnights.SetSquare(s)
+		pos.blackKnights = pos.blackKnights.SetBit(squareIndex)
 	case BlackBishop:
-		pos.blackBishops = pos.blackBishops.SetSquare(s)
+		pos.blackBishops = pos.blackBishops.SetBit(squareIndex)
 	case BlackQueen:
-		pos.blackQueens = pos.blackQueens.SetSquare(s)
+		pos.blackQueens = pos.blackQueens.SetBit(squareIndex)
 	case BlackKing:
-		pos.blackKings = pos.blackKings.SetSquare(s)
+		pos.blackKings = pos.blackKings.SetBit(squareIndex)
 	}
 }
 
@@ -472,19 +474,21 @@ func (pos *Position) ClearPiece(s Square) {
 	if !squareOnBoard(s) {
 		return
 	}
-	pos.whitePawns = pos.whitePawns.ClearSquare(s)
-	pos.whiteRooks = pos.whiteRooks.ClearSquare(s)
-	pos.whiteKnights = pos.whiteKnights.ClearSquare(s)
-	pos.whiteBishops = pos.whiteBishops.ClearSquare(s)
-	pos.whiteQueens = pos.whiteQueens.ClearSquare(s)
-	pos.whiteKings = pos.whiteKings.ClearSquare(s)
+	squareIndex := squareToIndex(s)
 
-	pos.blackPawns = pos.blackPawns.ClearSquare(s)
-	pos.blackRooks = pos.blackRooks.ClearSquare(s)
-	pos.blackKnights = pos.blackKnights.ClearSquare(s)
-	pos.blackBishops = pos.blackBishops.ClearSquare(s)
-	pos.blackQueens = pos.blackQueens.ClearSquare(s)
-	pos.blackKings = pos.blackKings.ClearSquare(s)
+	pos.whitePawns = pos.whitePawns.ClearBit(squareIndex)
+	pos.whiteRooks = pos.whiteRooks.ClearBit(squareIndex)
+	pos.whiteKnights = pos.whiteKnights.ClearBit(squareIndex)
+	pos.whiteBishops = pos.whiteBishops.ClearBit(squareIndex)
+	pos.whiteQueens = pos.whiteQueens.ClearBit(squareIndex)
+	pos.whiteKings = pos.whiteKings.ClearBit(squareIndex)
+
+	pos.blackPawns = pos.blackPawns.ClearBit(squareIndex)
+	pos.blackRooks = pos.blackRooks.ClearBit(squareIndex)
+	pos.blackKnights = pos.blackKnights.ClearBit(squareIndex)
+	pos.blackBishops = pos.blackBishops.ClearBit(squareIndex)
+	pos.blackQueens = pos.blackQueens.ClearBit(squareIndex)
+	pos.blackKings = pos.blackKings.ClearBit(squareIndex)
 }
 
 // Bitboard returns a bitboard for the given piece. If p is [NoPiece] then a bitboard with all the unoccupied squares is returned. If p is invalid 0 is returned. See also [Position.OccupiedBitboard] and [Position.ColorBitboard].
@@ -546,19 +550,16 @@ func (pos *Position) ColorBitboard(c Color) Bitboard {
 
 // IsCheck returns true if the side to move has a king under attack from an enemy piece. If side to move is not set false is returned.
 func (pos *Position) IsCheck() bool {
-	var attackingSide Color
 	switch pos.SideToMove {
 	case White:
-		attackingSide = Black
+		attackedSquares := pos.getAttackedSquares(Black)
+		return pos.whiteKings&attackedSquares > 0
 	case Black:
-		attackingSide = White
+		attackedSquares := pos.getAttackedSquares(White)
+		return pos.blackKings&attackedSquares > 0
 	default:
 		return false
 	}
-
-	attackedSquares := pos.getAttackedSquares(attackingSide)
-	kingsInCheck := pos.Bitboard(Piece{pos.SideToMove, King}) & attackedSquares
-	return kingsInCheck > 0
 }
 
 // getAttackedSquares returns a bitboard with all the squares the specified color attacks.
@@ -584,7 +585,7 @@ func (pos *Position) getAttackedSquares(side Color) Bitboard {
 	return attackedSquares
 }
 
-// Move performs chess moves in such a way that if all moves are legal, the FEN will always be properly updated. The rules it follows are listed below.
+// Move performs chess moves in such a way that if all moves are legal, the FEN will always be properly updated. If m contains invalid squares or promotions the results are undefined. The rules it follows are listed below.
 //
 //  1. By default the following happens:
 //
@@ -653,16 +654,21 @@ func (pos *Position) promotePiece(s Square, pt PieceType) {
 }
 
 func (pos *Position) isPawnMove(m Move) bool {
-	return pos.Piece(m.FromSquare).Type == Pawn
+	squareIndex := squareToIndex(m.FromSquare)
+	return pos.whitePawns.Bit(squareIndex) == 1 || pos.blackPawns.Bit(squareIndex) == 1
 }
 
 func (pos *Position) performPawnMove(m Move) {
 	pos.HalfMove = 0
 	pos.performPawnMove_takeEnPassant(m)
 	pos.performPawnMove_setEnPassant(m)
-	piece := pos.Piece(m.FromSquare)
-	pos.SetPiece(piece, m.ToSquare)
-	pos.ClearPiece(m.FromSquare)
+	if squareIndex := squareToIndex(m.FromSquare); pos.whitePawns.Bit(squareIndex) == 1 {
+		pos.SetPiece(WhitePawn, m.ToSquare)
+		pos.whitePawns = pos.whitePawns.ClearBit(squareIndex)
+	} else {
+		pos.SetPiece(BlackPawn, m.ToSquare)
+		pos.blackPawns = pos.blackPawns.ClearBit(squareIndex)
+	}
 }
 
 func (pos *Position) performPawnMove_takeEnPassant(m Move) {
@@ -698,27 +704,27 @@ func (pos *Position) isCastle(m Move) bool {
 	switch m {
 	case Move{E1, G1, NoPieceType}: // White King-side castle
 		return pos.WhiteKsCastle &&
-			pos.Piece(E1) == WhiteKing &&
-			pos.Piece(H1) == WhiteRook &&
+			pos.whiteKings.Bit(4) == 1 &&
+			pos.whiteRooks.Bit(7) == 1 &&
 			pos.Piece(F1) == NoPiece &&
 			pos.Piece(G1) == NoPiece
 	case Move{E1, C1, NoPieceType}: // White Queen-side castle
 		return pos.WhiteQsCastle &&
-			pos.Piece(E1) == WhiteKing &&
-			pos.Piece(A1) == WhiteRook &&
+			pos.whiteKings.Bit(4) == 1 &&
+			pos.whiteRooks.Bit(0) == 1 &&
 			pos.Piece(D1) == NoPiece &&
 			pos.Piece(C1) == NoPiece &&
 			pos.Piece(B1) == NoPiece
 	case Move{E8, G8, NoPieceType}: // Black King-side castle
 		return pos.BlackKsCastle &&
-			pos.Piece(E8) == BlackKing &&
-			pos.Piece(H8) == BlackRook &&
+			pos.blackKings.Bit(60) == 1 &&
+			pos.blackRooks.Bit(63) == 1 &&
 			pos.Piece(F8) == NoPiece &&
 			pos.Piece(G8) == NoPiece
 	case Move{E8, C8, NoPieceType}: // Black Queen-side castle
 		return pos.BlackQsCastle &&
-			pos.Piece(E8) == BlackKing &&
-			pos.Piece(A8) == BlackRook &&
+			pos.blackKings.Bit(60) == 1 &&
+			pos.blackRooks.Bit(56) == 1 &&
 			pos.Piece(D8) == NoPiece &&
 			pos.Piece(C8) == NoPiece &&
 			pos.Piece(B8) == NoPiece
@@ -730,31 +736,23 @@ func (pos *Position) isCastle(m Move) bool {
 func (pos *Position) performCastle(m Move) {
 	switch m {
 	case Move{E1, G1, NoPieceType}:
-		pos.SetPiece(WhiteKing, G1)
-		pos.ClearPiece(E1)
-		pos.SetPiece(WhiteRook, F1)
-		pos.ClearPiece(H1)
+		pos.whiteKings = pos.whiteKings.SetBit(6).ClearBit(4)
+		pos.whiteRooks = pos.whiteRooks.SetBit(5).ClearBit(7)
 		pos.WhiteKsCastle = false
 		pos.WhiteQsCastle = false
 	case Move{E1, C1, NoPieceType}:
-		pos.SetPiece(WhiteKing, C1)
-		pos.ClearPiece(E1)
-		pos.SetPiece(WhiteRook, D1)
-		pos.ClearPiece(A1)
+		pos.whiteKings = pos.whiteKings.SetBit(2).ClearBit(4)
+		pos.whiteRooks = pos.whiteRooks.SetBit(3).ClearBit(0)
 		pos.WhiteKsCastle = false
 		pos.WhiteQsCastle = false
 	case Move{E8, G8, NoPieceType}:
-		pos.SetPiece(BlackKing, G8)
-		pos.ClearPiece(E8)
-		pos.SetPiece(BlackRook, F8)
-		pos.ClearPiece(H8)
+		pos.blackKings = pos.blackKings.SetBit(62).ClearBit(60)
+		pos.blackRooks = pos.blackRooks.SetBit(61).ClearBit(63)
 		pos.BlackKsCastle = false
 		pos.BlackQsCastle = false
 	case Move{E8, C8, NoPieceType}:
-		pos.SetPiece(BlackKing, C8)
-		pos.ClearPiece(E8)
-		pos.SetPiece(BlackRook, D8)
-		pos.ClearPiece(A8)
+		pos.blackKings = pos.blackKings.SetBit(58).ClearBit(60)
+		pos.blackRooks = pos.blackRooks.SetBit(59).ClearBit(56)
 		pos.BlackKsCastle = false
 		pos.BlackQsCastle = false
 	}
