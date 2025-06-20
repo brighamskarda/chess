@@ -550,13 +550,21 @@ func (pos *Position) ColorBitboard(c Color) Bitboard {
 
 // IsCheck returns true if the side to move has a king under attack from an enemy piece. If side to move is not set false is returned.
 func (pos *Position) IsCheck() bool {
+	occupied := pos.OccupiedBitboard()
+
 	switch pos.SideToMove {
 	case White:
-		attackedSquares := pos.getAttackedSquares(Black)
-		return pos.whiteKings&attackedSquares > 0
+		return pos.whiteKings&pos.blackPawns.BlackPawnAttacks() > 0 ||
+			pos.whiteKings&pos.blackKnights.KnightAttacks() > 0 ||
+			pos.whiteKings&(pos.blackRooks|pos.blackQueens).RookAttacks(occupied) > 0 ||
+			pos.whiteKings&(pos.blackBishops|pos.blackQueens).BishopAttacks(occupied) > 0 ||
+			pos.whiteKings&pos.blackKings.KingAttacks() > 0
 	case Black:
-		attackedSquares := pos.getAttackedSquares(White)
-		return pos.blackKings&attackedSquares > 0
+		return pos.blackKings&pos.whitePawns.WhitePawnAttacks() > 0 ||
+			pos.blackKings&pos.whiteKnights.KnightAttacks() > 0 ||
+			pos.blackKings&(pos.whiteRooks|pos.whiteQueens).RookAttacks(occupied) > 0 ||
+			pos.blackKings&(pos.whiteBishops|pos.whiteQueens).BishopAttacks(occupied) > 0 ||
+			pos.blackKings&pos.whiteKings.KingAttacks() > 0
 	default:
 		return false
 	}
