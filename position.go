@@ -91,6 +91,27 @@ func (pos *Position) Equal(other *Position) bool {
 		pos.EnPassant == other.EnPassant
 }
 
+// equal returns true if the positions are the same, excluding move counters and enPassant.
+func (pos *Position) equalNoEnPassant(other *Position) bool {
+	return pos.whitePawns == other.whitePawns &&
+		pos.whiteRooks == other.whiteRooks &&
+		pos.whiteKnights == other.whiteKnights &&
+		pos.whiteBishops == other.whiteBishops &&
+		pos.whiteQueens == other.whiteQueens &&
+		pos.whiteKings == other.whiteKings &&
+		pos.blackPawns == other.blackPawns &&
+		pos.blackRooks == other.blackRooks &&
+		pos.blackKnights == other.blackKnights &&
+		pos.blackBishops == other.blackBishops &&
+		pos.blackQueens == other.blackQueens &&
+		pos.blackKings == other.blackKings &&
+		pos.SideToMove == other.SideToMove &&
+		pos.WhiteKsCastle == other.WhiteKsCastle &&
+		pos.WhiteQsCastle == other.WhiteQsCastle &&
+		pos.BlackKsCastle == other.BlackKsCastle &&
+		pos.BlackQsCastle == other.BlackQsCastle
+}
+
 // UnmarshalText is an implementation of the [encoding.TextUnmarshaler] interface. It expects text in [Forsyth-Edwards Notation]. It returns an error if it could not parse fen. It was likely malformed or missing important pieces.
 //
 // [Forsyth-Edwards Notation]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c16.1

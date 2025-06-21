@@ -20,7 +20,7 @@ import (
 	"sync"
 )
 
-// Huge thanks to Chess Programming and his example implementation of bitboards. It was extremely useful. https://www.youtube.com/watch?v=4ohJQ9pCkHI&t=1199s
+// Huge thanks to Chess Programming and his example implementation of magic bitboards. It was extremely useful. https://youtu.be/4ohJQ9pCkHI?si=4QQG2BntrELO2JYi
 
 var rookRelevantBits = [64]int{
 	12, 11, 11, 11, 11, 11, 11, 12,
