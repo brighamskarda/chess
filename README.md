@@ -1,6 +1,6 @@
 # brighamskarda/chess
 
-**chess** is a go module with useful utilities for playing and manipulating the game of chess. It was created to expand the selection of chess libraries available in golang. As of now, one of the only fleshed out libraries is [CorentinGS/chess](https://github.com/corentings/chess) (who has done some admittedly great work along with [notnil](https://github.com/notnil/chess)). Some of the functionality provided in this library includes:
+**chess** is a go module with useful utilities for playing and manipulating the game of chess. It was created to expand the selection of chess libraries available in golang. As of now, there are few fleshed out libraries that are documented and performant. Some of the functionality provided in this library includes:
 
 - Pseudo-legal move generation
 - Legal move generation
@@ -10,17 +10,28 @@
 
 ## Performance
 
-This module is designed with performance in mind. It aims to be performant enough for engine development, while still being easy to use.
+This module is designed with performance in mind. It aims to be performant enough for engine development, while still being easy to use. Performance testing (Perft) is one way to test the performance and correctness of a chess library. It involves generating all legal moves for a position up to a certain depth. Perft(6) indicates the time for a library to generate all legal moves 6 plys deep.
 
-It performs similarly to [CorentinGS/chess](https://github.com/corentings/chess), with one notable exception. Legal move generation in this module is up to **40%** faster (sometimes even more).
+### Popular Go Chess Library Performance Comparison
 
-| Postition | brighamskarda | CorentinGS |
-| --------- | ------------- | ---------- |
-| Starting  | 2820ns        | 4448ns     |
-| Midgame   | 6026ns        | 9987ns     |
-| Endgame   | 2167ns        | 4468ns     |
+| Repository            | Starting Position (Perft 6) | KiwiPete Position (Perft 5) | End Position (Perft 6) |
+| --------------------- | --------------------------- | --------------------------- | ---------------------- |
+| brighamskarda/chess   | 7.58                        | 12.04                       | 0.69                   |
+| CorentinGS/chess      | 32.49                       | 52.94                       | 4.95                   |
+| dylhunn/dragontoothmg | 1.44                        | 1.46                        | 0.22                   |
+| keelus/chess          | 435                         | \*                          | 37.86                  |
+| malbrecht/chess       | 77.39                       | 147.97                      | 5.44                   |
+| eightsquared/chess    | 7.075                       | 22.35                       | 1.01                   |
 
-Of course, benchmarking is a fickle art, and a deeper review will show that CorentinGS has done a great job of minimizing heap allocations in his library.
+Starting Position - `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`
+
+Kiwi Pete Position - `r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1` (a popular midgame position for testing)
+
+End Position - `8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1`
+
+Of course there are other hyper-specialized go programs and libraries that are able to achieve even faster times (such as [this one](https://github.com/bluescreen10/chester) which claims 300ms for perft 6 from the starting position). For this list I am looking at libraries that show up in the first couple pages of search results, and that provide a usable API with at least some documentation. If you have a library you think should be here let me know.
+
+But as the results show this library is one of the quickest. Notably it is about 4x as fast as CorentingGS/chess (a fork of notnil/chess that focuses on reducing memory allocations). dylhunn/dragontoothmg is an amazing library for pure speed if that is what you are looking for. It lacks PGN utilities though.
 
 ## Future Development
 
