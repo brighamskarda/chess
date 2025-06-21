@@ -848,15 +848,17 @@ func (g *Game) CanClaimDraw() bool {
 }
 
 // CanClaimDrawThreeFold returns true if the side to move can claim a draw due to threefold repetition.
+//
 // Threefold repetition occurs when a position occurs three times in a game. Positions are considered equivalent if the same player is set to move and all the pieces on the board are in identical positions. Positions are not considered equivalent if castling rights, or en passant differ. See more at [FIDE Laws of Chess] section 9.2.
 //
 // [FIDE Laws of Chess]: https://handbook.fide.com/chapter/E012023
 func (g *Game) CanClaimDrawThreeFold() bool {
 	positions := g.makePositionHist()
+	legalMoves := makeLegalMoveHis(positions)
 	for i := len(positions) - 1; i >= 0; i-- {
 		numEqual := 1
 		for j := i - 1; j >= 0; j-- {
-			if positions[i].Equal(positions[j]) {
+			if positions[i].equalNoEnPassant(positions[j]) && slices.Equal(legalMoves[i], legalMoves[j]) {
 				numEqual++
 			}
 			if numEqual >= 3 {
@@ -877,6 +879,14 @@ func (g *Game) makePositionHist() []*Position {
 		hist = append(hist, pos)
 	}
 	return hist
+}
+
+func makeLegalMoveHis(positions []*Position) [][]Move {
+	legalMoveHist := make([][]Move, 0, len(positions))
+	for _, pos := range positions {
+		legalMoveHist = append(legalMoveHist, LegalMoves(pos))
+	}
+	return legalMoveHist
 }
 
 // Move performs the move m only if it is legal. Otherwise an error is produced.

@@ -194,10 +194,10 @@ func TestGameMoveUCI(t *testing.T) {
 func TestAnnotateMove(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	if g.AnnotateMove(0, 3) != nil {
@@ -218,10 +218,10 @@ func TestAnnotateMove(t *testing.T) {
 func TestAnnotateMoveError(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	if g.AnnotateMove(-1, 3) == nil {
@@ -242,10 +242,10 @@ func TestAnnotateMoveError(t *testing.T) {
 func TestMoveSAN(t *testing.T) {
 	g := NewGame()
 	if g.MoveSAN("e4") != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.MoveSAN("Nc6") != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	if s, _ := g.Position().MarshalText(); string(s) != "r1bqkbnr/pppppppp/2n5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2" {
@@ -256,10 +256,10 @@ func TestMoveSAN(t *testing.T) {
 func TestPositionPly(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	ply := 0
@@ -287,13 +287,13 @@ func TestPositionPly(t *testing.T) {
 func TestPositionPly_AltStart(t *testing.T) {
 	g, err := NewGameFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBN1 w Qkq - 0 1")
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	ply := 0
@@ -321,10 +321,10 @@ func TestPositionPly_AltStart(t *testing.T) {
 func TestPositionPlyError(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	if g.PositionPly(-1) != nil {
@@ -338,10 +338,10 @@ func TestPositionPlyError(t *testing.T) {
 func TestCommentAfterMove(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	g.CommentAfterMove(0, "comment 1")
@@ -358,10 +358,10 @@ func TestCommentAfterMove(t *testing.T) {
 func TestCommentAfterMoveErr(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	if g.CommentAfterMove(0, "comment 1") != nil {
@@ -378,10 +378,10 @@ func TestCommentAfterMoveErr(t *testing.T) {
 func TestCommentBeforeMove(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	g.CommentBeforeMove(0, "comment 1")
@@ -398,10 +398,10 @@ func TestCommentBeforeMove(t *testing.T) {
 func TestCommentBeforeMoveErr(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	if g.CommentBeforeMove(0, "comment 1") != nil {
@@ -418,10 +418,10 @@ func TestCommentBeforeMoveErr(t *testing.T) {
 func TestDeleteCommentBefore(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	g.CommentBeforeMove(0, "comment 1")
@@ -454,10 +454,10 @@ func TestDeleteCommentBefore(t *testing.T) {
 func TestDeleteCommentBeforeError(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	g.CommentBeforeMove(0, "comment 1")
@@ -483,10 +483,10 @@ func TestDeleteCommentBeforeError(t *testing.T) {
 func TestDeleteCommentAfter(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	g.CommentAfterMove(0, "comment 1")
@@ -519,10 +519,10 @@ func TestDeleteCommentAfter(t *testing.T) {
 func TestDeleteCommentAfterError(t *testing.T) {
 	g := NewGame()
 	if g.Move(Move{E2, E4, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	if g.Move(Move{D7, D5, NoPieceType}) != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	g.CommentAfterMove(0, "comment 1")
@@ -852,7 +852,7 @@ func TestGameMarshalText_AltStart(t *testing.T) {
 
 	for _, m := range moves {
 		if g.MoveSAN(m) != nil {
-			t.Fail()
+			t.Fatal()
 		}
 	}
 	g.Date = "2025.04.09"
@@ -1465,7 +1465,7 @@ func TestBlackStart_altPos(t *testing.T) {
 1... Nd5 2. e3 Qf6 3. Bd2 O-O 4. O-O-O Nc6 5. Be2 b6 6. Nh3 Rb8 7. Rhf1 *
 `))
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 }
 
@@ -1599,7 +1599,6 @@ func TestThreeFoldDraw_EnPassantDifference(t *testing.T) {
 [White "?"]
 [Black "?"]
 [Result "*"]
-[Link "https://www.chess.com/analysis?tab=analysis"]
 
 1. e4 e6 2. Ke2 Ke7 3. Ke1 Ke8 4. e5 Ke7 5. Ke2 f5 6. Ke1 Ke8 7. Ke2 Ke7 8. Ke1
 Ke8 9. Ke2 Ke7 *`)
@@ -1629,7 +1628,6 @@ func TestThreeFoldDraw_CastleDifference(t *testing.T) {
 [White "?"]
 [Black "?"]
 [Result "*"]
-[Link "https://www.chess.com/analysis?tab=analysis"]
 
 1. e4 d5 2. Nf3 dxe4 3. Ng5 Nf6 4. Bc4 Nc6 5. Bxf7+ Kd7 6. Be6+ Ke8 7. Bf7+ Kd7
 8. Be6+ Ke8 9. Bf7+ *`)
@@ -1651,101 +1649,38 @@ func TestThreeFoldDraw_CastleDifference(t *testing.T) {
 	}
 }
 
-func BenchmarkParsePgn(b *testing.B) {
-	file, err := os.Open("./testdata/SaintLouis2023.pgn")
-	if err != nil {
-		b.Fatalf("issue reading test file at \"./testdata/SaintLouis2023.pgn\"")
-	}
-	defer file.Close()
-
-	pgn, err := io.ReadAll(file)
-	if err != nil {
-		b.Fatalf("issue reading test file at \"./testdata/SaintLouis2023.pgn\"")
-	}
-
-	r := bytes.NewReader(pgn)
-	for b.Loop() {
-		ParsePGN(r)
-		r.Reset(pgn)
-	}
-}
-
-// This fuzz test is quite slow.
-func FuzzParsePgn(f *testing.F) {
-	file, err := os.Open("./testdata/SaintLouis2023-first3.pgn")
-	if err != nil {
-		f.Fatalf("issue reading test file at \"./testdata/SaintLouis2023-first3.pgn\"")
-	}
-	defer file.Close()
-
-	pgn, err := io.ReadAll(file)
-	if err != nil {
-		f.Fatalf("issue reading test file at \"./testdata/SaintLouis2023-first3.pgn\"")
-	}
-
-	f.Add(pgn)
-	f.Fuzz(func(t *testing.T, pgn []byte) {
-		pgnReader := bytes.NewReader(pgn)
-		ParsePGN(pgnReader)
-		// Just make sure it doesn't panic.
-	})
-}
-func FuzzGameUnmarshal(f *testing.F) {
-	inputs := []string{"[]\n\n0",
-		"[a]\n\n0",
-		"[ \"]\n\n0",
-		"%0\n\n(", "%0\n\n{}",
-		"[]\n\n}{ s y . w I r",
-		"%\n\nAA1x0 0-1"}
-
-	for _, s := range inputs {
-		f.Add([]byte(s))
-	}
-
-	f.Add([]byte(`[Event "idc"]
-[Site "ur mom's house"]
-[Date "2025.04.09"]
-[Round "2"]
-[White "phil"]
-[Black "donna"]
-[Result "0-1"]
-[WhiteElo "1090"]
-
-{Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20}
-1. d4 e6 2. e4 (2. f4 g5 {Another variation here} {another comment here} (2...
-h5!) 3. h4) (2. a4) 2... d5 3. exd5? exd5 $10 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7.
-Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
-{Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.}
-0-1`))
-	f.Fuzz(func(t *testing.T, pgn []byte) {
-		// Just make sure it doesn't panic
-		g := NewGame()
-		g.UnmarshalText(pgn)
-	})
-}
-
-func FuzzGameUnmarshal_altStart(f *testing.F) {
-	f.Add([]byte(`[Event "Hamguy123's Study: Chapter 1"]
+func TestThreeFoldRepetition_NoLegalEnPassant(t *testing.T) {
+	pgn := []byte(`[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
 [Result "*"]
-[Variant "From Position"]
-[FEN "rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N5/PPQ1PPPP/R1B1KBNR b KQkq - 0 1"]
-[ECO "?"]
-[Opening "?"]
-[StudyName "Hamguy123's Study"]
-[ChapterName "Chapter 1"]
-[SetUp "1"]
-[UTCDate "2025.05.22"]
-[UTCTime "01:06:42"]
-[Annotator "https://lichess.org/@/Hamguy123"]
-[ChapterURL "https://lichess.org/study/lfAbjJ1u/fSzsIBlu"]
 
-1... Nd5 2. e3 Qf6 3. Bd2 O-O 4. O-O-O Nc6 5. Be2 b6 6. Nh3 Rb8 7. Rhf1 *
-`))
-	f.Fuzz(func(t *testing.T, pgn []byte) {
-		// Just make sure it doesn't panic
-		g := NewGame()
-		g.UnmarshalText(pgn)
-	})
+1. e4 e5 2. Nf3 Nf6 3. Ng1 Ng8 4.Nf3 Nf6 5. Ng1 Ng8 *`)
+	game := &Game{}
+	game.UnmarshalText(pgn)
+
+	if game.CanClaimDrawThreeFold() == false {
+		t.Error("thought three fold draw was legal when it was not")
+	}
+
+	pgn = []byte(`[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+
+1. e4 c5 2. e5 Qb6 3. Nf3 Qe6 4.Ng1 d5 5.Nf3 Nc6 6.Ng1 Nb8 7.Nf3 Nc6 8.Ng1 Nb8 *`)
+	game = &Game{}
+	game.UnmarshalText(pgn)
+
+	if game.CanClaimDrawThreeFold() == false {
+		t.Error("thought three fold draw was legal when it was not")
+	}
 }
 
 // TestRealPGNs ignores files that are in subdirectories. Useful for ignoring large files.
@@ -1879,4 +1814,131 @@ func TestParsePgn_PartialPgn(t *testing.T) {
 	if err == nil {
 		t.Error("did not get error for partial pgn")
 	}
+}
+
+func BenchmarkParsePgn(b *testing.B) {
+	file, err := os.Open("./testdata/SaintLouis2023.pgn")
+	if err != nil {
+		b.Fatalf("issue reading test file at \"./testdata/SaintLouis2023.pgn\"")
+	}
+	defer file.Close()
+
+	pgn, err := io.ReadAll(file)
+	if err != nil {
+		b.Fatalf("issue reading test file at \"./testdata/SaintLouis2023.pgn\"")
+	}
+
+	r := bytes.NewReader(pgn)
+	for b.Loop() {
+		ParsePGN(r)
+		r.Reset(pgn)
+	}
+}
+
+func BenchmarkCanClaimThreeFold(b *testing.B) {
+	pgn := []byte(`[Event "rated blitz game"]
+[Site "https://lichess.org/Cb0mTytV"]
+[Date "2025.06.21"]
+[White "llimllib"]
+[Black "MATSER-3000"]
+[Result "1/2-1/2"]
+[GameId "Cb0mTytV"]
+[UTCDate "2025.06.21"]
+[UTCTime "01:51:13"]
+[WhiteElo "1717"]
+[BlackElo "1708"]
+[WhiteRatingDiff "+0"]
+[BlackRatingDiff "+0"]
+[Variant "Standard"]
+[TimeControl "300+0"]
+[ECO "C66"]
+[Opening "Ruy Lopez: Berlin Defense, Improved Steinitz Defense"]
+[Termination "Time forfeit"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O d6 5. c3 Be7 6. Re1 O-O 7. d3 h6 8. Nbd2 a6 9. Ba4 Be6 10. d4 exd4 11. cxd4 Bg4 12. h3 Bh5 13. Nf1 b5 14. Bb3 Na5 15. Bc2 c5 16. Ng3 Bg6 17. e5 dxe5 18. dxe5 Bxc2 19. Qxc2 Nd5 20. Nf5 Qc7 21. Nxe7+ Nxe7 22. Be3 c4 23. Rad1 Nac6 24. Bc5 Ng6 25. Bxf8 Rxf8 26. e6 Nb4 27. Qe4 Ne7 28. exf7+ Rxf7 29. a3 Nbc6 30. Ne5 Rf6 31. Nxc6 Nxc6 32. Qe8+ Kh7 33. Rd7 Qf4 34. Re2 Qc1+ 35. Kh2 Qf4+ 36. g3 Qf3 37. Qe4+ Qxe4 38. Rxe4 Rxf2+ 39. Kg1 Rxb2 40. Rd6 Na5 41. Rxa6 Nb3 42. Re7 Rb1+ 43. Kf2 Nd4 44. Raa7 Nf5 45. Rf7 Nd6 46. Rxg7+ Kh8 47. Rh7+ Kg8 48. Rxh6 Ne4+ 49. Kf3 Ng5+ 50. Kg4 Nf7 51. Rc6 Ne5+ 52. Kf4 Nxc6 53. Ra8+ Kf7 54. Rc8 Rf1+ 55. Kg4 Ne5+ 56. Kh4 Ng6+ 57. Kh5 Rf5+ 58. Kg4 Kf6 59. h4 Ne5+ 60. Kh3 Rf3 61. Rb8 Rxa3 62. Rxb5 c3 63. Rc5 Ra2 64. h5 c2 65. h6 Kg6 66. Kh4 Ra4+ 67. g4 Nf3+ 68. Kg3 Nd4 69. g5 Ra3+ 70. Kf4 Ne2+ 71. Kg4 c1=Q 72. Rxc1 Nxc1 73. Kf4 Ra5 74. Kg4 Rxg5+ 75. Kf4 Kxh6 76. Ke4 Kg6 77. Ke3 Rf5 78. Ke4 Kg5 79. Kd4 Rf4+ 80. Ke3 1/2-1/2`)
+	game := &Game{}
+	if game.UnmarshalText(pgn) != nil {
+		b.Fatalf("pgn not parsed")
+	}
+	for b.Loop() {
+		game.CanClaimDrawThreeFold()
+	}
+}
+
+// This fuzz test is quite slow.
+func FuzzParsePgn(f *testing.F) {
+	file, err := os.Open("./testdata/SaintLouis2023-first3.pgn")
+	if err != nil {
+		f.Fatalf("issue reading test file at \"./testdata/SaintLouis2023-first3.pgn\"")
+	}
+	defer file.Close()
+
+	pgn, err := io.ReadAll(file)
+	if err != nil {
+		f.Fatalf("issue reading test file at \"./testdata/SaintLouis2023-first3.pgn\"")
+	}
+
+	f.Add(pgn)
+	f.Fuzz(func(t *testing.T, pgn []byte) {
+		pgnReader := bytes.NewReader(pgn)
+		ParsePGN(pgnReader)
+		// Just make sure it doesn't panic.
+	})
+}
+func FuzzGameUnmarshal(f *testing.F) {
+	inputs := []string{"[]\n\n0",
+		"[a]\n\n0",
+		"[ \"]\n\n0",
+		"%0\n\n(", "%0\n\n{}",
+		"[]\n\n}{ s y . w I r",
+		"%\n\nAA1x0 0-1"}
+
+	for _, s := range inputs {
+		f.Add([]byte(s))
+	}
+
+	f.Add([]byte(`[Event "idc"]
+[Site "ur mom's house"]
+[Date "2025.04.09"]
+[Round "2"]
+[White "phil"]
+[Black "donna"]
+[Result "0-1"]
+[WhiteElo "1090"]
+
+{Random game I found on Lichess.com, https://lichess.org/YF5EBq7m#20}
+1. d4 e6 2. e4 (2. f4 g5 {Another variation here} {another comment here} (2...
+h5!) 3. h4) (2. a4) 2... d5 3. exd5? exd5 $10 4. Nf3 Nf6 5. Ne5 Qe7 6. f4 Bg4 7.
+Be2 Bd7 8. g4 Ne4 9. c4 Qh4+ 10. Kf1 Qf2#
+{Black wins by checkmate. Now I need this comment to be even longer than before, preferably longer than 80 characters for some testing.}
+0-1`))
+	f.Fuzz(func(t *testing.T, pgn []byte) {
+		// Just make sure it doesn't panic
+		g := NewGame()
+		g.UnmarshalText(pgn)
+	})
+}
+
+func FuzzGameUnmarshal_altStart(f *testing.F) {
+	f.Add([]byte(`[Event "Hamguy123's Study: Chapter 1"]
+[Result "*"]
+[Variant "From Position"]
+[FEN "rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N5/PPQ1PPPP/R1B1KBNR b KQkq - 0 1"]
+[ECO "?"]
+[Opening "?"]
+[StudyName "Hamguy123's Study"]
+[ChapterName "Chapter 1"]
+[SetUp "1"]
+[UTCDate "2025.05.22"]
+[UTCTime "01:06:42"]
+[Annotator "https://lichess.org/@/Hamguy123"]
+[ChapterURL "https://lichess.org/study/lfAbjJ1u/fSzsIBlu"]
+
+1... Nd5 2. e3 Qf6 3. Bd2 O-O 4. O-O-O Nc6 5. Be2 b6 6. Nh3 Rb8 7. Rhf1 *
+`))
+	f.Fuzz(func(t *testing.T, pgn []byte) {
+		// Just make sure it doesn't panic
+		g := NewGame()
+		g.UnmarshalText(pgn)
+	})
 }
