@@ -925,7 +925,7 @@ func (g *Game) setResult() {
 	}
 }
 
-// MoveUCI parses and performs a chess move provided in UCI format. The format is <fromSquare><toSquare><OptionalPromotion>, see more at https://www.wbec-ridderkerk.nl/html/UCIProtocol.html
+// MoveUCI parses and performs a chess move provided in UCI format. The format is <fromSquare><toSquare><OptionalPromotion>, see the full UCI spec at https://www.shredderchess.com/download/div/uci.zip.
 // An error is returned if m could not be parsed or the move was illegal.
 func (g *Game) MoveUCI(m string) error {
 	var move Move
