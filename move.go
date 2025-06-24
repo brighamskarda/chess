@@ -26,7 +26,7 @@ import (
 
 // Move represents a UCI chess move. UCI chess moves are easily represented by three fields: FromSquare, ToSquare, and an optional Promotion. [UCI Specification]
 //
-// [UCI Specification]: https://www.wbec-ridderkerk.nl/html/UCIProtocol.html
+// [UCI Specification]: https://www.shredderchess.com/download/div/uci.zip
 type Move struct {
 	FromSquare Square
 	ToSquare   Square
@@ -35,7 +35,7 @@ type Move struct {
 
 // MarshalText implements the [encoding.TextMarshaler] interface to encode a move into a UCI compatible format. The form is <FromSquare><ToSquare><OptionalPromotion>, ex. "a7a8q". If fromsquare, tosquare, and promotion are all 0 then "0000" is returned as per the [UCI specification]. An error may be returned if a field is missing or malformed.
 //
-// [UCI specification]: https://www.wbec-ridderkerk.nl/html/UCIProtocol.html
+// [UCI specification]: https://www.shredderchess.com/download/div/uci.zip
 func (m Move) MarshalText() (text []byte, err error) {
 	if m.FromSquare == NoSquare && m.ToSquare == NoSquare && m.Promotion == NoPieceType {
 		return []byte{'0', '0', '0', '0'}, nil
@@ -58,7 +58,7 @@ func (m Move) MarshalText() (text []byte, err error) {
 
 // String provides a UCI compatible representation of the square in the form <FromSquare><ToSquare><OptionalPromotion>, ex. "a7a8q". If fromsquare, tosquare, and promotion are all 0 then "0000" is returned as per the [UCI specification]. An error string is returned if any of the fields are invalid.
 //
-// [UCI specification]: https://www.wbec-ridderkerk.nl/html/UCIProtocol.html
+// [UCI specification]: https://www.shredderchess.com/download/div/uci.zip
 func (m Move) String() string {
 	text, err := m.MarshalText()
 	if err != nil {
