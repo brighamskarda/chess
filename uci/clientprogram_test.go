@@ -16,7 +16,6 @@
 package uci
 
 import (
-	"strings"
 	"testing"
 	"time"
 )
@@ -47,8 +46,7 @@ func TestNewUciEngine_WriteRead(t *testing.T) {
 }
 
 func TestNewUciEngine_WriteStderr(t *testing.T) {
-	stderr := strings.Builder{}
-	engine, err := newClientProgram(dummyBinaryPath, ClientSettings{Stderr: &stderr})
+	engine, err := newClientProgram(dummyBinaryPath, ClientSettings{})
 	if err != nil {
 		t.Fatalf("could not start program: %v", err)
 	}
@@ -61,10 +59,14 @@ func TestNewUciEngine_WriteStderr(t *testing.T) {
 		t.Fatalf("could not write to program: %v", err)
 	}
 
-	time.Sleep(250 * time.Millisecond)
+	buf := make([]byte, 20)
+	i, err := engine.ReadErr(buf)
+	if err != nil {
+		t.Fatalf("could not read from program: %v", err)
+	}
 
-	if result := stderr.String(); result != testString {
-		t.Fatalf("did not get correct response: expected %q, got %q", testString, result)
+	if string(buf[:i]) != testString {
+		t.Fatalf("did not get correct response: expected %q, got %q", testString, buf[:i])
 	}
 }
 
