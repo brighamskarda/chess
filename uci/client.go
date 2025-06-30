@@ -39,9 +39,38 @@ type ClientSettings struct {
 	Logger io.Writer
 }
 
+// clientProgram should be a uci compatible chess engine that is already running.
+// When finished with a clientProgram be sure to call Wait() to free any resources.
+type clientProgram interface {
+	// Terminate asks the program to gracefully exit. Returns an error if the request was not sent successfully.
+	// Call [clientProgram.Wait] after this function to clean up resources.
+	//
+	// On windows this is implemented by sending a CTRL_BREAK_EVENT to the process. If you are calling this function from a GUI in windows it may be necessary to attach your GUI to a [console].
+	//
+	// On unix-like operating systems SIGTERM is sent to the process group.
+	//
+	// On other systems this function does nothing.
+	//
+	// [console]: https://learn.microsoft.com/en-us/windows/console/attachconsole
+	Terminate() error
+	// Kill immediately stops the program. Returns an error if the request was not sent successfully
+	// Call wait after this function to clean up resources.
+	Kill() error
+	// Wait waits for the program to finish and cleans up associated resources.
+	// It may return an error if the program did not exit successfully (like returning exit code 1), or there were io errors.
+	// Wait should only be called once. Ensure the io.WriteCloser is closed, and both readers are flushed to prevent blocking.
+	Wait() error
+	// Read reads from the program's stdout.
+	Read(p []byte) (int, error)
+	// Write writes to the program's stdin.
+	Write(p []byte) (int, error)
+	// ReadErr reads from the program's stderr.
+	ReadErr(p []byte) (int, error)
+}
+
 // Client is the side of UCI that handles game state and sends commands to the [Engine]. Use this if you are developing a chess program that interacts with engines.
 type Client struct {
-	clientProgram *clientProgram
+	clientProgram clientProgram
 	logger        *concurrentWriter
 }
 
@@ -59,6 +88,7 @@ func (cw *concurrentWriter) Write(p []byte) (int, error) {
 // NewClient takes in the path to UCI compliant chess engine and returns a [Client] that will allow you to interface with it. If it could not start the program, an error is returned.
 func NewClient(program string, settings ClientSettings) (*Client, error) {
 	c := &Client{}
+
 	// c.setUpLogger(settings.Logger)
 
 	// Setup cancel context
