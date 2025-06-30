@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-//go:build !windows
+//go:build !windows && !unix
 
 package uci
 
@@ -26,9 +26,9 @@ import (
 // clientProgram should be a uci compatible chess engine that is already running. [Client] will send and receive commands from it via Read and Write.
 // When finished with a clientProgram be sure to call Wait() to free any resources.
 type clientProgram struct {
-	io.Reader
-	io.WriteCloser
-	cmd *exec.Cmd
+	stdout io.ReadCloser
+	stdin  io.WriteCloser
+	cmd    *exec.Cmd
 }
 
 // newClientProgram starts program with the specified settings. program should be a path to a uci compatible chess engine. Stdout will be directed to towards Read(), and Stdin will receive from Write(). Stderr will be redirected to the writer provided in settings if available, otherwise it is ignored. If the program path is invalid, or unable to successfully run then an error is returned.
@@ -43,16 +43,19 @@ func newClientProgram(program string, settings ClientSettings) (*clientProgram, 
 	cmd.Stderr = settings.Stderr
 	cp := clientProgram{cmd: cmd}
 	var err error
-	cp.Reader, err = cmd.StdoutPipe()
+	cp.stdout, err = cmd.StdoutPipe()
 	if err != nil {
 		return nil, fmt.Errorf("could not start new uci engine: %w", err)
 	}
-	cp.WriteCloser, err = cmd.StdinPipe()
+	cp.stdin, err = cmd.StdinPipe()
 	if err != nil {
+		cp.stdout.Close()
 		return nil, fmt.Errorf("could not start new uci engine: %w", err)
 	}
 	err = cmd.Start()
 	if err != nil {
+		cp.stdin.Close()
+		cp.stdout.Close()
 		return nil, fmt.Errorf("could not start new uci engine: %w", err)
 	}
 
@@ -84,4 +87,14 @@ func (cp *clientProgram) Kill() error {
 // Wait should only be called once. Ensure the io.WriteCloser is closed, and the reader is flushed to prevent blocking.
 func (cp *clientProgram) Wait() error {
 	return cp.cmd.Wait()
+}
+
+// Read reads from the programs stdout.
+func (cp *clientProgram) Read(p []byte) (int, error) {
+	return cp.stdout.Read(p)
+}
+
+// Write writes to the programs stdin.
+func (cp *clientProgram) Write(p []byte) (int, error) {
+	return cp.stdin.Write(p)
 }
