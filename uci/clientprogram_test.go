@@ -81,10 +81,6 @@ func TestNewUciEngine_Terminate(t *testing.T) {
 	}
 
 	engine.Wait()
-
-	if engine.cmd.ProcessState == nil {
-		t.Error("process did not terminate")
-	}
 }
 
 func TestNewUciEngine_Kill(t *testing.T) {
@@ -98,9 +94,6 @@ func TestNewUciEngine_Kill(t *testing.T) {
 	}
 
 	engine.Wait()
-	if engine.cmd.ProcessState == nil {
-		t.Error("process did not die")
-	}
 }
 
 func TestNewUciEngine_WaitBlocks(t *testing.T) {

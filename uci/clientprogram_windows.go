@@ -27,9 +27,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// clientProgram should be a uci compatible chess engine that is already running. [Client] will send and receive commands from it via Read and Write.
-// When finished with a clientProgram be sure to call Wait() to free any resources.
-type clientProgram struct {
+type windowsClientProgram struct {
 	stdin  io.WriteCloser
 	stdout io.ReadCloser
 	stderr io.ReadCloser
@@ -42,12 +40,12 @@ type clientProgram struct {
 //   - On windows the program will be started in a job object. This reduces the likelihood of orphaning child processes when calling Kill()
 //   - Likewise on unix-like operating systems (linux, apple, etc.) the program is started in a process group to help prevent orphaned children.
 //   - On other operating systems Kill() just ends the parent process.
-func newClientProgram(program string, settings ClientSettings) (*clientProgram, error) {
+func newClientProgram(program string, settings ClientSettings) (clientProgram, error) {
 	cmd := exec.Command(program, settings.Args...)
 	cmd.Env = settings.Env
 	cmd.Dir = settings.WorkDir
 	cmd.Stderr = settings.Logger
-	cp := clientProgram{cmd: cmd}
+	cp := windowsClientProgram{cmd: cmd}
 	var err error
 	cp.stdout, err = cmd.StdoutPipe()
 	if err != nil {
@@ -94,7 +92,7 @@ func newClientProgram(program string, settings ClientSettings) (*clientProgram, 
 	return &cp, nil
 }
 
-func addCpToJobObject(cp *clientProgram) error {
+func addCpToJobObject(cp *windowsClientProgram) error {
 	job, err := windows.CreateJobObject(nil, nil)
 	if err != nil {
 		return fmt.Errorf("could not create job object: %w", err)
@@ -129,7 +127,7 @@ func addCpToJobObject(cp *clientProgram) error {
 	return nil
 }
 
-func resumeThreads(cp *clientProgram) error {
+func resumeThreads(cp *windowsClientProgram) error {
 	snapshotHandle, err := windows.CreateToolhelp32Snapshot(windows.TH32CS_SNAPTHREAD, 0)
 	if err != nil {
 		return fmt.Errorf("could not resume threads: %w", err)
@@ -165,17 +163,7 @@ func resumeThreads(cp *clientProgram) error {
 	return nil
 }
 
-// Terminate asks the program to gracefully exit. Returns an error if the request was not sent successfully.
-// Call [clientProgram.Wait] after this function to clean up resources.
-//
-// On windows this is implemented by sending a CTRL_BREAK_EVENT to the process. If you are calling this function from a GUI in windows it may be necessary to attach your GUI to a [console].
-//
-// On unix-like operating systems SIGTERM is sent to the process group.
-//
-// On other systems this function does nothing.
-//
-// [console]: https://learn.microsoft.com/en-us/windows/console/attachconsole
-func (cp *clientProgram) Terminate() error {
+func (cp *windowsClientProgram) Terminate() error {
 	err := windows.GenerateConsoleCtrlEvent(windows.CTRL_BREAK_EVENT, uint32(cp.cmd.Process.Pid))
 	if err != nil {
 		return fmt.Errorf("could not terminate clientProgram: %w", err)
@@ -183,32 +171,24 @@ func (cp *clientProgram) Terminate() error {
 	return nil
 }
 
-// Kill immediately stops the program. Returns an error if the request was not sent successfully
-// Call [clientProgram.Wait] after this function to clean up resources.
-func (cp *clientProgram) Kill() error {
+func (cp *windowsClientProgram) Kill() error {
 	return cp.cmd.Process.Kill()
 }
 
-// Wait waits for the program to finish and cleans up associated resources.
-// It may return an error if the program did not exit successfully (like returning exit code 1), or there were io errors.
-// Wait should only be called once. Ensure the io.WriteCloser is closed, and both readers are flushed to prevent blocking.
-func (cp *clientProgram) Wait() error {
+func (cp *windowsClientProgram) Wait() error {
 	err1 := cp.cmd.Wait()
 	err2 := windows.CloseHandle(cp.job)
 	return errors.Join(err1, err2)
 }
 
-// Read reads from the program's stdout.
-func (cp *clientProgram) Read(p []byte) (int, error) {
+func (cp *windowsClientProgram) Read(p []byte) (int, error) {
 	return cp.stdout.Read(p)
 }
 
-// Write writes to the program's stdin.
-func (cp *clientProgram) Write(p []byte) (int, error) {
+func (cp *windowsClientProgram) Write(p []byte) (int, error) {
 	return cp.stdin.Write(p)
 }
 
-// ReadErr reads from the program's stderr.
-func (cp *clientProgram) ReadErr(p []byte) (int, error) {
+func (cp *windowsClientProgram) ReadErr(p []byte) (int, error) {
 	return cp.stderr.Read(p)
 }

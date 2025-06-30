@@ -24,9 +24,7 @@ import (
 	"syscall"
 )
 
-// clientProgram should be a uci compatible chess engine that is already running. [Client] will send and receive commands from it via Read and Write.
-// When finished with a clientProgram be sure to call Wait() to free any resources.
-type clientProgram struct {
+type unixClientProgram struct {
 	stdin  io.WriteCloser
 	stdout io.ReadCloser
 	stderr io.ReadCloser
@@ -38,14 +36,14 @@ type clientProgram struct {
 //   - On windows the program will be started in a job object. This reduces the likelihood of orphaning child processes when calling Kill()
 //   - Likewise on unix-like operating systems (linux, apple, etc.) the program is started in a process group to help prevent orphaned children.
 //   - On other operating systems Kill() just ends the parent process.
-func newClientProgram(program string, settings ClientSettings) (*clientProgram, error) {
+func newClientProgram(program string, settings ClientSettings) (clientProgram, error) {
 	cmd := exec.Command(program, settings.Args...)
 	cmd.Env = settings.Env
 	cmd.Dir = settings.WorkDir
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 		Pgid:    0}
-	cp := clientProgram{cmd: cmd}
+	cp := unixClientProgram{cmd: cmd}
 	var err error
 	cp.stdout, err = cmd.StdoutPipe()
 	if err != nil {
@@ -73,44 +71,26 @@ func newClientProgram(program string, settings ClientSettings) (*clientProgram, 
 	return &cp, nil
 }
 
-// Terminate asks the program to gracefully exit. Returns an error if the request was not sent successfully.
-// Call [clientProgram.Wait] after this function to clean up resources.
-//
-// On windows this is implemented by sending a CTRL_BREAK_EVENT to the process. If you are calling this function from a GUI in windows it may be necessary to attach your GUI to a [console].
-//
-// On unix-like operating systems SIGTERM is sent to the process group.
-//
-// On other systems this function does nothing.
-//
-// [console]: https://learn.microsoft.com/en-us/windows/console/attachconsole
-func (cp *clientProgram) Terminate() error {
+func (cp *unixClientProgram) Terminate() error {
 	return syscall.Kill(-cp.cmd.Process.Pid, syscall.SIGTERM)
 }
 
-// Kill immediately stops the program. Returns an error if the request was not sent successfully
-// Call wait after this function to clean up resources.
-func (cp *clientProgram) Kill() error {
+func (cp *unixClientProgram) Kill() error {
 	return syscall.Kill(-cp.cmd.Process.Pid, syscall.SIGKILL)
 }
 
-// Wait waits for the program to finish and cleans up associated resources.
-// It may return an error if the program did not exit successfully (like returning exit code 1), or there were io errors.
-// Wait should only be called once. Ensure the io.WriteCloser is closed, and both readers are flushed to prevent blocking.
-func (cp *clientProgram) Wait() error {
+func (cp *unixClientProgram) Wait() error {
 	return cp.cmd.Wait()
 }
 
-// Read reads from the program's stdout.
-func (cp *clientProgram) Read(p []byte) (int, error) {
+func (cp *unixClientProgram) Read(p []byte) (int, error) {
 	return cp.stdout.Read(p)
 }
 
-// Write writes to the program's stdin.
-func (cp *clientProgram) Write(p []byte) (int, error) {
+func (cp *unixClientProgram) Write(p []byte) (int, error) {
 	return cp.stdin.Write(p)
 }
 
-// ReadErr reads from the program's stderr.
-func (cp *clientProgram) ReadErr(p []byte) (int, error) {
+func (cp *unixClientProgram) ReadErr(p []byte) (int, error) {
 	return cp.stderr.Read(p)
 }

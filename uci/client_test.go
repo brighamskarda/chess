@@ -15,16 +15,18 @@
 
 package uci
 
-// func TestNewClient_ErrorOnInvalidBinary(t *testing.T) {
-// 	_, err := NewClient("./dkfdks.exe", ClientSettings{})
-// 	if err == nil {
-// 		t.Error("did not get error on invalid binary")
-// 	}
-// }
+import "testing"
 
-// func TestNewClient_NoErrorOnValidBinary(t *testing.T) {
-// 	_, err := NewClient(dummyBinaryPath, ClientSettings{})
-// 	if err != nil {
-// 		t.Errorf("%v", err)
-// 	}
-// }
+func TestNewClient_ErrorOnInvalidBinary(t *testing.T) {
+	_, err := NewClient("./dkfdks.exe", ClientSettings{})
+	if err == nil {
+		t.Error("did not get error on invalid binary")
+	}
+}
+
+func TestNewClient_NoErrorOnValidBinary(t *testing.T) {
+	_, err := NewClient(dummyBinaryPath, ClientSettings{})
+	if err != nil {
+		t.Errorf("%v", err)
+	}
+}
