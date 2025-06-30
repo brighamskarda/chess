@@ -26,12 +26,13 @@ import (
 // clientProgram should be a uci compatible chess engine that is already running. [Client] will send and receive commands from it via Read and Write.
 // When finished with a clientProgram be sure to call Wait() to free any resources.
 type clientProgram struct {
-	stdout io.ReadCloser
 	stdin  io.WriteCloser
+	stdout io.ReadCloser
+	stderr io.ReadCloser
 	cmd    *exec.Cmd
 }
 
-// newClientProgram starts program with the specified settings. program should be a path to a uci compatible chess engine. Stdout will be directed to towards Read(), and Stdin will receive from Write(). Stderr will be redirected to the writer provided in settings if available, otherwise it is ignored. If the program path is invalid, or unable to successfully run then an error is returned.
+// newClientProgram starts program with the specified settings. program should be a path to a uci compatible chess engine. Stdout will be directed to towards Read(), and Stdin will receive from Write(). Stderr will be directed towards ReadErr(). If the program path is invalid, or unable to successfully run then an error is returned.
 //
 //   - On windows the program will be started in a job object. This reduces the likelihood of orphaning child processes when calling Kill()
 //   - Likewise on unix-like operating systems (linux, apple, etc.) the program is started in a process group to help prevent orphaned children.
@@ -40,7 +41,6 @@ func newClientProgram(program string, settings ClientSettings) (*clientProgram, 
 	cmd := exec.Command(program, settings.Args...)
 	cmd.Env = settings.Env
 	cmd.Dir = settings.WorkDir
-	cmd.Stderr = settings.Stderr
 	cp := clientProgram{cmd: cmd}
 	var err error
 	cp.stdout, err = cmd.StdoutPipe()
@@ -52,10 +52,17 @@ func newClientProgram(program string, settings ClientSettings) (*clientProgram, 
 		cp.stdout.Close()
 		return nil, fmt.Errorf("could not start new uci engine: %w", err)
 	}
+	cp.stderr, err = cmd.StderrPipe()
+	if err != nil {
+		cp.stdout.Close()
+		cp.stderr.Close()
+		return nil, fmt.Errorf("could not start new uci engine: %w", err)
+	}
 	err = cmd.Start()
 	if err != nil {
 		cp.stdin.Close()
 		cp.stdout.Close()
+		cp.stderr.Close()
 		return nil, fmt.Errorf("could not start new uci engine: %w", err)
 	}
 
@@ -84,17 +91,22 @@ func (cp *clientProgram) Kill() error {
 
 // Wait waits for the program to finish and cleans up associated resources.
 // It may return an error if the program did not exit successfully (like returning exit code 1), or there were io errors.
-// Wait should only be called once. Ensure the io.WriteCloser is closed, and the reader is flushed to prevent blocking.
+// Wait should only be called once. Ensure the io.WriteCloser is closed, and both readers are flushed to prevent blocking.
 func (cp *clientProgram) Wait() error {
 	return cp.cmd.Wait()
 }
 
-// Read reads from the programs stdout.
+// Read reads from the program's stdout.
 func (cp *clientProgram) Read(p []byte) (int, error) {
 	return cp.stdout.Read(p)
 }
 
-// Write writes to the programs stdin.
+// Write writes to the program's stdin.
 func (cp *clientProgram) Write(p []byte) (int, error) {
 	return cp.stdin.Write(p)
+}
+
+// ReadErr reads from the program's stderr.
+func (cp *clientProgram) ReadErr(p []byte) (int, error) {
+	return cp.stderr.Read(p)
 }

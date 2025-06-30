@@ -16,15 +16,12 @@
 package uci
 
 import (
-	"context"
-	"fmt"
 	"io"
-	"os/exec"
 	"sync"
 	"time"
 )
 
-// ClientSettings determines how [newClientProgram] should execute its command.
+// ClientSettings determines how [NewClient] should execute its command.
 type ClientSettings struct {
 	// Args is the arguments that should be passed to the engine. May be nil.
 	Args []string
@@ -32,18 +29,20 @@ type ClientSettings struct {
 	Env []string
 	// WorkDir is the working directory to run the engine from. If empty it will run in the working directory of the parent process.
 	WorkDir string
-	// Stderr is where the engines error output will be redirected. If nil error output will be ignored.
-	Stderr io.Writer
+	// Logger is where all communication between the engine and the client will take place.
+	//
+	// `>>>` Three arrows right indicates a line that was sent to stdin for the engine.
+	//
+	// `<<<` Three arrows left indicates a line that was received from the engine's stdout.
+	//
+	// `!<!` This pattern indicates a line that was received from the engine's stderr.
+	Logger io.Writer
 }
 
 // Client is the side of UCI that handles game state and sends commands to the [Engine]. Use this if you are developing a chess program that interacts with engines.
 type Client struct {
-	engineReader io.ReadCloser
-	engineWriter io.WriteCloser
-	engine       *exec.Cmd
-	ctx          context.Context
-	cancel       func()
-	logger       *concurrentWriter
+	clientProgram *clientProgram
+	logger        *concurrentWriter
 }
 
 type concurrentWriter struct {
@@ -63,31 +62,31 @@ func NewClient(program string, settings ClientSettings) (*Client, error) {
 	// c.setUpLogger(settings.Logger)
 
 	// Setup cancel context
-	c.ctx, c.cancel = context.WithCancel(context.Background())
+	// c.ctx, c.cancel = context.WithCancel(context.Background())
 
-	// Setup Engine
-	c.engine = exec.CommandContext(c.ctx, program, settings.Args...)
+	// // Setup Engine
+	// c.engine = exec.CommandContext(c.ctx, program, settings.Args...)
 
-	// Setup stdin and stdout
-	var err error
-	c.engineWriter, err = c.engine.StdinPipe()
-	if err != nil {
-		return nil, fmt.Errorf("could not create new client: %w", err)
-	}
-	c.engineReader, err = c.engine.StdoutPipe()
-	if err != nil {
-		return nil, fmt.Errorf("could not create new client: %w", err)
-	}
+	// // Setup stdin and stdout
+	// var err error
+	// c.engineWriter, err = c.engine.StdinPipe()
+	// if err != nil {
+	// 	return nil, fmt.Errorf("could not create new client: %w", err)
+	// }
+	// c.engineReader, err = c.engine.StdoutPipe()
+	// if err != nil {
+	// 	return nil, fmt.Errorf("could not create new client: %w", err)
+	// }
 
-	// Set env and working dir
-	c.engine.Env = settings.Env
-	c.engine.Dir = settings.WorkDir
+	// // Set env and working dir
+	// c.engine.Env = settings.Env
+	// c.engine.Dir = settings.WorkDir
 
-	// Start the engine
-	err = c.engine.Start()
-	if err != nil {
-		return nil, fmt.Errorf("could not create new client: %w", err)
-	}
+	// // Start the engine
+	// err = c.engine.Start()
+	// if err != nil {
+	// 	return nil, fmt.Errorf("could not create new client: %w", err)
+	// }
 
 	return c, nil
 }
@@ -101,24 +100,24 @@ func (c *Client) setUpLogger(w io.Writer) {
 
 // Quit sends the command to the engine to shutdown as soon as possible. After this is called, c should no longer be used and all resources for it will be freed. timeout is the amount of time the process should wait before forcibly shutting down the engine. If timeout is set to 0 then waiting for the engine to close gracefully may never end. An error is returned if the program was not exited gracefully. This error may be ignored if you don't care about the exit status of the engine.
 func (c *Client) Quit(timeout time.Duration) error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	// defer cancel()
 
-	done := make(chan error)
-	go func() {
-		c.engineWriter.Write([]byte("quit\n"))
-		c.engineWriter.Close()
-		done <- c.engine.Wait()
-	}()
+	// done := make(chan error)
+	// go func() {
+	// 	c.engineWriter.Write([]byte("quit\n"))
+	// 	c.engineWriter.Close()
+	// 	done <- c.engine.Wait()
+	// }()
 
-	select {
-	case err := <-done:
-		return err
-	case <-ctx.Done():
-		c.cancel()
-	}
+	// select {
+	// case err := <-done:
+	// 	return err
+	// case <-ctx.Done():
+	// 	c.cancel()
+	// }
 
-	return <-done
+	return nil
 }
 
 // TODO make sure that the constant read loop flushed stdout when it gets the cancel context.
