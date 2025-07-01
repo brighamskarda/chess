@@ -90,3 +90,7 @@ func (cp *defaultClientProgram) Write(p []byte) (int, error) {
 func (cp *defaultClientProgram) ReadErr(p []byte) (int, error) {
 	return cp.stderr.Read(p)
 }
+
+func (cp *defaultClientProgram) CloseStdin() error {
+	return cp.stdin.Close()
+}

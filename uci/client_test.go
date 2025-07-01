@@ -69,6 +69,9 @@ func (cp *clientProgramMock) Read(p []byte) (int, error) {
 func (cp *clientProgramMock) ReadErr(p []byte) (int, error) {
 	return cp.stderrReader.Read(p)
 }
+func (cp *clientProgramMock) CloseStdin() error {
+	return cp.stdinWriter.Close()
+}
 
 func newDummyClientProgram() *clientProgramMock {
 	stdinReader, stdinWriter := io.Pipe()
@@ -125,5 +128,113 @@ func TestClient_StderrToLogger(t *testing.T) {
 	loggerOutput := testLogger.String()
 	if loggerOutput != expected {
 		t.Errorf("logger output does not match: expected %v, got %v", expected, loggerOutput)
+	}
+}
+
+func TestClient_QuitOnRealProgram(t *testing.T) {
+	cp, err := newClientProgram(dummyBinaryPath, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	c, err := newClientFromClientProgram(cp, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	c.Quit(time.Second, time.Second)
+}
+
+type clientProgramMock_DelayedWait struct {
+	TerminateCalled bool
+	KillCalled      bool
+	TimeToDelay     time.Duration
+}
+
+func (cp *clientProgramMock_DelayedWait) Terminate() error {
+	cp.TerminateCalled = true
+	return nil
+}
+func (cp *clientProgramMock_DelayedWait) Kill() error {
+	cp.KillCalled = true
+	return nil
+}
+func (cp *clientProgramMock_DelayedWait) Wait() error {
+	time.Sleep(cp.TimeToDelay)
+	return nil
+}
+func (cp *clientProgramMock_DelayedWait) Write(p []byte) (int, error) {
+	return 0, nil
+}
+func (cp *clientProgramMock_DelayedWait) Read(p []byte) (int, error) {
+	return 0, nil
+}
+func (cp *clientProgramMock_DelayedWait) ReadErr(p []byte) (int, error) {
+	return 0, nil
+}
+func (cp *clientProgramMock_DelayedWait) CloseStdin() error {
+	return nil
+}
+
+func TestClient_QuitProcess(t *testing.T) {
+	cp := &clientProgramMock_DelayedWait{TimeToDelay: time.Second}
+	c, err := newClientFromClientProgram(cp, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	err = c.Quit(100*time.Millisecond, 100*time.Millisecond)
+	if err != nil {
+		t.Errorf("%v", err)
+	}
+
+	if !cp.TerminateCalled {
+		t.Error("Terminate() not called")
+	}
+
+	if !cp.KillCalled {
+		t.Error("Kill() not called")
+	}
+}
+
+func TestClient_QuitSendsQuit(t *testing.T) {
+	cp := newDummyClientProgram()
+	c, err := newClientFromClientProgram(cp, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	buf := make([]byte, 20)
+	var nRead int
+	go func() {
+		nRead, err = cp.stdinReader.Read(buf)
+	}()
+
+	c.Quit(100*time.Millisecond, 100*time.Millisecond)
+
+	if err != nil {
+		t.Errorf("%v", err)
+	}
+
+	expected := "quit\n"
+	got := string(buf[:nRead])
+	if got != expected {
+		t.Errorf("expected %q, got %q", expected, got)
+	}
+}
+
+func TestClient_QuitLogs(t *testing.T) {
+	cp := newDummyClientProgram()
+	testLogger := strings.Builder{}
+	c, err := newClientFromClientProgram(cp, ClientSettings{Logger: &testLogger})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	c.Quit(time.Millisecond, time.Millisecond)
+
+	expected := ">>> quit\n"
+	got := testLogger.String()
+	if got != expected {
+		t.Errorf("expected %q, got %q", expected, got)
 	}
 }
