@@ -16,6 +16,9 @@
 package uci
 
 import (
+	"bufio"
+	"context"
+	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -68,12 +71,6 @@ type clientProgram interface {
 	ReadErr(p []byte) (int, error)
 }
 
-// Client is the side of UCI that handles game state and sends commands to the [Engine]. Use this if you are developing a chess program that interacts with engines.
-type Client struct {
-	clientProgram clientProgram
-	logger        *concurrentWriter
-}
-
 type concurrentWriter struct {
 	m sync.Mutex
 	w io.Writer
@@ -85,10 +82,22 @@ func (cw *concurrentWriter) Write(p []byte) (int, error) {
 	return cw.w.Write(p)
 }
 
+// Client is the side of UCI that handles game state and sends commands to the [Engine]. Use this if you are developing a chess program that interacts with engines.
+type Client struct {
+	clientProgram clientProgram
+	logger        *concurrentWriter
+	ctx           context.Context
+	cancel        func()
+}
+
 // NewClient takes in the path to UCI compliant chess engine and returns a [Client] that will allow you to interface with it. If it could not start the program, an error is returned.
 func NewClient(program string, settings ClientSettings) (*Client, error) {
-	c := &Client{}
+	cp, err := newClientProgram(program, settings)
+	if err != nil {
+		return nil, fmt.Errorf("could not make new client: %w", err)
+	}
 
+	return newClientFromClientProgram(cp, settings)
 	// c.setUpLogger(settings.Logger)
 
 	// Setup cancel context
@@ -118,6 +127,19 @@ func NewClient(program string, settings ClientSettings) (*Client, error) {
 	// 	return nil, fmt.Errorf("could not create new client: %w", err)
 	// }
 
+}
+
+func newClientFromClientProgram(cp clientProgram, settings ClientSettings) (*Client, error) {
+	c := &Client{
+		clientProgram: cp,
+	}
+
+	// Setup context to cancel
+	c.ctx, c.cancel = context.WithCancel(context.Background())
+
+	c.setUpLogger(settings.Logger)
+	c.startReadLoop()
+
 	return c, nil
 }
 
@@ -126,6 +148,34 @@ func (c *Client) setUpLogger(w io.Writer) {
 		w = io.Discard
 	}
 	c.logger = &concurrentWriter{w: w}
+}
+
+func (c *Client) startReadLoop() {
+	go readLoop(c.logger, c.clientProgram, []byte("<<<"))
+	go readLoop(c.logger, readErrWrapper{cp: c.clientProgram}, []byte("!<!"))
+}
+
+type readErrWrapper struct{ cp clientProgram }
+
+func (rew readErrWrapper) Read(p []byte) (int, error) {
+	return rew.cp.ReadErr(p)
+}
+
+func readLoop(cw *concurrentWriter, r io.Reader, prefix []byte) {
+	scnr := bufio.NewScanner(r)
+	prefix = append(prefix, ' ')
+	originalPrefixLen := len(prefix)
+	for scnr.Scan() {
+		prefix = append(prefix, scnr.Bytes()...)
+		prefix = append(prefix, '\n')
+		_, err := cw.Write(prefix)
+		if err != nil {
+			break
+		}
+		prefix = prefix[:originalPrefixLen]
+	}
+	for scnr.Scan() {
+	}
 }
 
 // Quit sends the command to the engine to shutdown as soon as possible. After this is called, c should no longer be used and all resources for it will be freed. timeout is the amount of time the process should wait before forcibly shutting down the engine. If timeout is set to 0 then waiting for the engine to close gracefully may never end. An error is returned if the program was not exited gracefully. This error may be ignored if you don't care about the exit status of the engine.

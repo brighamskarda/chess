@@ -59,7 +59,7 @@ func newClientProgram(program string, settings ClientSettings) (clientProgram, e
 	cp.stderr, err = cmd.StderrPipe()
 	if err != nil {
 		cp.stdout.Close()
-		cp.stderr.Close()
+		cp.stdin.Close()
 		return nil, fmt.Errorf("could not start new uci engine: %w", err)
 	}
 
