@@ -94,3 +94,7 @@ func (cp *unixClientProgram) Write(p []byte) (int, error) {
 func (cp *unixClientProgram) ReadErr(p []byte) (int, error) {
 	return cp.stderr.Read(p)
 }
+
+func (cp *unixClientProgram) CloseStdin() error {
+	return cp.stdin.Close()
+}

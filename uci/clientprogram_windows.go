@@ -192,3 +192,7 @@ func (cp *windowsClientProgram) Write(p []byte) (int, error) {
 func (cp *windowsClientProgram) ReadErr(p []byte) (int, error) {
 	return cp.stderr.Read(p)
 }
+
+func (cp *windowsClientProgram) CloseStdin() error {
+	return cp.stdin.Close()
+}
