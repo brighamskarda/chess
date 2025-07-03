@@ -17,10 +17,13 @@ package uci
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 )
@@ -89,6 +92,7 @@ func (cw *concurrentWriter) Write(p []byte) (int, error) {
 type Client struct {
 	clientProgram clientProgram
 	logger        *concurrentWriter
+	infoBuf       *concurrentCircBuf[*Info]
 }
 
 // NewClient takes in the path to UCI compliant chess engine and returns a [Client] that will allow you to interface with it. If it could not start the program, an error is returned.
@@ -104,6 +108,7 @@ func NewClient(program string, settings ClientSettings) (*Client, error) {
 func newClientFromClientProgram(cp clientProgram, settings ClientSettings) (*Client, error) {
 	c := &Client{
 		clientProgram: cp,
+		infoBuf:       newCircBuf[*Info](128),
 	}
 
 	c.setUpLogger(settings.Logger)
@@ -120,8 +125,8 @@ func (c *Client) setUpLogger(w io.Writer) {
 }
 
 func (c *Client) startReadLoop() {
-	go readLoop(c.logger, c.clientProgram, []byte("<<<"))
-	go readLoop(c.logger, readErrWrapper{cp: c.clientProgram}, []byte("!<!"))
+	go c.stdoutReadLoop()
+	go stderrReadLoop(c.logger, readErrWrapper{cp: c.clientProgram})
 }
 
 type readErrWrapper struct{ cp clientProgram }
@@ -130,9 +135,9 @@ func (rew readErrWrapper) Read(p []byte) (int, error) {
 	return rew.cp.ReadErr(p)
 }
 
-func readLoop(cw *concurrentWriter, r io.Reader, prefix []byte) {
+func stderrReadLoop(cw *concurrentWriter, r io.Reader) {
 	scnr := bufio.NewScanner(r)
-	prefix = append(prefix, ' ')
+	prefix := []byte("!<! ")
 	originalPrefixLen := len(prefix)
 	for scnr.Scan() {
 		prefix = append(prefix, scnr.Bytes()...)
@@ -147,6 +152,70 @@ func readLoop(cw *concurrentWriter, r io.Reader, prefix []byte) {
 	}
 }
 
+func (c *Client) stdoutReadLoop() {
+	scnr := bufio.NewScanner(c.clientProgram)
+	prefix := []byte("<<< ")
+	originalPrefixLen := len(prefix)
+	for scnr.Scan() {
+		line := scnr.Bytes()
+
+		// send to logger
+		prefix = append(prefix, line...)
+		prefix = append(prefix, '\n')
+		c.logger.Write(prefix)
+		prefix = prefix[:originalPrefixLen]
+
+		// parse command for rest of Client
+		c.handleCommand(line)
+	}
+}
+
+func (c *Client) handleCommand(line []byte) {
+	command := parseCommand(line)
+	switch command.commandType() {
+	case info:
+		c.infoBuf.Push(command.(*Info))
+	}
+}
+
+func parseCommand(line []byte) command {
+	commandType := findCommandType(line)
+	switch commandType {
+	case unknown:
+		return basicCommand{cmdType: unknown, msg: string(line)}
+	case info:
+		return parseInfoCommand(line)
+	}
+	panic(fmt.Sprintf("could not parse command, unexpected command type %d", commandType))
+}
+
+func findCommandType(line []byte) commandType {
+	scnr := bufio.NewScanner(bytes.NewBuffer(slices.Clone(line)))
+	scnr.Split(bufio.ScanWords)
+	for scnr.Scan() {
+		token := strings.ToLower(scnr.Text())
+		switch token {
+		case "id":
+			return id
+		case "uciok":
+			return uciok
+		case "readyok":
+			return readyok
+		case "bestmove":
+			return bestmove
+		case "copyprotection":
+			return copyprotection
+		case "registration":
+			return registration
+		case "info":
+			return info
+		case "option":
+			return option
+		}
+	}
+	return unknown
+}
+
 // send is the proper way to send messages to the engine as it will also send the messages to the client's logger.
 func (c *Client) send(p []byte) error {
 	prefix := []byte(">>> ")
@@ -154,6 +223,13 @@ func (c *Client) send(p []byte) error {
 	c.logger.Write(prefix)
 	_, err := c.clientProgram.Write(p)
 	return err
+}
+
+// ReadInfo returns an [Info] received from the engine. This is implemented as a circular buffer with size 128, meaning that only the last 128 infos are stored. If the engine sends more, the oldest info is deleted to make room. It is a good idea to setup a continuous read loop if you don't want to miss any infos.
+//
+// ReadInfo blocks if no infos are available. The returned info is safe to modify.
+func (c *Client) ReadInfo() *Info {
+	return c.infoBuf.Next()
 }
 
 // Quit sends the quit command to the engine to shutdown as soon as possible.  timeout1 is the amount of time the process should wait before resorting to other measures. Once the timeout1 is reached a request will be sent to the engine to gracefully shutdown (SIGTERM on unix). timeout2 will then begin, and once it is reached the engine will be shutdown forcibly.
@@ -172,7 +248,7 @@ func (c *Client) Quit(timeout1 time.Duration, timeout2 time.Duration) error {
 	done := make(chan error)
 	go func() {
 		err := c.send([]byte("quit\n"))
-		time.Sleep(timeout1/5) // gives the engine time to read quit before the pipe is closed.
+		time.Sleep(timeout1 / 5) // gives the engine time to read quit before the pipe is closed.
 		err = errors.Join(err, c.clientProgram.CloseStdin())
 		done <- errors.Join(err, c.clientProgram.Wait())
 	}()
