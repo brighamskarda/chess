@@ -47,7 +47,7 @@ There is still a lot of work to do to make this library as great as possible. Cu
 
 ## Contributing
 
-I'm open to suggestions and contributions. Feel free to post them on github issues and pull requests. You can also email me directly at <mailto:brighamskarda@gmail.com>.
+I'm open to suggestions and contributions. Feel free to post them on github issues and pull requests. You can also email me directly at [brighamskarda@gmail.com](mailto:brighamskarda@gmail.com). Also take a look at [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Usage
 
