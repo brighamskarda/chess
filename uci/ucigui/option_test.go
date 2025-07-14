@@ -15,7 +15,7 @@
 
 // MOST OF THE CODE IN THIS FILE WAS WRITTEN BY MICROSOFT COPILOT.
 
-package uci
+package ucigui
 
 import (
 	"slices"

@@ -15,7 +15,7 @@
 
 //go:build windows
 
-package uci
+package ucigui
 
 import (
 	"errors"

@@ -13,17 +13,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-//go:build !windows && !unix
+//go:build unix
 
-package uci
+package ucigui
 
 import (
 	"fmt"
 	"io"
 	"os/exec"
+	"syscall"
 )
 
-type defaultClientProgram struct {
+type unixClientProgram struct {
 	stdin  io.WriteCloser
 	stdout io.ReadCloser
 	stderr io.ReadCloser
@@ -39,7 +40,10 @@ func newClientProgram(program string, settings ClientSettings) (clientProgram, e
 	cmd := exec.Command(program, settings.Args...)
 	cmd.Env = settings.Env
 	cmd.Dir = settings.WorkDir
-	cp := defaultClientProgram{cmd: cmd}
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setpgid: true,
+		Pgid:    0}
+	cp := unixClientProgram{cmd: cmd}
 	var err error
 	cp.stdout, err = cmd.StdoutPipe()
 	if err != nil {
@@ -67,30 +71,30 @@ func newClientProgram(program string, settings ClientSettings) (clientProgram, e
 	return &cp, nil
 }
 
-func (cp *defaultClientProgram) Terminate() error {
-	return nil
+func (cp *unixClientProgram) Terminate() error {
+	return syscall.Kill(-cp.cmd.Process.Pid, syscall.SIGTERM)
 }
 
-func (cp *defaultClientProgram) Kill() error {
-	return cp.cmd.Process.Kill()
+func (cp *unixClientProgram) Kill() error {
+	return syscall.Kill(-cp.cmd.Process.Pid, syscall.SIGKILL)
 }
 
-func (cp *defaultClientProgram) Wait() error {
+func (cp *unixClientProgram) Wait() error {
 	return cp.cmd.Wait()
 }
 
-func (cp *defaultClientProgram) Read(p []byte) (int, error) {
+func (cp *unixClientProgram) Read(p []byte) (int, error) {
 	return cp.stdout.Read(p)
 }
 
-func (cp *defaultClientProgram) Write(p []byte) (int, error) {
+func (cp *unixClientProgram) Write(p []byte) (int, error) {
 	return cp.stdin.Write(p)
 }
 
-func (cp *defaultClientProgram) ReadErr(p []byte) (int, error) {
+func (cp *unixClientProgram) ReadErr(p []byte) (int, error) {
 	return cp.stderr.Read(p)
 }
 
-func (cp *defaultClientProgram) CloseStdin() error {
+func (cp *unixClientProgram) CloseStdin() error {
 	return cp.stdin.Close()
 }
