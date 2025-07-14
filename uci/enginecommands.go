@@ -17,6 +17,8 @@ package uci
 
 import (
 	"bytes"
+	"math"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -26,7 +28,6 @@ import (
 // command represents a command received from the engine. It is necessary to type assert certain commands. But this should be avoided when possible.
 type command interface {
 	commandType() commandType
-	message() string
 }
 
 type commandType uint8
@@ -50,10 +51,6 @@ type basicCommand struct {
 
 func (bc basicCommand) commandType() commandType {
 	return bc.cmdType
-}
-
-func (bc basicCommand) message() string {
-	return bc.msg
 }
 
 // Score is used in [Info] to represent the score reported by the engine.
@@ -131,17 +128,13 @@ func (i *Info) commandType() commandType {
 	return info
 }
 
-func (i *Info) message() string {
-	return ""
-}
-
 func parseInfoCommand(line []byte) *Info {
 	info := &Info{}
 
 	tokens := bytes.Fields(line)
 
-	i := findInfoIndex(tokens) + 1
-	if i < 0 {
+	i := findTokenIndex(tokens, []byte("info")) + 1
+	if i <= 0 {
 		return info
 	}
 
@@ -149,38 +142,33 @@ loop:
 	for ; i < len(tokens)-1; i++ {
 		switch strings.ToLower(string(tokens[i])) {
 		case "depth":
-			i++
-			info.Depth = parseUintPointer(tokens[i])
-			if info.Depth == nil {
-				i--
+			info.Depth = parseUintPointer(tokens[i+1])
+			if info.Depth != nil {
+				i++
 			}
 		case "seldepth":
-			i++
-			info.Seldepth = parseUintPointer(tokens[i])
-			if info.Seldepth == nil {
-				i--
+			info.Seldepth = parseUintPointer(tokens[i+1])
+			if info.Seldepth != nil {
+				i++
 			}
 		case "time":
-			i++
-			info.Time = parseUintPointer(tokens[i])
-			if info.Time == nil {
-				i--
+			info.Time = parseUintPointer(tokens[i+1])
+			if info.Time != nil {
+				i++
 			}
 		case "nodes":
-			i++
-			info.Nodes = parseUintPointer(tokens[i])
-			if info.Nodes == nil {
-				i--
+			info.Nodes = parseUintPointer(tokens[i+1])
+			if info.Nodes != nil {
+				i++
 			}
 		case "pv":
 			var numParsed int
 			info.Pv, numParsed = parseMoveLine(tokens[i+1:])
 			i += numParsed
 		case "multipv":
-			i++
-			info.Multipv = parseUintPointer(tokens[i])
-			if info.Nodes == nil {
-				i--
+			info.Multipv = parseUintPointer(tokens[i+1])
+			if info.Nodes != nil {
+				i++
 			}
 		case "score":
 			var numParsed int
@@ -194,34 +182,29 @@ loop:
 				info.Currmove = nil
 			}
 		case "currmovenumber":
-			i++
-			info.Currmovenumber = parseUintPointer(tokens[i])
-			if info.Currmovenumber == nil {
-				i--
+			info.Currmovenumber = parseUintPointer(tokens[i+1])
+			if info.Currmovenumber != nil {
+				i++
 			}
 		case "hashfull":
-			i++
-			info.Hashfull = parseUintPointer(tokens[i])
-			if info.Hashfull == nil {
-				i--
+			info.Hashfull = parseUintPointer(tokens[i+1])
+			if info.Hashfull != nil {
+				i++
 			}
 		case "nps":
-			i++
-			info.Nps = parseUintPointer(tokens[i])
-			if info.Nps == nil {
-				i--
+			info.Nps = parseUintPointer(tokens[i+1])
+			if info.Nps != nil {
+				i++
 			}
 		case "tbhits":
-			i++
-			info.Tbhits = parseUintPointer(tokens[i])
-			if info.Tbhits == nil {
-				i--
+			info.Tbhits = parseUintPointer(tokens[i+1])
+			if info.Tbhits != nil {
+				i++
 			}
 		case "cpuload":
-			i++
-			info.CpuLoad = parseUintPointer(tokens[i])
-			if info.CpuLoad == nil {
-				i--
+			info.CpuLoad = parseUintPointer(tokens[i+1])
+			if info.CpuLoad != nil {
+				i++
 			}
 		case "refutation":
 			var numParsed int
@@ -242,9 +225,9 @@ loop:
 	return info
 }
 
-func findInfoIndex(tokens [][]byte) int {
+func findTokenIndex(tokens [][]byte, tokenToFind []byte) int {
 	for i, token := range tokens {
-		if bytes.EqualFold(token, []byte("info")) {
+		if bytes.EqualFold(token, tokenToFind) {
 			return i
 		}
 	}
@@ -357,4 +340,248 @@ func parseCurrLine(tokens [][]byte) (currLine *Currline, numParsed int) {
 		Moves: line,
 	}
 	return
+}
+
+type OptionType uint8
+
+const (
+	_ OptionType = iota
+	Check
+	Spin
+	Combo
+	Button
+	String
+)
+
+func parseOptionType(token []byte) OptionType {
+	switch strings.ToLower(string(token)) {
+	case "check":
+		return Check
+	case "spin":
+		return Spin
+	case "combo":
+		return Combo
+	case "button":
+		return Button
+	case "string":
+		return String
+	default:
+		return 0
+	}
+}
+
+// Option represent the configurable options sent by the chess engine. See the [UCI chess specification] for common options. As specified there, options with certain names will be verified to ensure they are of the right type. Options that break those conventions will not be parsed. Options without a type or name will also not be parsed.
+//
+// If default, min, max, or var are nil, it means they were not provided. As defined in the UCI specification, there are only certain combinations that make sense. Options that don't follow these rules may be parsed incorrectly. Every option that at least defines name and type will be parsed though, even if their attributes don't make sense or aren't parsed correctly.
+//
+//   - Check - May only have a default value of true or false.
+//   - Spin - Can define min, max, and default. These should all be numbers.
+//   - Combo - Must define at least one var. Can also have a default.
+//   - String - Can only have a default.
+//   - Button - Has no attributes.
+//
+// Options with the prefix "UCI_" that are not defined in the UCI specification are ignored, per the UCI specification.
+//
+// [UCI chess specification]: https://www.shredderchess.com/download/div/uci.zip
+type Option struct {
+	Name    string
+	OType   OptionType
+	Default *string
+	Min     *int
+	Max     *int
+	Var     []string
+}
+
+func (o *Option) commandType() commandType {
+	return option
+}
+
+func parseOptionCommand(line []byte) *Option {
+	option := &Option{}
+
+	tokens := bytes.Fields(line)
+
+	i := findTokenIndex(tokens, []byte("option")) + 1
+	if i <= 0 {
+		return option
+	}
+
+	for ; i < len(tokens)-1; i++ {
+		switch string(tokens[i]) {
+		case "name":
+			var numParsed int
+			option.Name, numParsed = parseOptionName(line)
+			i += numParsed
+		case "type":
+			option.OType = parseOptionType(tokens[i+1])
+			if option.OType != 0 {
+				i++
+			}
+		case "default":
+			optionDefault, numParsed := parseOptionDefault(line, option.OType == String)
+			option.Default = &optionDefault
+			i += numParsed
+		case "min":
+			option.Min = parseIntPointer(tokens[i+1])
+			if option.Min != nil {
+				i++
+			}
+		case "max":
+			option.Max = parseIntPointer(tokens[i+1])
+			if option.Max != nil {
+				i++
+			}
+		case "var":
+			optionVar, numParsed := parseOptionVar(line, len(option.Var))
+			option.Var = append(option.Var, optionVar)
+			i += numParsed
+		}
+	}
+
+	if !nameAndTypeExist(option) {
+		return nil
+	}
+
+	if isPredefinedOption(option) {
+		if !isLegalPredefOption(option) {
+			return nil
+		}
+		return option
+	}
+
+	if strings.HasPrefix(option.Name, "UCI_") {
+		return nil
+	}
+
+	return option
+}
+
+func nameAndTypeExist(o *Option) bool {
+	return o.Name != "" && o.OType != 0
+}
+
+func parseOptionName(line []byte) (string, int) {
+	startIndex := findTokenIndexWithWhiteSpace(line, "name")
+
+	if startIndex < 0 {
+		return "", 0
+	}
+
+	var optionName string
+	nextOptionOffset := findNextOptionIndex(line[startIndex:])
+	if nextOptionOffset == -1 {
+		optionName = string(line[startIndex:])
+	} else {
+		optionName = string(line[startIndex : startIndex+nextOptionOffset])
+	}
+	optionName = strings.TrimSpace(optionName)
+	return optionName, len(strings.Fields(optionName))
+}
+
+func parseOptionDefault(line []byte, isString bool) (string, int) {
+	startIndex := findTokenIndexWithWhiteSpace(line, "default")
+
+	if startIndex < 0 {
+		return "", 0
+	}
+
+	if isString {
+		defaultValue := strings.TrimSpace(string(line[startIndex:]))
+		return defaultValue, len(strings.Fields(defaultValue))
+	}
+
+	var defaultValue string
+	nextOptionOffset := findNextOptionIndex(line[startIndex:])
+	if nextOptionOffset == -1 {
+		defaultValue = string(line[startIndex:])
+	} else {
+		defaultValue = string(line[startIndex : startIndex+nextOptionOffset])
+	}
+	defaultValue = strings.TrimSpace(defaultValue)
+	return defaultValue, len(strings.Fields(defaultValue))
+}
+
+func parseOptionVar(line []byte, varIndex int) (string, int) {
+
+	startIndex := findTokenIndexWithWhiteSpace(line, "var")
+	for range varIndex {
+		startIndex += findTokenIndexWithWhiteSpace(line[startIndex:], "var")
+	}
+
+	if startIndex < 0 {
+		return "", 0
+	}
+
+	var varValue string
+	nextOptionOffset := findNextOptionIndex(line[startIndex:])
+	if nextOptionOffset == -1 {
+		varValue = string(line[startIndex:])
+	} else {
+		varValue = string(line[startIndex : startIndex+nextOptionOffset])
+	}
+	varValue = strings.TrimSpace(varValue)
+	return varValue, len(strings.Fields(varValue))
+}
+
+func findNextOptionIndex(line []byte) int {
+	nextOptionIndex := math.MaxInt
+
+	options := [][]byte{[]byte(" type "), []byte(" default "), []byte(" min "), []byte(" max "), []byte(" var ")}
+
+	for _, o := range options {
+		possibleOption := bytes.Index(line, o)
+		if possibleOption > 0 && possibleOption < nextOptionIndex {
+			nextOptionIndex = possibleOption
+		}
+	}
+
+	if nextOptionIndex == math.MaxInt {
+		return -1
+	}
+	return nextOptionIndex
+}
+
+var predef map[string]struct{} = map[string]struct{}{
+	"Hash":                  {},
+	"NalimovPath":           {},
+	"NalimovCache":          {},
+	"Ponder":                {},
+	"OwnBook":               {},
+	"MultiPV":               {},
+	"UCI_ShowCurrLine":      {},
+	"UCI_ShowRefutations":   {},
+	"UCI_LimitStrength":     {},
+	"UCI_Elo":               {},
+	"UCI_AnalyseMode":       {},
+	"UCI_Opponent":          {},
+	"UCI_EngineAbout":       {},
+	"UCI_ShredderbasesPath": {},
+	"UCI_SetPositionValue":  {},
+}
+
+func isPredefinedOption(o *Option) bool {
+	_, ok := predef[o.Name]
+	return ok
+}
+
+func isLegalPredefOption(o *Option) bool {
+	switch o.Name {
+	case "Hash", "NalimovCache", "MultiPV", "UCI_Elo":
+		return o.OType == Spin
+	case "NalimovPath", "UCI_Opponent", "UCI_EngineAbout", "UCI_ShredderbasesPath", "UCI_SetPositionValue":
+		return o.OType == String
+	case "Ponder", "OwnBook", "UCI_ShowCurrLine", "UCI_ShowRefutations", "UCI_LimitStrength", "UCI_AnalyseMode":
+		return o.OType == Check
+	default:
+		return true
+	}
+}
+
+func findTokenIndexWithWhiteSpace(line []byte, token string) int {
+	re := regexp.MustCompile(`\s` + token + `\s`)
+	matches := re.FindIndex(line)
+	if matches != nil {
+		return matches[1]
+	}
+	return -1
 }

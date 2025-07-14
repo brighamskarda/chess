@@ -911,13 +911,3 @@ func TestInfoParsing_WhitespaceInPv(t *testing.T) {
 		t.Errorf("expected Pv %v, got %v", expected, info.Pv)
 	}
 }
-
-// func TestInfoParsing_(t *testing.T) {
-// 	dummy := newDummyClientProgram()
-// 	defer dummy.Kill()
-// 	client, err := newClientFromClientProgram(dummy, ClientSettings{})
-// 	if err != nil {
-// 		t.Fatalf("%v", err)
-// 	}
-
-// }

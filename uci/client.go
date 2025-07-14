@@ -93,6 +93,7 @@ type Client struct {
 	clientProgram clientProgram
 	logger        *concurrentWriter
 	infoBuf       *concurrentCircBuf[*Info]
+	commandBuf    *concurrentBuf[command]
 }
 
 // NewClient takes in the path to UCI compliant chess engine and returns a [Client] that will allow you to interface with it. If it could not start the program, an error is returned.
@@ -109,6 +110,7 @@ func newClientFromClientProgram(cp clientProgram, settings ClientSettings) (*Cli
 	c := &Client{
 		clientProgram: cp,
 		infoBuf:       newCircBuf[*Info](128),
+		commandBuf:    newConcBuf[command](),
 	}
 
 	c.setUpLogger(settings.Logger)
@@ -172,21 +174,34 @@ func (c *Client) stdoutReadLoop() {
 
 func (c *Client) handleCommand(line []byte) {
 	command := parseCommand(line)
+	if command == nil {
+		return
+	}
 	switch command.commandType() {
 	case info:
 		c.infoBuf.Push(command.(*Info))
+	case unknown:
+	default:
+		c.commandBuf.Push(command)
 	}
 }
 
 func parseCommand(line []byte) command {
 	commandType := findCommandType(line)
+	var c command
 	switch commandType {
 	case unknown:
 		return basicCommand{cmdType: unknown, msg: string(line)}
 	case info:
-		return parseInfoCommand(line)
+		if parsedCommand := parseInfoCommand(line); parsedCommand != nil {
+			c = parsedCommand
+		}
+	case option:
+		if parsedCommand := parseOptionCommand(line); parsedCommand != nil {
+			c = parsedCommand
+		}
 	}
-	panic(fmt.Sprintf("could not parse command, unexpected command type %d", commandType))
+	return c
 }
 
 func findCommandType(line []byte) commandType {

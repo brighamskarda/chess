@@ -15,6 +15,8 @@
 
 package uci
 
+import "sync"
+
 // concurrentCircBuf is a thread-safe circular buffer that overwrites old values,
 // and blocks on Next() if nothing is available.
 type concurrentCircBuf[T any] struct {
@@ -40,4 +42,37 @@ func (cb *concurrentCircBuf[T]) Push(t T) {
 		<-cb.contents
 		cb.contents <- t
 	}
+}
+
+// concurrentBuf is a thread-safe buffer. Unlike circular buf it doesn't drop old values. It will just keep growing to accommodate unread values. Blocks next if nothing is available.
+type concurrentBuf[T any] struct {
+	mu     sync.Mutex
+	cond   *sync.Cond
+	buffer []T
+}
+
+func newConcBuf[T any]() *concurrentBuf[T] {
+	cb := &concurrentBuf[T]{}
+	cb.cond = sync.NewCond(&cb.mu)
+	return cb
+}
+
+func (cb *concurrentBuf[T]) Push(t T) {
+	cb.mu.Lock()
+	defer cb.mu.Unlock()
+	cb.buffer = append(cb.buffer, t)
+	cb.cond.Signal()
+}
+
+func (cb *concurrentBuf[T]) Next() T {
+	cb.mu.Lock()
+	defer cb.mu.Unlock()
+
+	for len(cb.buffer) == 0 {
+		cb.cond.Wait()
+	}
+
+	value := cb.buffer[0]
+	cb.buffer = cb.buffer[1:]
+	return value
 }
