@@ -180,7 +180,7 @@ func (c *Client) handleCommand(line []byte) {
 	switch command.commandType() {
 	case info:
 		c.infoBuf.Push(command.(*Info))
-	case unknown:
+	case unknownCommandType:
 	default:
 		c.commandBuf.Push(command)
 	}
@@ -189,8 +189,8 @@ func (c *Client) handleCommand(line []byte) {
 func parseCommand(line []byte) command {
 	commandType := findCommandType(line)
 	switch commandType {
-	case unknown:
-		return basicCommand{cmdType: unknown, msg: string(line)}
+	case unknownCommandType:
+		return basicCommand{cmdType: unknownCommandType, msg: string(line)}
 	case info:
 		if parsedCommand := parseInfoCommand(line); parsedCommand != nil {
 			return parsedCommand
@@ -215,6 +215,10 @@ func parseCommand(line []byte) command {
 		}
 	case bestmove:
 		if parsedCommand := parseBestMoveCommand(line); parsedCommand != nil {
+			return *parsedCommand
+		}
+	case copyprotection:
+		if parsedCommand := parseCopyProtection(line); parsedCommand != nil {
 			return *parsedCommand
 		}
 	}
@@ -245,7 +249,7 @@ func findCommandType(line []byte) commandType {
 			return option
 		}
 	}
-	return unknown
+	return unknownCommandType
 }
 
 // send is the proper way to send messages to the engine as it will also send the messages to the client's logger.

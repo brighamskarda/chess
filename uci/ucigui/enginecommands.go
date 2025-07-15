@@ -33,7 +33,7 @@ type command interface {
 type commandType uint8
 
 const (
-	unknown commandType = iota
+	unknownCommandType commandType = iota
 	id
 	uciok
 	readyok
@@ -681,4 +681,42 @@ func parseBestMoveCommand(line []byte) *bestMove {
 	}
 
 	return &best
+}
+
+type copyProtection uint8
+
+func (cp copyProtection) commandType() commandType {
+	return copyprotection
+}
+
+const (
+	_ copyProtection = iota
+	checking
+	ok
+	cpError
+)
+
+func parseCopyProtection(line []byte) *copyProtection {
+	tokens := bytes.Fields(line)
+
+	var cp copyProtection
+	for _, t := range tokens {
+		if bytes.EqualFold(t, []byte("checking")) {
+			cp = checking
+			break
+		}
+		if bytes.EqualFold(t, []byte("ok")) {
+			cp = ok
+			break
+		}
+		if bytes.EqualFold(t, []byte("error")) {
+			cp = cpError
+			break
+		}
+	}
+
+	if cp == 0 {
+		return nil
+	}
+	return &cp
 }

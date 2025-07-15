@@ -285,3 +285,80 @@ func TestBestMoveParsing_RandomWhiteSpace(t *testing.T) {
 		t.Errorf("did not get expectedPonder: expected %v, got %v", expectedPonder, parsedCommand1.ponder)
 	}
 }
+
+func TestCopyProtectionParsing(t *testing.T) {
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
+
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	dummy.stdoutWriter.Write([]byte("copyprotection checking\n"))
+	dummy.stdoutWriter.Write([]byte("copyprotection ok\n"))
+	dummy.stdoutWriter.Write([]byte("copyprotection error\n"))
+
+	parsedCommand := client.commandBuf.Next().(copyProtection)
+	if parsedCommand != checking {
+		t.Error("did not get copyprotection checking")
+	}
+	parsedCommand = client.commandBuf.Next().(copyProtection)
+	if parsedCommand != ok {
+		t.Error("did not get copyprotection ok")
+	}
+	parsedCommand = client.commandBuf.Next().(copyProtection)
+	if parsedCommand != cpError {
+		t.Error("did not get copyprotection error")
+	}
+}
+
+func TestCopyProtectionParsing_WithGibberish(t *testing.T) {
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
+
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	dummy.stdoutWriter.Write([]byte("copyprotection fdkd checking\n"))
+	dummy.stdoutWriter.Write([]byte("s ddf copyprotection dfdf fd fdf fd ok\n"))
+	dummy.stdoutWriter.Write([]byte("    copyprotection\t   error ok\n"))
+
+	parsedCommand := client.commandBuf.Next().(copyProtection)
+	if parsedCommand != checking {
+		t.Error("did not get copyprotection checking")
+	}
+	parsedCommand = client.commandBuf.Next().(copyProtection)
+	if parsedCommand != ok {
+		t.Error("did not get copyprotection ok")
+	}
+	parsedCommand = client.commandBuf.Next().(copyProtection)
+	if parsedCommand != cpError {
+		t.Error("did not get copyprotection error")
+	}
+}
+
+func TestCopyProtectionParsing_BadInput(t *testing.T) {
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
+
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	dummy.stdoutWriter.Write([]byte("copyprotection\n"))
+	dummy.stdoutWriter.Write([]byte("copyprotection  ok\n"))
+	dummy.stdoutWriter.Write([]byte("copyprotection error \n"))
+
+	parsedCommand := client.commandBuf.Next().(copyProtection)
+	if parsedCommand != ok {
+		t.Error("did not get copyprotection ok")
+	}
+	parsedCommand = client.commandBuf.Next().(copyProtection)
+	if parsedCommand != cpError {
+		t.Error("did not get copyprotection error")
+	}
+}
