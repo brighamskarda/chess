@@ -36,7 +36,7 @@ Of course there are other hyper-specialized go programs and libraries that are a
 
 But as the results show this library is one of the quickest. Notably it is about **4x** as fast as _CorentingGS/chess_ (a fork of notnil/chess that focuses on reducing memory allocations). _dylhunn/dragontoothmg_ is an amazing library for pure speed if that is what you are looking for. It lacks PGN utilities though.
 
-The fastest time I got for Perft 6 from the starting position was 6.5 seconds. Utilizing performance guided optimization (PGO) seems to give about a 10-12% improvement for this code.
+The fastest time I got for Perft 6 from the starting position was 6.5 seconds. Utilizing profile-guided optimization (PGO) seems to give about a 10-12% improvement for this code.
 
 ## Future Development
 
