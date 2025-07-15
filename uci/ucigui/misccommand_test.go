@@ -17,6 +17,7 @@ package ucigui
 
 import (
 	"testing"
+	"time"
 
 	"github.com/brighamskarda/chess/v2"
 )
@@ -296,20 +297,35 @@ func TestCopyProtectionParsing(t *testing.T) {
 	}
 
 	dummy.stdoutWriter.Write([]byte("copyprotection checking\n"))
-	dummy.stdoutWriter.Write([]byte("copyprotection ok\n"))
-	dummy.stdoutWriter.Write([]byte("copyprotection error\n"))
+	time.Sleep(10 * time.Millisecond)
+	if client.CopyrightStatus() != CpChecking {
+		t.Error("status not set to CpChecking")
+	}
 
-	parsedCommand := client.commandBuf.Next().(copyProtection)
-	if parsedCommand != cpChecking {
-		t.Error("did not get copyprotection checking")
+	dummy.stdoutWriter.Write([]byte("copyprotection ok\n"))
+	time.Sleep(10 * time.Millisecond)
+	if client.CopyrightStatus() != CpOk {
+		t.Error("status not set to CpOk")
 	}
-	parsedCommand = client.commandBuf.Next().(copyProtection)
-	if parsedCommand != cpOk {
-		t.Error("did not get copyprotection ok")
+
+	dummy.stdoutWriter.Write([]byte("copyprotection error\n"))
+	time.Sleep(10 * time.Millisecond)
+	if client.CopyrightStatus() != CpError {
+		t.Error("status not set to CpError")
 	}
-	parsedCommand = client.commandBuf.Next().(copyProtection)
-	if parsedCommand != cpError {
-		t.Error("did not get copyprotection error")
+}
+
+func TestCopyProtectionBeforeInit(t *testing.T) {
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
+
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	if client.CopyrightStatus() != CpUnknown {
+		t.Error("wrong cp status before init")
 	}
 }
 
@@ -323,20 +339,21 @@ func TestCopyProtectionParsing_WithGibberish(t *testing.T) {
 	}
 
 	dummy.stdoutWriter.Write([]byte("copyprotection fdkd checking\n"))
-	dummy.stdoutWriter.Write([]byte("s ddf copyprotection dfdf fd fdf fd ok\n"))
-	dummy.stdoutWriter.Write([]byte("    copyprotection\t   error ok\n"))
+	time.Sleep(10 * time.Millisecond)
+	if client.CopyrightStatus() != CpChecking {
+		t.Error("status not set to CpChecking")
+	}
 
-	parsedCommand := client.commandBuf.Next().(copyProtection)
-	if parsedCommand != cpChecking {
-		t.Error("did not get copyprotection checking")
+	dummy.stdoutWriter.Write([]byte("s ddf copyprotection dfdf fd fdf fd ok\n"))
+	time.Sleep(10 * time.Millisecond)
+	if client.CopyrightStatus() != CpOk {
+		t.Error("status not set to CpOk")
 	}
-	parsedCommand = client.commandBuf.Next().(copyProtection)
-	if parsedCommand != cpOk {
-		t.Error("did not get copyprotection ok")
-	}
-	parsedCommand = client.commandBuf.Next().(copyProtection)
-	if parsedCommand != cpError {
-		t.Error("did not get copyprotection error")
+
+	dummy.stdoutWriter.Write([]byte("    copyprotection\t   error ok\n"))
+	time.Sleep(10 * time.Millisecond)
+	if client.CopyrightStatus() != CpError {
+		t.Error("status not set to CpError")
 	}
 }
 
@@ -349,93 +366,93 @@ func TestCopyProtectionParsing_BadInput(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
+	dummy.stdoutWriter.Write([]byte("copyprotection ok\n"))
 	dummy.stdoutWriter.Write([]byte("copyprotection\n"))
-	dummy.stdoutWriter.Write([]byte("copyprotection  ok\n"))
-	dummy.stdoutWriter.Write([]byte("copyprotection error \n"))
-
-	parsedCommand := client.commandBuf.Next().(copyProtection)
-	if parsedCommand != cpOk {
-		t.Error("did not get copyprotection ok")
-	}
-	parsedCommand = client.commandBuf.Next().(copyProtection)
-	if parsedCommand != cpError {
-		t.Error("did not get copyprotection error")
+	time.Sleep(10 * time.Millisecond)
+	if client.CopyrightStatus() != CpOk {
+		t.Error("incomplete copyprotection overwrote CpOk")
 	}
 }
 
 func TestRegistrationCommandParsing(t *testing.T) {
-    dummy := newDummyClientProgram()
-    defer dummy.Kill()
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
 
-    client, err := newClientFromClientProgram(dummy, ClientSettings{})
-    if err != nil {
-        t.Fatalf("%v", err)
-    }
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
 
-    dummy.stdoutWriter.Write([]byte("registration checking\n"))
-    dummy.stdoutWriter.Write([]byte("registration ok\n"))
-    dummy.stdoutWriter.Write([]byte("registration error\n"))
+	dummy.stdoutWriter.Write([]byte("registration checking\n"))
+	time.Sleep(10 * time.Millisecond)
+	if client.RegistrationStatus() != RegChecking {
+		t.Error("status not set to RegChecking")
+	}
+	dummy.stdoutWriter.Write([]byte("registration ok\n"))
+	time.Sleep(10 * time.Millisecond)
+	if client.RegistrationStatus() != RegOk {
+		t.Error("status not set to RegOk")
+	}
+	dummy.stdoutWriter.Write([]byte("registration error\n"))
+	time.Sleep(10 * time.Millisecond)
+	if client.RegistrationStatus() != RegError {
+		t.Error("status not set to RegError")
+	}
+}
 
-    parsed := client.commandBuf.Next().(registrationCommand)
-    if parsed != regChecking {
-        t.Error("did not get registration checking")
-    }
-    parsed = client.commandBuf.Next().(registrationCommand)
-    if parsed != regOk {
-        t.Error("did not get registration ok")
-    }
-    parsed = client.commandBuf.Next().(registrationCommand)
-    if parsed != regError {
-        t.Error("did not get registration error")
-    }
+func TestRegistrationBeforeInit(t *testing.T) {
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
+
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	if client.RegistrationStatus() != RegUnknown {
+		t.Error("wrong reg status before init")
+	}
 }
 
 func TestRegistrationCommandParsing_WithNoise(t *testing.T) {
-    dummy := newDummyClientProgram()
-    defer dummy.Kill()
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
 
-    client, err := newClientFromClientProgram(dummy, ClientSettings{})
-    if err != nil {
-        t.Fatalf("%v", err)
-    }
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
 
-    dummy.stdoutWriter.Write([]byte("registration gibberish checking\n"))
-    dummy.stdoutWriter.Write([]byte("random registration text ok\n"))
-    dummy.stdoutWriter.Write([]byte("\t registration  \t error ok\n"))
-
-    parsed := client.commandBuf.Next().(registrationCommand)
-    if parsed != regChecking {
-        t.Error("did not get registration checking")
-    }
-    parsed = client.commandBuf.Next().(registrationCommand)
-    if parsed != regOk {
-        t.Error("did not get registration ok")
-    }
-    parsed = client.commandBuf.Next().(registrationCommand)
-    if parsed != regError {
-        t.Error("did not get registration error")
-    }
+	dummy.stdoutWriter.Write([]byte("registration gibberish checking\n"))
+	time.Sleep(10 * time.Millisecond)
+	if client.RegistrationStatus() != RegChecking {
+		t.Error("status not set to RegChecking")
+	}
+	dummy.stdoutWriter.Write([]byte("random registration text ok\n"))
+	time.Sleep(10 * time.Millisecond)
+	if client.RegistrationStatus() != RegOk {
+		t.Error("status not set to RegOk")
+	}
+	dummy.stdoutWriter.Write([]byte("\t registration  \t error ok\n"))
+	time.Sleep(10 * time.Millisecond)
+	if client.RegistrationStatus() != RegError {
+		t.Error("status not set to RegError")
+	}
 }
 
 func TestRegistrationCommandParsing_IncompleteInput(t *testing.T) {
-    dummy := newDummyClientProgram()
-    defer dummy.Kill()
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
 
-    client, err := newClientFromClientProgram(dummy, ClientSettings{})
-    if err != nil {
-        t.Fatalf("%v", err)
-    }
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
 
-    dummy.stdoutWriter.Write([]byte("registration\n"))
-    dummy.stdoutWriter.Write([]byte("registration ok\n"))
-    dummy.stdoutWriter.Write([]byte("registration error\n"))
-
-    parsed := client.commandBuf.Next().(registrationCommand)
-    if parsed != regOk {
-        t.Error("did not get registration ok")
-    }
-    parsed = client.commandBuf.Next().(registrationCommand)
-    if parsed != regError {
-        t.Error("did not get registration error")
-    }
+	dummy.stdoutWriter.Write([]byte("registration ok\n"))
+	dummy.stdoutWriter.Write([]byte("registration\n"))
+	time.Sleep(10 * time.Millisecond)
+	if client.RegistrationStatus() != RegOk {
+		t.Error("incomplete registration overwrote RegOk")
+	}
 }

@@ -25,6 +25,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -88,15 +89,19 @@ func (cw *concurrentWriter) Write(p []byte) (int, error) {
 	return cw.w.Write(p)
 }
 
-// Client is the side of UCI that handles game state and sends commands to the [Engine]. Use this if you are developing a chess program that interacts with engines.
+// Client is the GUI side of UCI that handles game state and sends commands to the engine. Use this if you are developing a chess program that interacts with engines.
 type Client struct {
 	clientProgram clientProgram
 	logger        *concurrentWriter
 	infoBuf       *concurrentCircBuf[*Info]
 	commandBuf    *concurrentBuf[command]
+	cpStatus      atomic.Value
+	regStatus     atomic.Value
 }
 
 // NewClient takes in the path to UCI compliant chess engine and returns a [Client] that will allow you to interface with it. If it could not start the program, an error is returned.
+//
+// To ensure no resources are leaked, be sure to always call [Client.Quit] on new clients once you are done with them. (calling `defer client.Quit()` right after NewClient can be a good idea.)
 func NewClient(program string, settings ClientSettings) (*Client, error) {
 	cp, err := newClientProgram(program, settings)
 	if err != nil {
@@ -112,6 +117,8 @@ func newClientFromClientProgram(cp clientProgram, settings ClientSettings) (*Cli
 		infoBuf:       newCircBuf[*Info](128),
 		commandBuf:    newConcBuf[command](),
 	}
+	c.cpStatus.Store(CpUnknown)
+	c.regStatus.Store(RegUnknown)
 
 	c.setUpLogger(settings.Logger)
 	c.startReadLoop()
@@ -178,9 +185,13 @@ func (c *Client) handleCommand(line []byte) {
 		return
 	}
 	switch command.commandType() {
+	case unknownCommandType:
 	case info:
 		c.infoBuf.Push(command.(*Info))
-	case unknownCommandType:
+	case copyprotection:
+		c.cpStatus.Store(command.(CopyStatus))
+	case registration:
+		c.regStatus.Store(command.(RegStatus))
 	default:
 		c.commandBuf.Push(command)
 	}
@@ -256,7 +267,7 @@ func findCommandType(line []byte) commandType {
 	return unknownCommandType
 }
 
-// send is the proper way to send messages to the engine as it will also send the messages to the client's logger.
+// send is the proper way to send messages to the engine as it will also send the messages to the client's logger. Don't forget to add a new line.
 func (c *Client) send(p []byte) error {
 	prefix := []byte(">>> ")
 	prefix = append(prefix, p...)
@@ -272,7 +283,9 @@ func (c *Client) ReadInfo() *Info {
 	return c.infoBuf.Next()
 }
 
-// Quit sends the quit command to the engine to shutdown as soon as possible.  timeout1 is the amount of time the process should wait before resorting to other measures. Once the timeout1 is reached a request will be sent to the engine to gracefully shutdown (SIGTERM on unix). timeout2 will then begin, and once it is reached the engine will be shutdown forcibly.
+// Quit sends the quit command to the engine to shutdown as soon as possible. This function should always be called when a client is no longer being used to clean up resources.
+//
+// Once the timeout1 is reached a system-level request will be sent to the engine to gracefully shutdown (SIGTERM on unix). timeout2 will then begin, and once it is reached the engine will be shutdown forcibly.
 //
 // This library makes use of process groups (unix) and job objects (windows) to help ensure that the engine don't leave behind stray processes on forcible exits.
 //
@@ -313,20 +326,31 @@ func (c *Client) Quit(timeout1 time.Duration, timeout2 time.Duration) error {
 	return errs
 }
 
-// TODO make sure that the constant read loop flushed stdout when it gets the cancel context.
+// Uci should be the first function you always call on a new client. It tells the program to enter uci mode. Returns an error if the timeout is reached before receiving uciok. It is a good idea to call [Client.CopyrightStatus] and [Client.RegistrationStatus] a short time after this function to make sure the engine initialized correctly.
+func (c *Client) Uci(timeout time.Duration) ([]Option, error) {
+	return nil, nil
+}
 
-// Uci should be the first function you always call. It tells the program on the other end of the writer to enter uci mode.
+// CopyrightStatus returns the current copyright status received from the engine.
 //
-// tell engine to use the uci (universal chess interface),
-// this will be sent once as a first command after program boot
-// to tell the engine to switch to uci mode.
-// After receiving the uci command the engine must identify itself with the "id" command
-// and send the "option" commands to tell the GUI which engine settings the engine supports if any.
-// After that the engine should send "uciok" to acknowledge the uci mode.
-// If no uciok is sent within a certain time period, the engine task will be killed by the GUI.
-// func (c *Client) Uci(timeout) error {
-// 	n, err := c.engineWriter.Write([]byte("uci\n"))
-// 	if err != nil {
+//   - [CpUnknown] - No message has been received yet. The Engine may not have copy protection and is good to go.
+//   - [CpChecking] - The engine is checking its copy protection. Check back in a few seconds.
+//   - [CpOk] - The engine copy protection succeeded.
+//   - [CpError] - The engine copy protection failed. You should call [Client.Quit] and make sure you configured the engine correctly.
+func (c *Client) CopyrightStatus() CopyStatus {
+	return c.cpStatus.Load().(CopyStatus)
+}
 
-// 	}
-// }
+// RegistrationStatus returns the current registration status received from the engine.
+//
+//   - [RegUnknown] - No registration message has been received yet. The engine might not require registration and is ready.
+//   - [RegChecking] - The engine is verifying its registration. Wait a few moments before proceeding.
+//   - [RegOk] - The engine registration was successful.
+//   - [RegError] - The engine registration failed. The engine may still work, but it is a good idea to call [Client.Register], even if it is just to send the later command.
+func (c *Client) RegistrationStatus() RegStatus {
+	return c.regStatus.Load().(RegStatus)
+}
+
+func (c *Client) Register() error {
+	return nil
+}

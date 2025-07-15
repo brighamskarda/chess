@@ -683,34 +683,35 @@ func parseBestMoveCommand(line []byte) *bestMove {
 	return &best
 }
 
-type copyProtection uint8
+// CopyStatus represents the last copyright status message received from the engine. If none have been received yet then it is [cpUnknown].
+type CopyStatus uint8
 
-func (cp copyProtection) commandType() commandType {
+func (cp CopyStatus) commandType() commandType {
 	return copyprotection
 }
 
 const (
-	_ copyProtection = iota
-	cpChecking
-	cpOk
-	cpError
+	CpUnknown CopyStatus = iota
+	CpChecking
+	CpOk
+	CpError
 )
 
-func parseCopyProtection(line []byte) *copyProtection {
+func parseCopyProtection(line []byte) *CopyStatus {
 	tokens := bytes.Fields(line)
 
-	var cp copyProtection
+	var cp CopyStatus
 	for _, t := range tokens {
 		if bytes.EqualFold(t, []byte("checking")) {
-			cp = cpChecking
+			cp = CpChecking
 			break
 		}
 		if bytes.EqualFold(t, []byte("ok")) {
-			cp = cpOk
+			cp = CpOk
 			break
 		}
 		if bytes.EqualFold(t, []byte("error")) {
-			cp = cpError
+			cp = CpError
 			break
 		}
 	}
@@ -721,34 +722,35 @@ func parseCopyProtection(line []byte) *copyProtection {
 	return &cp
 }
 
-type registrationCommand uint8
+// RegStatus represents the last registration status message received from the engine. If none have been received yet then it is [regUnknown]
+type RegStatus uint8
 
-func (reg registrationCommand) commandType() commandType {
+func (reg RegStatus) commandType() commandType {
 	return registration
 }
 
 const (
-	_ registrationCommand = iota
-	regChecking
-	regOk
-	regError
+	RegUnknown RegStatus = iota
+	RegChecking
+	RegOk
+	RegError
 )
 
-func parseRegistration(line []byte) *registrationCommand {
+func parseRegistration(line []byte) *RegStatus {
 	tokens := bytes.Fields(line)
 
-	var reg registrationCommand
+	var reg RegStatus
 	for _, t := range tokens {
 		if bytes.EqualFold(t, []byte("checking")) {
-			reg = regChecking
+			reg = RegChecking
 			break
 		}
 		if bytes.EqualFold(t, []byte("ok")) {
-			reg = regOk
+			reg = RegOk
 			break
 		}
 		if bytes.EqualFold(t, []byte("error")) {
-			reg = regError
+			reg = RegError
 			break
 		}
 	}
