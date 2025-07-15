@@ -15,7 +15,11 @@
 
 package ucigui
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/brighamskarda/chess/v2"
+)
 
 func TestIdParsing_Name(t *testing.T) {
 	dummy := newDummyClientProgram()
@@ -103,10 +107,10 @@ func TestUciokParsing(t *testing.T) {
 	parsedCommand2 := client.commandBuf.Next()
 
 	if parsedCommand1.commandType() != uciok {
-		t.Errorf("parsedCommand1 is not uciok")
+		t.Error("parsedCommand1 is not uciok")
 	}
 	if parsedCommand2.commandType() != uciok {
-		t.Errorf("parsedCommand2 is not uciok")
+		t.Error("parsedCommand2 is not uciok")
 	}
 }
 
@@ -126,9 +130,158 @@ func TestReadyokParsing(t *testing.T) {
 	parsedCommand2 := client.commandBuf.Next()
 
 	if parsedCommand1.commandType() != readyok {
-		t.Errorf("parsedCommand1 is not readyok")
+		t.Error("parsedCommand1 is not readyok")
 	}
 	if parsedCommand2.commandType() != readyok {
-		t.Errorf("parsedCommand2 is not readyok")
+		t.Error("parsedCommand2 is not readyok")
+	}
+}
+
+func TestBestMoveParsing(t *testing.T) {
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
+
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	dummy.stdoutWriter.Write([]byte("bestmove e2e4q\n"))
+
+	parsedCommand1 := client.commandBuf.Next().(bestMove)
+
+	expectedBest := chess.Move{
+		FromSquare: chess.E2,
+		ToSquare:   chess.E4,
+		Promotion:  chess.Queen,
+	}
+
+	if parsedCommand1.best != expectedBest {
+		t.Errorf("did not get expectedBest: expected %v, got %v", expectedBest, parsedCommand1.best)
+	}
+	if parsedCommand1.ponder != nil {
+		t.Error("ponder was not nil")
+	}
+}
+
+func TestBestMoveParsing_Ponder(t *testing.T) {
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
+
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	dummy.stdoutWriter.Write([]byte("bestmove e2e4 ponder a1a3r\n"))
+
+	parsedCommand1 := client.commandBuf.Next().(bestMove)
+
+	expectedPonder := chess.Move{
+		FromSquare: chess.A1,
+		ToSquare:   chess.A3,
+		Promotion:  chess.Rook,
+	}
+
+	if *parsedCommand1.ponder != expectedPonder {
+		t.Errorf("did not get expectedPonder: expected %v, got %v", expectedPonder, parsedCommand1.ponder)
+	}
+}
+
+func TestBestMoveParsing_InputOutOfOrder(t *testing.T) {
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
+
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	dummy.stdoutWriter.Write([]byte("bestmove ponder a1a3r e2e4q\n"))
+	dummy.stdoutWriter.Write([]byte("bestmove d8d7\n"))
+
+	parsedCommand1 := client.commandBuf.Next().(bestMove)
+
+	expectedBest := chess.Move{
+		FromSquare: chess.D8,
+		ToSquare:   chess.D7,
+		Promotion:  chess.NoPieceType,
+	}
+
+	if parsedCommand1.best != expectedBest {
+		t.Errorf("did not get expectedBest: expected %v, got %v", expectedBest, parsedCommand1.best)
+	}
+}
+
+func TestBestMoveParsing_InvalidMove(t *testing.T) {
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
+
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	dummy.stdoutWriter.Write([]byte("bestmove z2h3 ponder a1a2\n"))
+	dummy.stdoutWriter.Write([]byte("bestmove a1a2 ponder f3\n"))
+	dummy.stdoutWriter.Write([]byte("bestmove d8d7\n"))
+
+	parsedCommand1 := client.commandBuf.Next().(bestMove)
+	parsedCommand2 := client.commandBuf.Next().(bestMove)
+
+	expectedBest := chess.Move{
+		FromSquare: chess.A1,
+		ToSquare:   chess.A2,
+		Promotion:  chess.NoPieceType,
+	}
+
+	if parsedCommand1.best != expectedBest {
+		t.Errorf("did not get expectedBest from parsedCommand1: expected %v, got %v", expectedBest, parsedCommand1.best)
+	}
+
+	if parsedCommand1.ponder != nil {
+		t.Error("expected ponder to be nil")
+	}
+
+	expectedBest = chess.Move{
+		FromSquare: chess.D8,
+		ToSquare:   chess.D7,
+		Promotion:  chess.NoPieceType,
+	}
+
+	if parsedCommand2.best != expectedBest {
+		t.Errorf("did not get expectedBest from parsedCommand2: expected %v, got %v", expectedBest, parsedCommand1.best)
+	}
+}
+
+func TestBestMoveParsing_RandomWhiteSpace(t *testing.T) {
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
+
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	dummy.stdoutWriter.Write([]byte("\tbestmove \t d8d7     ponder     \ta1a2\n"))
+
+	parsedCommand1 := client.commandBuf.Next().(bestMove)
+
+	expectedBest := chess.Move{
+		FromSquare: chess.D8,
+		ToSquare:   chess.D7,
+		Promotion:  chess.NoPieceType,
+	}
+	expectedPonder := chess.Move{
+		FromSquare: chess.A1,
+		ToSquare:   chess.A2,
+		Promotion:  chess.NoPieceType,
+	}
+
+	if parsedCommand1.best != expectedBest {
+		t.Errorf("did not get expectedBest: expected %v, got %v", expectedBest, parsedCommand1.best)
+	}
+	if *parsedCommand1.ponder != expectedPonder {
+		t.Errorf("did not get expectedPonder: expected %v, got %v", expectedPonder, parsedCommand1.ponder)
 	}
 }

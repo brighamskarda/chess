@@ -630,3 +630,55 @@ func parseIdCommand(line []byte) *idCommand {
 		}
 	}
 }
+
+type bestMove struct {
+	best   chess.Move
+	ponder *chess.Move
+}
+
+func (bm bestMove) commandType() commandType {
+	return bestmove
+}
+
+func parseBestMoveCommand(line []byte) *bestMove {
+	best := bestMove{}
+
+	tokens := bytes.Fields(line)
+
+	bestMoveSet := false
+	for i, t := range tokens {
+		if bytes.EqualFold(t, []byte("ponder")) {
+			return nil
+		}
+		if err := best.best.UnmarshalText(t); err == nil {
+			if i < len(tokens)-1 {
+				tokens = tokens[i+1:]
+			} else {
+				tokens = nil
+			}
+			bestMoveSet = true
+			break
+		}
+	}
+
+	if !bestMoveSet {
+		return nil
+	}
+
+	for i, t := range tokens {
+		if bytes.EqualFold(t, []byte("ponder")) && i < len(tokens)-1 {
+			tokens = tokens[i+1:]
+			break
+		}
+	}
+
+	ponder := chess.Move{}
+	for _, t := range tokens {
+		if err := ponder.UnmarshalText(t); err == nil {
+			best.ponder = &ponder
+			break
+		}
+	}
+
+	return &best
+}

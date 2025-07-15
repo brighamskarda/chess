@@ -213,6 +213,10 @@ func parseCommand(line []byte) command {
 			cmdType: commandType,
 			msg:     "",
 		}
+	case bestmove:
+		if parsedCommand := parseBestMoveCommand(line); parsedCommand != nil {
+			return *parsedCommand
+		}
 	}
 	return nil
 }
