@@ -188,7 +188,7 @@ func (c *Client) handleCommand(line []byte) {
 
 func parseCommand(line []byte) command {
 	commandType := findCommandType(line)
-	var c command
+	var c command = nil
 	switch commandType {
 	case unknown:
 		return basicCommand{cmdType: unknown, msg: string(line)}
@@ -199,6 +199,10 @@ func parseCommand(line []byte) command {
 	case option:
 		if parsedCommand := parseOptionCommand(line); parsedCommand != nil {
 			c = parsedCommand
+		}
+	case id:
+		if parsedCommand := parseIdCommand(line); parsedCommand != nil {
+			c = *parsedCommand
 		}
 	}
 	return c

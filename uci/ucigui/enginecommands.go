@@ -585,3 +585,48 @@ func findTokenIndexWithWhiteSpace(line []byte, token string) int {
 	}
 	return -1
 }
+
+type idType uint8
+
+const (
+	_ idType = iota
+	name
+	author
+)
+
+type idCommand struct {
+	idt   idType
+	value string
+}
+
+func (i idCommand) commandType() commandType {
+	return id
+}
+
+func parseIdCommand(line []byte) *idCommand {
+	nameIndex := bytes.Index(line, []byte("name"))
+	authorIndex := bytes.Index(line, []byte("author"))
+	if nameIndex == -1 && authorIndex == -1 {
+		return nil
+	} else if nameIndex != -1 && authorIndex == -1 {
+		return &idCommand{
+			idt:   name,
+			value: string(bytes.TrimSpace(line[nameIndex+4:])),
+		}
+	} else if nameIndex == -1 && authorIndex != -1 {
+		return &idCommand{
+			idt:   author,
+			value: string(bytes.TrimSpace(line[authorIndex+6:])),
+		}
+	} else if nameIndex < authorIndex {
+		return &idCommand{
+			idt:   name,
+			value: string(bytes.TrimSpace(line[nameIndex+4:])),
+		}
+	} else {
+		return &idCommand{
+			idt:   author,
+			value: string(bytes.TrimSpace(line[authorIndex+6:])),
+		}
+	}
+}
