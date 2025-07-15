@@ -86,3 +86,49 @@ func TestIdParsing_BadInput(t *testing.T) {
 		t.Errorf("IDs do not match: expected %v, got %v", expected, parsedCommand)
 	}
 }
+
+func TestUciokParsing(t *testing.T) {
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
+
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	dummy.stdoutWriter.Write([]byte("uciok\n"))
+	dummy.stdoutWriter.Write([]byte(" \tuciok\t\t fdfj fdk\n"))
+
+	parsedCommand1 := client.commandBuf.Next()
+	parsedCommand2 := client.commandBuf.Next()
+
+	if parsedCommand1.commandType() != uciok {
+		t.Errorf("parsedCommand1 is not uciok")
+	}
+	if parsedCommand2.commandType() != uciok {
+		t.Errorf("parsedCommand2 is not uciok")
+	}
+}
+
+func TestReadyokParsing(t *testing.T) {
+	dummy := newDummyClientProgram()
+	defer dummy.Kill()
+
+	client, err := newClientFromClientProgram(dummy, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	dummy.stdoutWriter.Write([]byte("readyok\n"))
+	dummy.stdoutWriter.Write([]byte(" \treadyok\t\t fdfj fdk\n"))
+
+	parsedCommand1 := client.commandBuf.Next()
+	parsedCommand2 := client.commandBuf.Next()
+
+	if parsedCommand1.commandType() != readyok {
+		t.Errorf("parsedCommand1 is not readyok")
+	}
+	if parsedCommand2.commandType() != readyok {
+		t.Errorf("parsedCommand2 is not readyok")
+	}
+}

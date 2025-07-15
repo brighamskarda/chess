@@ -188,24 +188,33 @@ func (c *Client) handleCommand(line []byte) {
 
 func parseCommand(line []byte) command {
 	commandType := findCommandType(line)
-	var c command = nil
 	switch commandType {
 	case unknown:
 		return basicCommand{cmdType: unknown, msg: string(line)}
 	case info:
 		if parsedCommand := parseInfoCommand(line); parsedCommand != nil {
-			c = parsedCommand
+			return parsedCommand
 		}
 	case option:
 		if parsedCommand := parseOptionCommand(line); parsedCommand != nil {
-			c = parsedCommand
+			return parsedCommand
 		}
 	case id:
 		if parsedCommand := parseIdCommand(line); parsedCommand != nil {
-			c = *parsedCommand
+			return *parsedCommand
+		}
+	case uciok:
+		return basicCommand{
+			cmdType: commandType,
+			msg:     "",
+		}
+	case readyok:
+		return basicCommand{
+			cmdType: commandType,
+			msg:     "",
 		}
 	}
-	return c
+	return nil
 }
 
 func findCommandType(line []byte) commandType {
