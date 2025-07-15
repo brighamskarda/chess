@@ -221,6 +221,10 @@ func parseCommand(line []byte) command {
 		if parsedCommand := parseCopyProtection(line); parsedCommand != nil {
 			return *parsedCommand
 		}
+	case registration:
+		if parsedCommand := parseRegistration(line); parsedCommand != nil {
+			return *parsedCommand
+		}
 	}
 	return nil
 }

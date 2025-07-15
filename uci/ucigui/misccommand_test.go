@@ -300,11 +300,11 @@ func TestCopyProtectionParsing(t *testing.T) {
 	dummy.stdoutWriter.Write([]byte("copyprotection error\n"))
 
 	parsedCommand := client.commandBuf.Next().(copyProtection)
-	if parsedCommand != checking {
+	if parsedCommand != cpChecking {
 		t.Error("did not get copyprotection checking")
 	}
 	parsedCommand = client.commandBuf.Next().(copyProtection)
-	if parsedCommand != ok {
+	if parsedCommand != cpOk {
 		t.Error("did not get copyprotection ok")
 	}
 	parsedCommand = client.commandBuf.Next().(copyProtection)
@@ -327,11 +327,11 @@ func TestCopyProtectionParsing_WithGibberish(t *testing.T) {
 	dummy.stdoutWriter.Write([]byte("    copyprotection\t   error ok\n"))
 
 	parsedCommand := client.commandBuf.Next().(copyProtection)
-	if parsedCommand != checking {
+	if parsedCommand != cpChecking {
 		t.Error("did not get copyprotection checking")
 	}
 	parsedCommand = client.commandBuf.Next().(copyProtection)
-	if parsedCommand != ok {
+	if parsedCommand != cpOk {
 		t.Error("did not get copyprotection ok")
 	}
 	parsedCommand = client.commandBuf.Next().(copyProtection)
@@ -354,11 +354,88 @@ func TestCopyProtectionParsing_BadInput(t *testing.T) {
 	dummy.stdoutWriter.Write([]byte("copyprotection error \n"))
 
 	parsedCommand := client.commandBuf.Next().(copyProtection)
-	if parsedCommand != ok {
+	if parsedCommand != cpOk {
 		t.Error("did not get copyprotection ok")
 	}
 	parsedCommand = client.commandBuf.Next().(copyProtection)
 	if parsedCommand != cpError {
 		t.Error("did not get copyprotection error")
 	}
+}
+
+func TestRegistrationCommandParsing(t *testing.T) {
+    dummy := newDummyClientProgram()
+    defer dummy.Kill()
+
+    client, err := newClientFromClientProgram(dummy, ClientSettings{})
+    if err != nil {
+        t.Fatalf("%v", err)
+    }
+
+    dummy.stdoutWriter.Write([]byte("registration checking\n"))
+    dummy.stdoutWriter.Write([]byte("registration ok\n"))
+    dummy.stdoutWriter.Write([]byte("registration error\n"))
+
+    parsed := client.commandBuf.Next().(registrationCommand)
+    if parsed != regChecking {
+        t.Error("did not get registration checking")
+    }
+    parsed = client.commandBuf.Next().(registrationCommand)
+    if parsed != regOk {
+        t.Error("did not get registration ok")
+    }
+    parsed = client.commandBuf.Next().(registrationCommand)
+    if parsed != regError {
+        t.Error("did not get registration error")
+    }
+}
+
+func TestRegistrationCommandParsing_WithNoise(t *testing.T) {
+    dummy := newDummyClientProgram()
+    defer dummy.Kill()
+
+    client, err := newClientFromClientProgram(dummy, ClientSettings{})
+    if err != nil {
+        t.Fatalf("%v", err)
+    }
+
+    dummy.stdoutWriter.Write([]byte("registration gibberish checking\n"))
+    dummy.stdoutWriter.Write([]byte("random registration text ok\n"))
+    dummy.stdoutWriter.Write([]byte("\t registration  \t error ok\n"))
+
+    parsed := client.commandBuf.Next().(registrationCommand)
+    if parsed != regChecking {
+        t.Error("did not get registration checking")
+    }
+    parsed = client.commandBuf.Next().(registrationCommand)
+    if parsed != regOk {
+        t.Error("did not get registration ok")
+    }
+    parsed = client.commandBuf.Next().(registrationCommand)
+    if parsed != regError {
+        t.Error("did not get registration error")
+    }
+}
+
+func TestRegistrationCommandParsing_IncompleteInput(t *testing.T) {
+    dummy := newDummyClientProgram()
+    defer dummy.Kill()
+
+    client, err := newClientFromClientProgram(dummy, ClientSettings{})
+    if err != nil {
+        t.Fatalf("%v", err)
+    }
+
+    dummy.stdoutWriter.Write([]byte("registration\n"))
+    dummy.stdoutWriter.Write([]byte("registration ok\n"))
+    dummy.stdoutWriter.Write([]byte("registration error\n"))
+
+    parsed := client.commandBuf.Next().(registrationCommand)
+    if parsed != regOk {
+        t.Error("did not get registration ok")
+    }
+    parsed = client.commandBuf.Next().(registrationCommand)
+    if parsed != regError {
+        t.Error("did not get registration error")
+    }
 }

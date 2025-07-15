@@ -691,8 +691,8 @@ func (cp copyProtection) commandType() commandType {
 
 const (
 	_ copyProtection = iota
-	checking
-	ok
+	cpChecking
+	cpOk
 	cpError
 )
 
@@ -702,11 +702,11 @@ func parseCopyProtection(line []byte) *copyProtection {
 	var cp copyProtection
 	for _, t := range tokens {
 		if bytes.EqualFold(t, []byte("checking")) {
-			cp = checking
+			cp = cpChecking
 			break
 		}
 		if bytes.EqualFold(t, []byte("ok")) {
-			cp = ok
+			cp = cpOk
 			break
 		}
 		if bytes.EqualFold(t, []byte("error")) {
@@ -719,4 +719,42 @@ func parseCopyProtection(line []byte) *copyProtection {
 		return nil
 	}
 	return &cp
+}
+
+type registrationCommand uint8
+
+func (reg registrationCommand) commandType() commandType {
+	return registration
+}
+
+const (
+	_ registrationCommand = iota
+	regChecking
+	regOk
+	regError
+)
+
+func parseRegistration(line []byte) *registrationCommand {
+	tokens := bytes.Fields(line)
+
+	var reg registrationCommand
+	for _, t := range tokens {
+		if bytes.EqualFold(t, []byte("checking")) {
+			reg = regChecking
+			break
+		}
+		if bytes.EqualFold(t, []byte("ok")) {
+			reg = regOk
+			break
+		}
+		if bytes.EqualFold(t, []byte("error")) {
+			reg = regError
+			break
+		}
+	}
+
+	if reg == 0 {
+		return nil
+	}
+	return &reg
 }
