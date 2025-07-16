@@ -33,11 +33,17 @@ import (
 type ClientSettings struct {
 	// Args is the arguments that should be passed to the engine. May be nil.
 	Args []string
-	// Env is the environment variables that the engine should run with. If nil, it will run with environment of the parent process. If empty it will run with an empty environment. Entries should be formatted as "VAR_NAME=VALUE".
+	// Env is the environment variables that the engine should run with. If nil,
+	// it will run with environment of the parent process. If empty it will run
+	// with an empty environment. Entries should be formatted as "VAR_NAME=VALUE".
 	Env []string
-	// WorkDir is the working directory to run the engine from. If empty it will run in the working directory of the parent process.
+	// WorkDir is the working directory to run the engine from. If empty it will
+	// run in the working directory of the parent process.
 	WorkDir string
-	// Logger is where all communication between the engine and the client will take place.
+	// Logger is where all communication between the engine and the client will
+	// be recorded. Logger is closely related to various IO routines, so if it
+	// starts blocking for extended periods of time, timeouts may start to
+	// occur. May be nil.
 	//
 	// `>>>` Three arrows right indicates a line that was sent to stdin for the engine.
 	//
@@ -156,13 +162,8 @@ func stderrReadLoop(cw *concurrentWriter, r io.Reader) {
 	for scnr.Scan() {
 		prefix = append(prefix, scnr.Bytes()...)
 		prefix = append(prefix, '\n')
-		_, err := cw.Write(prefix)
-		if err != nil {
-			break
-		}
+		cw.Write(prefix)
 		prefix = prefix[:originalPrefixLen]
-	}
-	for scnr.Scan() {
 	}
 }
 
@@ -273,12 +274,25 @@ func findCommandType(line []byte) commandType {
 }
 
 // send is the proper way to send messages to the engine as it will also send the messages to the client's logger. Don't forget to add a new line.
-func (c *Client) send(p []byte) error {
-	prefix := []byte(">>> ")
-	prefix = append(prefix, p...)
-	c.logger.Write(prefix)
-	_, err := c.clientProgram.Write(p)
-	return err
+func (c *Client) send(ctx context.Context, p []byte) error {
+	done := make(chan error, 1)
+	go func() {
+		nWrit, err := c.clientProgram.Write(p)
+		prefix := []byte(">>> ")
+		prefix = append(prefix, p[:nWrit]...)
+		c.logger.Write(prefix)
+		done <- err
+	}()
+
+	select {
+	case err := <-done:
+		if err != nil {
+			return fmt.Errorf("problem sending message to engine: %w", err)
+		}
+		return nil
+	case <-ctx.Done():
+		return fmt.Errorf("problem sending message to engine, context cancelled: %w", ctx.Err())
+	}
 }
 
 // ReadInfo returns an [Info] received from the engine. This is implemented as a circular buffer with size 128, meaning that only the last 128 infos are stored. If the engine sends more, the oldest info is deleted to make room. It is a good idea to setup a continuous read loop if you don't want to miss any infos.
@@ -305,12 +319,12 @@ func (c *Client) Quit(timeout1 time.Duration, timeout2 time.Duration) error {
 	var errs error
 	defer c.cancel()
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout1)
+	timer1, cancel := context.WithTimeout(context.Background(), timeout1)
 	defer cancel()
 
 	done := make(chan error)
 	go func() {
-		err := c.send([]byte("quit\n"))
+		err := c.send(timer1, []byte("quit\n"))
 		time.Sleep(timeout1 / 5) // gives the engine time to read quit before the pipe is closed.
 		err = errors.Join(err, c.clientProgram.CloseStdin())
 		done <- errors.Join(err, c.clientProgram.Wait())
@@ -319,15 +333,15 @@ func (c *Client) Quit(timeout1 time.Duration, timeout2 time.Duration) error {
 	select {
 	case err := <-done:
 		return err
-	case <-ctx.Done():
-		ctx2, cancel2 := context.WithTimeout(context.Background(), timeout2)
+	case <-timer1.Done():
+		timer2, cancel2 := context.WithTimeout(context.Background(), timeout2)
 		defer cancel2()
 		errs = c.clientProgram.Terminate()
 
 		select {
 		case err := <-done:
 			return errors.Join(errs, err)
-		case <-ctx2.Done():
+		case <-timer2.Done():
 			errs = errors.Join(errs, c.clientProgram.Kill())
 		}
 	}
@@ -345,7 +359,10 @@ func (c *Client) Uci(timeout time.Duration) ([]*Option, error) {
 	timer, cancel := context.WithTimeout(c.ctx, timeout)
 	defer cancel()
 
-	c.send([]byte("uci\n"))
+	err := c.send(timer, []byte("uci\n"))
+	if err != nil {
+		return nil, fmt.Errorf("could not initialize uci mode: %w", err)
+	}
 
 	nextCommand := make(chan command)
 	go readCommandsUntilUciOk(timer, nextCommand, c.commandBuf)
@@ -444,7 +461,10 @@ func (c *Client) IsReady(timeout time.Duration) bool {
 	timer, cancel := context.WithTimeout(c.ctx, timeout)
 	defer cancel()
 
-	c.send([]byte("isready\n"))
+	err := c.send(timer, []byte("isready\n"))
+	if err != nil {
+		return false
+	}
 
 	for {
 		command, err := c.commandBuf.NextWithContext(timer)

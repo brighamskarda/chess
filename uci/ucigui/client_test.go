@@ -17,7 +17,10 @@ package ucigui
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -38,12 +41,12 @@ func TestNewClient_NoErrorOnValidBinary(t *testing.T) {
 }
 
 type clientProgramMock struct {
-	stdinReader  *io.PipeReader
-	stdinWriter  *io.PipeWriter
-	stdoutReader *io.PipeReader
-	stdoutWriter *io.PipeWriter
-	stderrReader *io.PipeReader
-	stderrWriter *io.PipeWriter
+	stdinReader  io.ReadCloser
+	stdinWriter  io.WriteCloser
+	stdoutReader io.ReadCloser
+	stdoutWriter io.WriteCloser
+	stderrReader io.ReadCloser
+	stderrWriter io.WriteCloser
 }
 
 func (cp *clientProgramMock) Terminate() error {
@@ -75,9 +78,12 @@ func (cp *clientProgramMock) CloseStdin() error {
 }
 
 func newDummyClientProgram() *clientProgramMock {
-	stdinReader, stdinWriter := io.Pipe()
-	stdoutReader, stdoutWriter := io.Pipe()
-	stderrReader, stderrWriter := io.Pipe()
+	stdinReader, stdinWriter, err1 := os.Pipe()
+	stdoutReader, stdoutWriter, err2 := os.Pipe()
+	stderrReader, stderrWriter, err3 := os.Pipe()
+	if err1 != nil || err2 != nil || err3 != nil {
+		panic(fmt.Sprintf("could not create os pipes: %v", errors.Join(err1, err2, err3)))
+	}
 	return &clientProgramMock{
 		stdinReader:  stdinReader,
 		stdinWriter:  stdinWriter,
@@ -231,7 +237,10 @@ func TestClient_QuitLogs(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	c.Quit(time.Millisecond, time.Millisecond)
+	go func() {
+		cp.stdinReader.Read(make([]byte, 10))
+	}()
+	c.Quit(10*time.Millisecond, time.Millisecond)
 
 	expected := ">>> quit\n"
 	got := testLogger.String()
@@ -242,6 +251,7 @@ func TestClient_QuitLogs(t *testing.T) {
 
 func TestClient_UciSendsuci(t *testing.T) {
 	cp := newDummyClientProgram()
+	defer cp.Kill()
 	c, err := newClientFromClientProgram(cp, ClientSettings{})
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -258,6 +268,7 @@ func TestClient_UciSendsuci(t *testing.T) {
 
 func TestClient_Uci(t *testing.T) {
 	cp := newDummyClientProgram()
+	defer cp.Kill()
 	c, err := newClientFromClientProgram(cp, ClientSettings{})
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -296,6 +307,7 @@ func TestClient_Uci(t *testing.T) {
 
 func TestClient_UciMinimal(t *testing.T) {
 	cp := newDummyClientProgram()
+	defer cp.Kill()
 	c, err := newClientFromClientProgram(cp, ClientSettings{})
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -327,6 +339,7 @@ func TestClient_UciMinimal(t *testing.T) {
 
 func TestClient_UciShuffle(t *testing.T) {
 	cp := newDummyClientProgram()
+	defer cp.Kill()
 	c, err := newClientFromClientProgram(cp, ClientSettings{})
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -365,6 +378,7 @@ func TestClient_UciShuffle(t *testing.T) {
 
 func TestClient_UciTimeout(t *testing.T) {
 	cp := newDummyClientProgram()
+	defer cp.Kill()
 	c, err := newClientFromClientProgram(cp, ClientSettings{})
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -385,6 +399,7 @@ func TestClient_UciTimeout(t *testing.T) {
 
 func TestClient_IsReady(t *testing.T) {
 	cp := newDummyClientProgram()
+	defer cp.Kill()
 	c, err := newClientFromClientProgram(cp, ClientSettings{})
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -406,6 +421,7 @@ func TestClient_IsReady(t *testing.T) {
 
 func TestClient_IsReadyDelay(t *testing.T) {
 	cp := newDummyClientProgram()
+	defer cp.Kill()
 	c, err := newClientFromClientProgram(cp, ClientSettings{})
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -427,6 +443,7 @@ func TestClient_IsReadyDelay(t *testing.T) {
 
 func TestClient_IsReadyExtraInput(t *testing.T) {
 	cp := newDummyClientProgram()
+	defer cp.Kill()
 	c, err := newClientFromClientProgram(cp, ClientSettings{})
 	if err != nil {
 		t.Fatalf("%v", err)
