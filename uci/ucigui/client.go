@@ -97,6 +97,10 @@ type Client struct {
 	commandBuf    *concurrentBuf[command]
 	cpStatus      atomic.Value
 	regStatus     atomic.Value
+	engineName    string
+	engineAuthor  string
+	ctx           context.Context
+	cancel        context.CancelFunc
 }
 
 // NewClient takes in the path to UCI compliant chess engine and returns a [Client] that will allow you to interface with it. If it could not start the program, an error is returned.
@@ -115,10 +119,11 @@ func newClientFromClientProgram(cp clientProgram, settings ClientSettings) (*Cli
 	c := &Client{
 		clientProgram: cp,
 		infoBuf:       newCircBuf[*Info](128),
-		commandBuf:    newConcBuf[command](),
 	}
 	c.cpStatus.Store(CpUnknown)
 	c.regStatus.Store(RegUnknown)
+	c.ctx, c.cancel = context.WithCancel(context.Background())
+	c.commandBuf = newConcBuf[command](c.ctx)
 
 	c.setUpLogger(settings.Logger)
 	c.startReadLoop()
@@ -294,6 +299,7 @@ func (c *Client) ReadInfo() *Info {
 // After this is called, c should no longer be used and all resources for it will be freed.
 func (c *Client) Quit(timeout1 time.Duration, timeout2 time.Duration) error {
 	var errs error
+	defer c.cancel()
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout1)
 	defer cancel()
@@ -326,9 +332,67 @@ func (c *Client) Quit(timeout1 time.Duration, timeout2 time.Duration) error {
 	return errs
 }
 
-// Uci should be the first function you always call on a new client. It tells the program to enter uci mode. Returns an error if the timeout is reached before receiving uciok. It is a good idea to call [Client.CopyrightStatus] and [Client.RegistrationStatus] a short time after this function to make sure the engine initialized correctly.
-func (c *Client) Uci(timeout time.Duration) ([]Option, error) {
-	return nil, nil
+// Uci should be the first function you always call on a new client. It tells the program to enter uci mode. If successful [Client.Name] and [Client.Author] will be set, and the engine's options will be returned. Returns an error if the timeout is reached before receiving uciok. [Client.Quit] should be called after receiving an error.
+//
+// It is a good idea to call [Client.CopyrightStatus] and [Client.RegistrationStatus] a short time after this function to make sure the engine initialized correctly.
+func (c *Client) Uci(timeout time.Duration) ([]*Option, error) {
+	timer, cancel := context.WithTimeout(c.ctx, timeout)
+	defer cancel()
+
+	c.send([]byte("uci\n"))
+
+	nextCommand := make(chan command)
+	go readCommandsUntilUciOk(timer, nextCommand, c.commandBuf)
+
+	options := []*Option{}
+
+	for {
+		cmd := <-nextCommand
+		if cmd == nil {
+			return nil, errors.New("could not initialize uci mode, timeout reached before encountering uciok")
+		}
+		switch cmd.commandType() {
+		case id:
+			c.setId(cmd.(idCommand))
+		case option:
+			options = append(options, cmd.(*Option))
+		case uciok:
+			return options, nil
+		}
+	}
+}
+
+func readCommandsUntilUciOk(ctx context.Context, commands chan<- command, commandBuf *concurrentBuf[command]) {
+	for {
+		cmd, err := commandBuf.NextWithContext(ctx)
+		if err != nil {
+			commands <- nil
+			break
+		}
+		commands <- cmd
+		if cmd.commandType() == uciok {
+			break
+		}
+	}
+}
+
+func (c *Client) setId(id idCommand) {
+	switch id.idt {
+	case author:
+		c.engineAuthor = id.value
+	case name:
+		c.engineName = id.value
+	}
+}
+
+// Name provides the id name sent by the engine after calling [Client.Uci]. Empty string if not set.
+func (c *Client) Name() string {
+	return c.engineName
+}
+
+// Author provides the author sent by the engine after calling [Client.Uci]. Empty string if not set.
+func (c *Client) Author() string {
+	return c.engineAuthor
 }
 
 // CopyrightStatus returns the current copyright status received from the engine.

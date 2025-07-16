@@ -16,6 +16,7 @@
 package ucigui
 
 import (
+	"bytes"
 	"io"
 	"strings"
 	"testing"
@@ -176,7 +177,7 @@ func (cp *clientProgramMock_DelayedWait) CloseStdin() error {
 }
 
 func TestClient_QuitProcess(t *testing.T) {
-	cp := &clientProgramMock_DelayedWait{TimeToDelay: time.Second}
+	cp := &clientProgramMock_DelayedWait{TimeToDelay: 300 * time.Millisecond}
 	c, err := newClientFromClientProgram(cp, ClientSettings{})
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -236,5 +237,148 @@ func TestClient_QuitLogs(t *testing.T) {
 	got := testLogger.String()
 	if got != expected {
 		t.Errorf("expected %q, got %q", expected, got)
+	}
+}
+
+func TestClient_UciSendsuci(t *testing.T) {
+	cp := newDummyClientProgram()
+	c, err := newClientFromClientProgram(cp, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	go c.Uci(time.Second)
+
+	buf := make([]byte, 20)
+	nRead, _ := cp.stdinReader.Read(buf)
+	if !bytes.Equal(buf[:nRead], []byte("uci\n")) {
+		t.Error("did not sent uci\\n")
+	}
+}
+
+func TestClient_Uci(t *testing.T) {
+	cp := newDummyClientProgram()
+	c, err := newClientFromClientProgram(cp, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	go func() {
+		cp.stdinReader.Read(make([]byte, 10))
+		cp.stdoutWriter.Write([]byte("id name dummy engine\n"))
+		cp.stdoutWriter.Write([]byte("id author Brigham Skarda\n"))
+		cp.stdoutWriter.Write([]byte("option name Nullmove type check default true\n"))
+		cp.stdoutWriter.Write([]byte("option name Selectivity type spin default 2 min 0 max 4\n"))
+		cp.stdoutWriter.Write([]byte("uciok\n"))
+	}()
+
+	options, err := c.Uci(time.Hour)
+
+	if err != nil {
+		t.Errorf("got error: %v", err)
+	}
+	if len(options) != 2 {
+		t.Fatalf("incorrect options length")
+	}
+	if options[0].Name != "Nullmove" {
+		t.Errorf("first option should be Nullmove, got %s", options[0].Name)
+	}
+	if options[1].Name != "Selectivity" {
+		t.Errorf("first option should be Selectivity, got %s", options[1].Name)
+	}
+	if c.Name() != "dummy engine" {
+		t.Errorf("name should be dummy engine, got %s", c.Name())
+	}
+	if c.Author() != "Brigham Skarda" {
+		t.Errorf("author should be Brigham Skarda, got %s", c.Author())
+	}
+}
+
+func TestClient_UciMinimal(t *testing.T) {
+	cp := newDummyClientProgram()
+	c, err := newClientFromClientProgram(cp, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	go func() {
+		cp.stdinReader.Read(make([]byte, 10))
+		cp.stdoutWriter.Write([]byte("uciok\n"))
+	}()
+
+	options, err := c.Uci(time.Second)
+
+	if err != nil {
+		t.Errorf("got error: %v", err)
+	}
+	if options == nil {
+		t.Error("options should not be nil")
+	}
+	if len(options) != 0 {
+		t.Error("options should have len 0")
+	}
+	if c.Name() != "" {
+		t.Errorf("name was set: %q", c.Name())
+	}
+	if c.Author() != "" {
+		t.Errorf("author was set: %q", c.Name())
+	}
+}
+
+func TestClient_UciShuffle(t *testing.T) {
+	cp := newDummyClientProgram()
+	c, err := newClientFromClientProgram(cp, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	go func() {
+		cp.stdinReader.Read(make([]byte, 10))
+		cp.stdoutWriter.Write([]byte("option name Nullmove type check default true\n"))
+		cp.stdoutWriter.Write([]byte("id author Brigham Skarda\n"))
+		cp.stdoutWriter.Write([]byte("option name Selectivity type spin default 2 min 0 max 4\n"))
+		cp.stdoutWriter.Write([]byte("id name dummy engine\n"))
+		cp.stdoutWriter.Write([]byte("uciok\n"))
+	}()
+
+	options, err := c.Uci(time.Second)
+
+	if err != nil {
+		t.Errorf("got error: %v", err)
+	}
+	if len(options) != 2 {
+		t.Fatalf("incorrect options length")
+	}
+	if options[0].Name != "Nullmove" {
+		t.Errorf("first option should be Nullmove, got %s", options[0].Name)
+	}
+	if options[1].Name != "Selectivity" {
+		t.Errorf("first option should be Selectivity, got %s", options[1].Name)
+	}
+	if c.Name() != "dummy engine" {
+		t.Errorf("name should be dummy engine, got %s", c.Name())
+	}
+	if c.Author() != "Brigham Skarda" {
+		t.Errorf("author should be Brigham Skarda, got %s", c.Author())
+	}
+}
+
+func TestClient_UciTimeout(t *testing.T) {
+	cp := newDummyClientProgram()
+	c, err := newClientFromClientProgram(cp, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	go func() {
+		cp.stdinReader.Read(make([]byte, 10))
+		time.Sleep(time.Second)
+		cp.stdoutWriter.Write([]byte("uciok\n"))
+	}()
+
+	_, err = c.Uci(500 * time.Millisecond)
+
+	if err == nil {
+		t.Error("did not get error")
 	}
 }
