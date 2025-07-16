@@ -41,7 +41,7 @@ type ClientSettings struct {
 	// run in the working directory of the parent process.
 	WorkDir string
 	// Logger is where all communication between the engine and the client will
-	// be recorded. Logger is closely related to various IO routines, so if it
+	// be recorded. Logger is closely tied to various IO routines, so if it
 	// starts blocking for extended periods of time, timeouts may start to
 	// occur. May be nil.
 	//
@@ -291,7 +291,9 @@ func (c *Client) send(ctx context.Context, p []byte) error {
 		}
 		return nil
 	case <-ctx.Done():
-		return fmt.Errorf("problem sending message to engine, context cancelled: %w", ctx.Err())
+		return fmt.Errorf("problem sending message to engine, context closed: %w", ctx.Err())
+	case <-c.ctx.Done():
+		return fmt.Errorf("problem sending message to engine, client context closed")
 	}
 }
 
@@ -306,7 +308,7 @@ func (c *Client) ReadInfo() *Info {
 
 // Quit sends the quit command to the engine to shutdown as soon as possible. This function should always be called when a client is no longer being used to clean up resources.
 //
-// Once the timeout1 is reached a system-level request will be sent to the engine to gracefully shutdown (SIGTERM on unix). timeout2 will then begin, and once it is reached the engine will be shutdown forcibly.
+// Once the gracefulCtx.Done() is closed a system-level request will be sent to the engine to gracefully shutdown (SIGTERM on unix). Once forcedCtx.Done is closed the engine will be shutdown forcibly.
 //
 // This library makes use of process groups (unix) and job objects (windows) to help ensure that the engine don't leave behind stray processes on forcible exits.
 //
@@ -315,17 +317,14 @@ func (c *Client) ReadInfo() *Info {
 // After this is called, c should no longer be used and all resources for it will be freed.
 //
 // Safe to call concurrently. Should only be called once.
-func (c *Client) Quit(timeout1 time.Duration, timeout2 time.Duration) error {
+func (c *Client) Quit(gracefulCtx context.Context, forcedCtx context.Context) error {
 	var errs error
 	defer c.cancel()
 
-	timer1, cancel := context.WithTimeout(context.Background(), timeout1)
-	defer cancel()
-
 	done := make(chan error)
 	go func() {
-		err := c.send(timer1, []byte("quit\n"))
-		time.Sleep(timeout1 / 5) // gives the engine time to read quit before the pipe is closed.
+		err := c.send(c.ctx, []byte("quit\n"))
+		time.Sleep(10 * time.Millisecond) // gives the engine time to read quit before the pipe is closed.
 		err = errors.Join(err, c.clientProgram.CloseStdin())
 		done <- errors.Join(err, c.clientProgram.Wait())
 	}()
@@ -333,15 +332,13 @@ func (c *Client) Quit(timeout1 time.Duration, timeout2 time.Duration) error {
 	select {
 	case err := <-done:
 		return err
-	case <-timer1.Done():
-		timer2, cancel2 := context.WithTimeout(context.Background(), timeout2)
-		defer cancel2()
+	case <-gracefulCtx.Done():
 		errs = c.clientProgram.Terminate()
 
 		select {
 		case err := <-done:
 			return errors.Join(errs, err)
-		case <-timer2.Done():
+		case <-forcedCtx.Done():
 			errs = errors.Join(errs, c.clientProgram.Kill())
 		}
 	}
@@ -350,29 +347,26 @@ func (c *Client) Quit(timeout1 time.Duration, timeout2 time.Duration) error {
 	return errs
 }
 
-// Uci should be the first function you always call on a new client. It tells the program to enter uci mode. If successful [Client.Name] and [Client.Author] will be set, and the engine's options will be returned. Returns an error if the timeout is reached before receiving uciok. [Client.Quit] should be called after receiving an error.
+// Uci should be the first function you always call on a new client. It tells the program to enter uci mode. If successful [Client.Name] and [Client.Author] will be set, and the engine's options will be returned. Returns an error if ctx.Done() closes before receiving uciok. [Client.Quit] should be called after receiving an error.
 //
 // It is a good idea to call [Client.CopyrightStatus] and [Client.RegistrationStatus] a short time after this function to make sure the engine initialized correctly.
 //
 // Not safe for concurrent use.
-func (c *Client) Uci(timeout time.Duration) ([]*Option, error) {
-	timer, cancel := context.WithTimeout(c.ctx, timeout)
-	defer cancel()
-
-	err := c.send(timer, []byte("uci\n"))
+func (c *Client) Uci(ctx context.Context) ([]*Option, error) {
+	err := c.send(ctx, []byte("uci\n"))
 	if err != nil {
 		return nil, fmt.Errorf("could not initialize uci mode: %w", err)
 	}
 
 	nextCommand := make(chan command)
-	go readCommandsUntilUciOk(timer, nextCommand, c.commandBuf)
+	go readCommandsUntilUciOk(ctx, nextCommand, c.commandBuf)
 
 	options := []*Option{}
 
 	for {
 		cmd := <-nextCommand
 		if cmd == nil {
-			return nil, errors.New("could not initialize uci mode, timeout reached before encountering uciok")
+			return nil, errors.New("could not initialize uci mode, context closed reached before encountering uciok")
 		}
 		switch cmd.commandType() {
 		case id:
@@ -454,20 +448,17 @@ func (c *Client) RegistrationStatus() RegStatus {
 	return RegStatus(c.regStatus.Load())
 }
 
-// IsReady blocks until the engine responds with readyok. Returns false if timeout is reached. This is useful for synchronizing with the engine after calling functions like [Client.Uci], [Client.SetOption], and [Client.Register].
+// IsReady blocks until the engine responds with readyok. Returns false if ctx.Done() is closed. This is useful for synchronizing with the engine after calling functions like [Client.Uci], [Client.SetOption], and [Client.Register].
 //
 // Not safe for concurrent use.
-func (c *Client) IsReady(timeout time.Duration) bool {
-	timer, cancel := context.WithTimeout(c.ctx, timeout)
-	defer cancel()
-
-	err := c.send(timer, []byte("isready\n"))
+func (c *Client) IsReady(ctx context.Context) bool {
+	err := c.send(ctx, []byte("isready\n"))
 	if err != nil {
 		return false
 	}
 
 	for {
-		command, err := c.commandBuf.NextWithContext(timer)
+		command, err := c.commandBuf.NextWithContext(ctx)
 		if err != nil {
 			return false
 		}
@@ -477,20 +468,17 @@ func (c *Client) IsReady(timeout time.Duration) bool {
 	}
 }
 
-// Debug tells the engine to enter or exit debug mode. Returns an error if timeout expires before the command could be sent.
+// Debug tells the engine to enter or exit debug mode. Returns an error if ctx.Done() closes before the command could be sent.
 //
 // Not safe for concurrent use.
-func (c *Client) Debug(enabled bool, timeout time.Duration) error {
-	timer, cancel := context.WithTimeout(c.ctx, timeout)
-	defer cancel()
-
+func (c *Client) Debug(ctx context.Context, debugOn bool) error {
 	var message []byte
-	if enabled {
+	if debugOn {
 		message = []byte("debug on\n")
 	} else {
 		message = []byte("debug off\n")
 	}
-	err := c.send(timer, message)
+	err := c.send(ctx, message)
 	if err != nil {
 		return fmt.Errorf("could not send debug message: %w", err)
 	}

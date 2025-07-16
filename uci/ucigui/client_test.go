@@ -17,6 +17,7 @@ package ucigui
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -148,7 +149,11 @@ func TestClient_QuitOnRealProgram(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	c.Quit(time.Second, time.Second)
+	ctx1, cancel1 := context.WithTimeout(context.Background(), time.Second)
+	ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel1()
+	defer cancel2()
+	c.Quit(ctx1, ctx2)
 }
 
 type clientProgramMock_DelayedWait struct {
@@ -189,7 +194,11 @@ func TestClient_QuitProcess(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	err = c.Quit(100*time.Millisecond, 100*time.Millisecond)
+	ctx1, cancel1 := context.WithTimeout(context.Background(), time.Millisecond*100)
+	ctx2, cancel2 := context.WithTimeout(context.Background(), time.Millisecond*200)
+	defer cancel1()
+	defer cancel2()
+	c.Quit(ctx1, ctx2)
 	if err != nil {
 		t.Errorf("%v", err)
 	}
@@ -216,7 +225,11 @@ func TestClient_QuitSendsQuit(t *testing.T) {
 		nRead, err = cp.stdinReader.Read(buf)
 	}()
 
-	c.Quit(100*time.Millisecond, 100*time.Millisecond)
+	ctx1, cancel1 := context.WithTimeout(context.Background(), time.Millisecond*100)
+	ctx2, cancel2 := context.WithTimeout(context.Background(), time.Millisecond*200)
+	defer cancel1()
+	defer cancel2()
+	c.Quit(ctx1, ctx2)
 
 	if err != nil {
 		t.Errorf("%v", err)
@@ -240,7 +253,11 @@ func TestClient_QuitLogs(t *testing.T) {
 	go func() {
 		cp.stdinReader.Read(make([]byte, 10))
 	}()
-	c.Quit(10*time.Millisecond, time.Millisecond)
+	ctx1, cancel1 := context.WithTimeout(context.Background(), time.Millisecond*10)
+	ctx2, cancel2 := context.WithTimeout(context.Background(), time.Millisecond*11)
+	defer cancel1()
+	defer cancel2()
+	c.Quit(ctx1, ctx2)
 
 	expected := ">>> quit\n"
 	got := testLogger.String()
@@ -257,7 +274,9 @@ func TestClient_UciSendsuci(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	go c.Uci(time.Second)
+	ctx1, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	go c.Uci(ctx1)
 
 	buf := make([]byte, 20)
 	nRead, _ := cp.stdinReader.Read(buf)
@@ -283,7 +302,9 @@ func TestClient_Uci(t *testing.T) {
 		cp.stdoutWriter.Write([]byte("uciok\n"))
 	}()
 
-	options, err := c.Uci(time.Hour)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Hour)
+	defer cancel()
+	options, err := c.Uci(ctx)
 
 	if err != nil {
 		t.Errorf("got error: %v", err)
@@ -318,7 +339,9 @@ func TestClient_UciMinimal(t *testing.T) {
 		cp.stdoutWriter.Write([]byte("uciok\n"))
 	}()
 
-	options, err := c.Uci(time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	options, err := c.Uci(ctx)
 
 	if err != nil {
 		t.Errorf("got error: %v", err)
@@ -354,7 +377,9 @@ func TestClient_UciShuffle(t *testing.T) {
 		cp.stdoutWriter.Write([]byte("uciok\n"))
 	}()
 
-	options, err := c.Uci(time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	options, err := c.Uci(ctx)
 
 	if err != nil {
 		t.Errorf("got error: %v", err)
@@ -390,7 +415,9 @@ func TestClient_UciTimeout(t *testing.T) {
 		cp.stdoutWriter.Write([]byte("uciok\n"))
 	}()
 
-	_, err = c.Uci(500 * time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+	_, err = c.Uci(ctx)
 
 	if err == nil {
 		t.Error("did not get error")
@@ -414,7 +441,9 @@ func TestClient_IsReady(t *testing.T) {
 		}
 	}()
 
-	if !c.IsReady(1000 * time.Millisecond) {
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	if !c.IsReady(ctx) {
 		t.Error("returned not ready")
 	}
 }
@@ -436,7 +465,9 @@ func TestClient_IsReadyDelay(t *testing.T) {
 		}
 	}()
 
-	if c.IsReady(100 * time.Millisecond) {
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	if c.IsReady(ctx) {
 		t.Error("returned ready")
 	}
 }
@@ -460,7 +491,9 @@ func TestClient_IsReadyExtraInput(t *testing.T) {
 		}
 	}()
 
-	if !c.IsReady(100 * time.Millisecond) {
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	if !c.IsReady(ctx) {
 		t.Error("returned ready")
 	}
 }
@@ -473,7 +506,9 @@ func TestClient_DebugOn(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	if err := c.Debug(true, 10*time.Millisecond); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+	if err := c.Debug(ctx, true); err != nil {
 		t.Errorf("got error: %v", err)
 	}
 	buf := make([]byte, 10)
@@ -491,7 +526,9 @@ func TestClient_DebugOff(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	if err := c.Debug(false, 10*time.Millisecond); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+	if err := c.Debug(ctx, false); err != nil {
 		t.Errorf("got error: %v", err)
 	}
 	buf := make([]byte, 10)
@@ -509,7 +546,9 @@ func TestClient_DebugError(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	if err := c.Debug(false, 0); err == nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 0)
+	defer cancel()
+	if err := c.Debug(ctx, false); err == nil {
 		t.Error("got no error")
 	}
 }

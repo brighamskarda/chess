@@ -51,22 +51,24 @@ func (cb *concurrentCircBuf[T]) Push(t T) {
 type concurrentBuf[T any] struct {
 	inCh  chan T
 	outCh chan T
+	ctx   context.Context
 }
 
 func newConcBuf[T any](ctx context.Context) *concurrentBuf[T] {
 	cb := &concurrentBuf[T]{
 		inCh:  make(chan T),
 		outCh: make(chan T),
+		ctx:   ctx,
 	}
-	go cb.run(ctx)
+	go cb.run()
 	return cb
 }
 
-func (cb *concurrentBuf[T]) run(ctx context.Context) {
+func (cb *concurrentBuf[T]) run() {
 	var buffer []T
 	var outCh chan T
 	var next T
-	done := ctx.Done()
+	done := cb.ctx.Done()
 
 	for {
 		// If we have something to send, prepare the output
@@ -104,5 +106,8 @@ func (cb *concurrentBuf[T]) NextWithContext(ctx context.Context) (T, error) {
 	case <-ctx.Done():
 		var zero T
 		return zero, errors.New("could not get next value, context expired")
+	case <-cb.ctx.Done():
+		var zero T
+		return zero, errors.New("could not get next value, buffer parent context expired")
 	}
 }
