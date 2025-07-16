@@ -477,6 +477,26 @@ func (c *Client) IsReady(timeout time.Duration) bool {
 	}
 }
 
+// Debug tells the engine to enter or exit debug mode. Returns an error if timeout expires before the command could be sent.
+//
+// Not safe for concurrent use.
+func (c *Client) Debug(enabled bool, timeout time.Duration) error {
+	timer, cancel := context.WithTimeout(c.ctx, timeout)
+	defer cancel()
+
+	var message []byte
+	if enabled {
+		message = []byte("debug on\n")
+	} else {
+		message = []byte("debug off\n")
+	}
+	err := c.send(timer, message)
+	if err != nil {
+		return fmt.Errorf("could not send debug message: %w", err)
+	}
+	return nil
+}
+
 func (c *Client) Register() error {
 	return nil
 }

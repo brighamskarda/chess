@@ -464,3 +464,52 @@ func TestClient_IsReadyExtraInput(t *testing.T) {
 		t.Error("returned ready")
 	}
 }
+
+func TestClient_DebugOn(t *testing.T) {
+	cp := newDummyClientProgram()
+	defer cp.Kill()
+	c, err := newClientFromClientProgram(cp, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	if err := c.Debug(true, 10*time.Millisecond); err != nil {
+		t.Errorf("got error: %v", err)
+	}
+	buf := make([]byte, 10)
+	nRead, _ := cp.stdinReader.Read(buf)
+	if !bytes.Equal(buf[:nRead], []byte("debug on\n")) {
+		t.Errorf("expected debug on, got %q", buf[:nRead])
+	}
+}
+
+func TestClient_DebugOff(t *testing.T) {
+	cp := newDummyClientProgram()
+	defer cp.Kill()
+	c, err := newClientFromClientProgram(cp, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	if err := c.Debug(false, 10*time.Millisecond); err != nil {
+		t.Errorf("got error: %v", err)
+	}
+	buf := make([]byte, 10)
+	nRead, _ := cp.stdinReader.Read(buf)
+	if !bytes.Equal(buf[:nRead], []byte("debug off\n")) {
+		t.Errorf("expected debug off, got %q", buf[:nRead])
+	}
+}
+
+func TestClient_DebugError(t *testing.T) {
+	cp := newDummyClientProgram()
+	defer cp.Kill()
+	c, err := newClientFromClientProgram(cp, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	if err := c.Debug(false, 0); err == nil {
+		t.Error("got no error")
+	}
+}
