@@ -382,3 +382,68 @@ func TestClient_UciTimeout(t *testing.T) {
 		t.Error("did not get error")
 	}
 }
+
+func TestClient_IsReady(t *testing.T) {
+	cp := newDummyClientProgram()
+	c, err := newClientFromClientProgram(cp, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	go func() {
+		buf := make([]byte, 10)
+		nRead, _ := cp.stdinReader.Read(buf)
+		if bytes.Equal(buf[:nRead], []byte("isready\n")) {
+			time.Sleep(50 * time.Millisecond)
+			cp.stdoutWriter.Write([]byte("readyok\n"))
+		}
+	}()
+
+	if !c.IsReady(1000 * time.Millisecond) {
+		t.Error("returned not ready")
+	}
+}
+
+func TestClient_IsReadyDelay(t *testing.T) {
+	cp := newDummyClientProgram()
+	c, err := newClientFromClientProgram(cp, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	go func() {
+		buf := make([]byte, 10)
+		nRead, _ := cp.stdinReader.Read(buf)
+		if bytes.Equal(buf[:nRead], []byte("isready\n")) {
+			time.Sleep(150 * time.Millisecond)
+			cp.stdoutWriter.Write([]byte("readyok\n"))
+		}
+	}()
+
+	if c.IsReady(100 * time.Millisecond) {
+		t.Error("returned ready")
+	}
+}
+
+func TestClient_IsReadyExtraInput(t *testing.T) {
+	cp := newDummyClientProgram()
+	c, err := newClientFromClientProgram(cp, ClientSettings{})
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	go func() {
+		buf := make([]byte, 10)
+		nRead, _ := cp.stdinReader.Read(buf)
+		if bytes.Equal(buf[:nRead], []byte("isready\n")) {
+			cp.stdoutWriter.Write([]byte("uciok\n"))
+			cp.stdoutWriter.Write([]byte("info depth 1 seldepth 0\n"))
+			cp.stdoutWriter.Write([]byte("option name Hash type spin default 1 min 1 max 128\n"))
+			cp.stdoutWriter.Write([]byte("tacos de adobada \treadyok with \tguacamole \n"))
+		}
+	}()
+
+	if !c.IsReady(100 * time.Millisecond) {
+		t.Error("returned ready")
+	}
+}

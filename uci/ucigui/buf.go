@@ -96,13 +96,13 @@ func (cb *concurrentBuf[T]) Next() T {
 	return <-cb.outCh
 }
 
-// NextWithContext blocks until the context expires, at which point it returns an error if no value was yet available.
+// NextWithContext blocks until the context expires, at which point it returns an error if no value was available.
 func (cb *concurrentBuf[T]) NextWithContext(ctx context.Context) (T, error) {
 	select {
 	case val := <-cb.outCh:
 		return val, nil
 	case <-ctx.Done():
 		var zero T
-		return zero, errors.New("context expired")
+		return zero, errors.New("could not get next value, context expired")
 	}
 }

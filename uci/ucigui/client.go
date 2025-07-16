@@ -90,20 +90,22 @@ func (cw *concurrentWriter) Write(p []byte) (int, error) {
 }
 
 // Client is the GUI side of UCI that handles game state and sends commands to the engine. Use this if you are developing a chess program that interacts with engines.
+//
+// There are a mix of functions that can be called concurrently, and others that must be called sequentially. In general status related functions are safe to call concurrently (for ui updates), while functions that send commands to the engine should be called sequentially. [Client.Quit] is an exception to this rule. It can be called at anytime, and should only be called once. See individual method docs for more info.
 type Client struct {
 	clientProgram clientProgram
 	logger        *concurrentWriter
 	infoBuf       *concurrentCircBuf[*Info]
 	commandBuf    *concurrentBuf[command]
-	cpStatus      atomic.Value
-	regStatus     atomic.Value
-	engineName    string
-	engineAuthor  string
+	cpStatus      atomic.Uint32
+	regStatus     atomic.Uint32
+	engineName    atomic.Pointer[string]
+	engineAuthor  atomic.Pointer[string]
 	ctx           context.Context
 	cancel        context.CancelFunc
 }
 
-// NewClient takes in the path to UCI compliant chess engine and returns a [Client] that will allow you to interface with it. If it could not start the program, an error is returned.
+// NewClient takes in the path to a UCI compliant chess engine and returns a [Client] that will allow you to interface with it. If it could not start the program, an error is returned.
 //
 // To ensure no resources are leaked, be sure to always call [Client.Quit] on new clients once you are done with them. (calling `defer client.Quit()` right after NewClient can be a good idea.)
 func NewClient(program string, settings ClientSettings) (*Client, error) {
@@ -120,8 +122,6 @@ func newClientFromClientProgram(cp clientProgram, settings ClientSettings) (*Cli
 		clientProgram: cp,
 		infoBuf:       newCircBuf[*Info](128),
 	}
-	c.cpStatus.Store(CpUnknown)
-	c.regStatus.Store(RegUnknown)
 	c.ctx, c.cancel = context.WithCancel(context.Background())
 	c.commandBuf = newConcBuf[command](c.ctx)
 
@@ -194,9 +194,9 @@ func (c *Client) handleCommand(line []byte) {
 	case info:
 		c.infoBuf.Push(command.(*Info))
 	case copyprotection:
-		c.cpStatus.Store(command.(CopyStatus))
+		c.cpStatus.Store(uint32(command.(CopyStatus)))
 	case registration:
-		c.regStatus.Store(command.(RegStatus))
+		c.regStatus.Store(uint32(command.(RegStatus)))
 	default:
 		c.commandBuf.Push(command)
 	}
@@ -284,6 +284,8 @@ func (c *Client) send(p []byte) error {
 // ReadInfo returns an [Info] received from the engine. This is implemented as a circular buffer with size 128, meaning that only the last 128 infos are stored. If the engine sends more, the oldest info is deleted to make room. It is a good idea to setup a continuous read loop if you don't want to miss any infos.
 //
 // ReadInfo blocks if no infos are available. The returned info is safe to modify.
+//
+// Safe to call concurrently.
 func (c *Client) ReadInfo() *Info {
 	return c.infoBuf.Next()
 }
@@ -297,6 +299,8 @@ func (c *Client) ReadInfo() *Info {
 // Any errors encountered during the exit process will be reported, though outside of debugging they can likely be ignored as this function will only return once the engine is dead.
 //
 // After this is called, c should no longer be used and all resources for it will be freed.
+//
+// Safe to call concurrently. Should only be called once.
 func (c *Client) Quit(timeout1 time.Duration, timeout2 time.Duration) error {
 	var errs error
 	defer c.cancel()
@@ -335,6 +339,8 @@ func (c *Client) Quit(timeout1 time.Duration, timeout2 time.Duration) error {
 // Uci should be the first function you always call on a new client. It tells the program to enter uci mode. If successful [Client.Name] and [Client.Author] will be set, and the engine's options will be returned. Returns an error if the timeout is reached before receiving uciok. [Client.Quit] should be called after receiving an error.
 //
 // It is a good idea to call [Client.CopyrightStatus] and [Client.RegistrationStatus] a short time after this function to make sure the engine initialized correctly.
+//
+// Not safe for concurrent use.
 func (c *Client) Uci(timeout time.Duration) ([]*Option, error) {
 	timer, cancel := context.WithTimeout(c.ctx, timeout)
 	defer cancel()
@@ -379,20 +385,32 @@ func readCommandsUntilUciOk(ctx context.Context, commands chan<- command, comman
 func (c *Client) setId(id idCommand) {
 	switch id.idt {
 	case author:
-		c.engineAuthor = id.value
+		c.engineAuthor.Store(&id.value)
 	case name:
-		c.engineName = id.value
+		c.engineName.Store(&id.value)
 	}
 }
 
 // Name provides the id name sent by the engine after calling [Client.Uci]. Empty string if not set.
+//
+// Safe to call concurrently.
 func (c *Client) Name() string {
-	return c.engineName
+	val := c.engineName.Load()
+	if val == nil {
+		return ""
+	}
+	return *val
 }
 
 // Author provides the author sent by the engine after calling [Client.Uci]. Empty string if not set.
+//
+// Safe to call concurrently.
 func (c *Client) Author() string {
-	return c.engineAuthor
+	val := c.engineAuthor.Load()
+	if val == nil {
+		return ""
+	}
+	return *val
 }
 
 // CopyrightStatus returns the current copyright status received from the engine.
@@ -401,8 +419,10 @@ func (c *Client) Author() string {
 //   - [CpChecking] - The engine is checking its copy protection. Check back in a few seconds.
 //   - [CpOk] - The engine copy protection succeeded.
 //   - [CpError] - The engine copy protection failed. You should call [Client.Quit] and make sure you configured the engine correctly.
+//
+// Safe to call concurrently.
 func (c *Client) CopyrightStatus() CopyStatus {
-	return c.cpStatus.Load().(CopyStatus)
+	return CopyStatus(c.cpStatus.Load())
 }
 
 // RegistrationStatus returns the current registration status received from the engine.
@@ -411,8 +431,30 @@ func (c *Client) CopyrightStatus() CopyStatus {
 //   - [RegChecking] - The engine is verifying its registration. Wait a few moments before proceeding.
 //   - [RegOk] - The engine registration was successful.
 //   - [RegError] - The engine registration failed. The engine may still work, but it is a good idea to call [Client.Register], even if it is just to send the later command.
+//
+// Safe to call concurrently.
 func (c *Client) RegistrationStatus() RegStatus {
-	return c.regStatus.Load().(RegStatus)
+	return RegStatus(c.regStatus.Load())
+}
+
+// IsReady blocks until the engine responds with readyok. Returns false if timeout is reached. This is useful for synchronizing with the engine after calling functions like [Client.Uci], [Client.SetOption], and [Client.Register].
+//
+// Not safe for concurrent use.
+func (c *Client) IsReady(timeout time.Duration) bool {
+	timer, cancel := context.WithTimeout(c.ctx, timeout)
+	defer cancel()
+
+	c.send([]byte("isready\n"))
+
+	for {
+		command, err := c.commandBuf.NextWithContext(timer)
+		if err != nil {
+			return false
+		}
+		if command.commandType() == readyok {
+			return true
+		}
+	}
 }
 
 func (c *Client) Register() error {
