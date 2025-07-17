@@ -102,7 +102,7 @@ type Client struct {
 	clientProgram clientProgram
 	logger        *concurrentWriter
 	infoBuf       *concurrentCircBuf[*Info]
-	commandBuf    *concurrentBuf[command]
+	commandBuf    chan command
 	cpStatus      atomic.Uint32
 	regStatus     atomic.Uint32
 	engineName    atomic.Pointer[string]
@@ -127,9 +127,9 @@ func newClientFromClientProgram(cp clientProgram, settings ClientSettings) (*Cli
 	c := &Client{
 		clientProgram: cp,
 		infoBuf:       newCircBuf[*Info](128),
+		commandBuf:    make(chan command, 128),
 	}
 	c.ctx, c.cancel = context.WithCancel(context.Background())
-	c.commandBuf = newConcBuf[command](c.ctx)
 
 	c.setUpLogger(settings.Logger)
 	c.startReadLoop()
@@ -199,7 +199,7 @@ func (c *Client) handleCommand(line []byte) {
 	case registration:
 		c.regStatus.Store(uint32(command.(RegStatus)))
 	default:
-		c.commandBuf.Push(command)
+		c.commandBuf <- command
 	}
 }
 
@@ -358,37 +358,24 @@ func (c *Client) Uci(ctx context.Context) ([]*Option, error) {
 		return nil, fmt.Errorf("could not initialize uci mode: %w", err)
 	}
 
-	nextCommand := make(chan command)
-	go readCommandsUntilUciOk(ctx, nextCommand, c.commandBuf)
-
 	options := []*Option{}
 
 	for {
-		cmd := <-nextCommand
-		if cmd == nil {
+		var cmd command
+		select {
+		case cmd = <-c.commandBuf:
+			switch cmd.commandType() {
+			case id:
+				c.setId(cmd.(idCommand))
+			case option:
+				options = append(options, cmd.(*Option))
+			case uciok:
+				return options, nil
+			}
+		case <-ctx.Done():
 			return nil, errors.New("could not initialize uci mode, context closed reached before encountering uciok")
-		}
-		switch cmd.commandType() {
-		case id:
-			c.setId(cmd.(idCommand))
-		case option:
-			options = append(options, cmd.(*Option))
-		case uciok:
-			return options, nil
-		}
-	}
-}
-
-func readCommandsUntilUciOk(ctx context.Context, commands chan<- command, commandBuf *concurrentBuf[command]) {
-	for {
-		cmd, err := commandBuf.NextWithContext(ctx)
-		if err != nil {
-			commands <- nil
-			break
-		}
-		commands <- cmd
-		if cmd.commandType() == uciok {
-			break
+		case <-c.ctx.Done():
+			return nil, errors.New("could not initialize uci mode, context closed reached before encountering uciok")
 		}
 	}
 }
@@ -458,12 +445,15 @@ func (c *Client) IsReady(ctx context.Context) bool {
 	}
 
 	for {
-		command, err := c.commandBuf.NextWithContext(ctx)
-		if err != nil {
+		select {
+		case cmd := <-c.commandBuf:
+			if cmd.commandType() == readyok {
+				return true
+			}
+		case <-ctx.Done():
 			return false
-		}
-		if command.commandType() == readyok {
-			return true
+		case <-c.ctx.Done():
+			return false
 		}
 	}
 }

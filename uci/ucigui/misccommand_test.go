@@ -33,7 +33,7 @@ func TestIdParsing_Name(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("id name \t Stockfish 17.1 author \t stillInName\t \n"))
 
-	parsedCommand := client.commandBuf.Next().(idCommand)
+	parsedCommand := (<-client.commandBuf).(idCommand)
 
 	expected := idCommand{
 		idt:   name,
@@ -56,7 +56,7 @@ func TestIdParsing_Author(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("id \t author \t the Stockfish developers (see AUTHORS file) name \t stillInName\t \n"))
 
-	parsedCommand := client.commandBuf.Next().(idCommand)
+	parsedCommand := (<-client.commandBuf).(idCommand)
 
 	expected := idCommand{
 		idt:   author,
@@ -80,7 +80,7 @@ func TestIdParsing_BadInput(t *testing.T) {
 	dummy.stdoutWriter.Write([]byte("id \t jeff  \t the Stockfish developers (see AUTHORS file) \t stillInName\t \n"))
 	dummy.stdoutWriter.Write([]byte("id name \t Stockfish 17.1 author \t stillInName\t \n"))
 
-	parsedCommand := client.commandBuf.Next().(idCommand)
+	parsedCommand := (<-client.commandBuf).(idCommand)
 
 	expected := idCommand{
 		idt:   name,
@@ -104,8 +104,8 @@ func TestUciokParsing(t *testing.T) {
 	dummy.stdoutWriter.Write([]byte("uciok\n"))
 	dummy.stdoutWriter.Write([]byte(" \tuciok\t\t fdfj fdk\n"))
 
-	parsedCommand1 := client.commandBuf.Next()
-	parsedCommand2 := client.commandBuf.Next()
+	parsedCommand1 := (<-client.commandBuf)
+	parsedCommand2 := (<-client.commandBuf)
 
 	if parsedCommand1.commandType() != uciok {
 		t.Error("parsedCommand1 is not uciok")
@@ -127,8 +127,8 @@ func TestReadyokParsing(t *testing.T) {
 	dummy.stdoutWriter.Write([]byte("readyok\n"))
 	dummy.stdoutWriter.Write([]byte(" \treadyok\t\t fdfj fdk\n"))
 
-	parsedCommand1 := client.commandBuf.Next()
-	parsedCommand2 := client.commandBuf.Next()
+	parsedCommand1 := (<-client.commandBuf)
+	parsedCommand2 := (<-client.commandBuf)
 
 	if parsedCommand1.commandType() != readyok {
 		t.Error("parsedCommand1 is not readyok")
@@ -149,7 +149,7 @@ func TestBestMoveParsing(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("bestmove e2e4q\n"))
 
-	parsedCommand1 := client.commandBuf.Next().(bestMove)
+	parsedCommand1 := (<-client.commandBuf).(bestMove)
 
 	expectedBest := chess.Move{
 		FromSquare: chess.E2,
@@ -176,7 +176,7 @@ func TestBestMoveParsing_Ponder(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("bestmove e2e4 ponder a1a3r\n"))
 
-	parsedCommand1 := client.commandBuf.Next().(bestMove)
+	parsedCommand1 := (<-client.commandBuf).(bestMove)
 
 	expectedPonder := chess.Move{
 		FromSquare: chess.A1,
@@ -201,7 +201,7 @@ func TestBestMoveParsing_InputOutOfOrder(t *testing.T) {
 	dummy.stdoutWriter.Write([]byte("bestmove ponder a1a3r e2e4q\n"))
 	dummy.stdoutWriter.Write([]byte("bestmove d8d7\n"))
 
-	parsedCommand1 := client.commandBuf.Next().(bestMove)
+	parsedCommand1 := (<-client.commandBuf).(bestMove)
 
 	expectedBest := chess.Move{
 		FromSquare: chess.D8,
@@ -227,8 +227,8 @@ func TestBestMoveParsing_InvalidMove(t *testing.T) {
 	dummy.stdoutWriter.Write([]byte("bestmove a1a2 ponder f3\n"))
 	dummy.stdoutWriter.Write([]byte("bestmove d8d7\n"))
 
-	parsedCommand1 := client.commandBuf.Next().(bestMove)
-	parsedCommand2 := client.commandBuf.Next().(bestMove)
+	parsedCommand1 := (<-client.commandBuf).(bestMove)
+	parsedCommand2 := (<-client.commandBuf).(bestMove)
 
 	expectedBest := chess.Move{
 		FromSquare: chess.A1,
@@ -266,7 +266,7 @@ func TestBestMoveParsing_RandomWhiteSpace(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("\tbestmove \t d8d7     ponder     \ta1a2\n"))
 
-	parsedCommand1 := client.commandBuf.Next().(bestMove)
+	parsedCommand1 := (<-client.commandBuf).(bestMove)
 
 	expectedBest := chess.Move{
 		FromSquare: chess.D8,

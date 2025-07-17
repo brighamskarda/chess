@@ -60,7 +60,7 @@ func TestOptionParsing_CheckType(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("option name Nullmove type check default true\n"))
 
-	parsedCommand := client.commandBuf.Next().(*Option)
+	parsedCommand := (<-client.commandBuf).(*Option)
 
 	def := "true"
 	expected := &Option{
@@ -85,7 +85,7 @@ func TestOptionParsing_SpinType(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("option name SkillLevel type spin min -1 max 99 default 0\n"))
 
-	parsedCommand := client.commandBuf.Next().(*Option)
+	parsedCommand := (<-client.commandBuf).(*Option)
 
 	min := -1
 	max := 99
@@ -114,7 +114,7 @@ func TestOptionParsing_ComboType(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("option name Style type combo var Opt1 var Opt2 default Opt1\n"))
 
-	parsedCommand := client.commandBuf.Next().(*Option)
+	parsedCommand := (<-client.commandBuf).(*Option)
 
 	def := "Opt1"
 	expected := &Option{
@@ -140,7 +140,7 @@ func TestOptionParsing_ButtonType(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("option name ClearHash type button \n"))
 
-	parsedCommand := client.commandBuf.Next().(*Option)
+	parsedCommand := (<-client.commandBuf).(*Option)
 
 	expected := &Option{
 		Name:  "ClearHash",
@@ -163,7 +163,7 @@ func TestOptionParsing_StringType(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("option name BookPath type string default My Favorite Book\n"))
 
-	parsedCommand := client.commandBuf.Next().(*Option)
+	parsedCommand := (<-client.commandBuf).(*Option)
 
 	def := "My Favorite Book"
 	expected := &Option{
@@ -188,7 +188,7 @@ func TestOptionParsing_VarsWithSpaces(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("option name BookPath type combo default Default 1 var Default 1 var Default 2\n"))
 
-	parsedCommand := client.commandBuf.Next().(*Option)
+	parsedCommand := (<-client.commandBuf).(*Option)
 
 	if *parsedCommand.Default != "Default 1" {
 		t.Errorf("options do not match: expected %v, got %v", "Default 1", parsedCommand.Default)
@@ -211,7 +211,7 @@ func TestOptionParsing_BadCheck(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("option name Nullmove type check default notABool\n"))
 
-	parsedCommand := client.commandBuf.Next().(*Option)
+	parsedCommand := (<-client.commandBuf).(*Option)
 
 	expected := &Option{
 		Name:  "Nullmove",
@@ -234,7 +234,7 @@ func TestOptionParsing_BadSpin(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("option name SkillLevel type spin min hi max lol default 0\n"))
 
-	parsedCommand := client.commandBuf.Next().(*Option)
+	parsedCommand := (<-client.commandBuf).(*Option)
 
 	def := "0"
 	expected := &Option{
@@ -259,7 +259,7 @@ func TestOptionParsing_StringWithKeywords(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("option name BookPath type string default My min Favorite default Book max ra\n"))
 
-	parsedCommand := client.commandBuf.Next().(*Option)
+	parsedCommand := (<-client.commandBuf).(*Option)
 
 	def := "My min Favorite default Book max ra"
 	expected := &Option{
@@ -304,7 +304,7 @@ func TestOptionParsing_InvalidOptions(t *testing.T) {
 	}
 	dummy.stdoutWriter.Write([]byte("option name Nullmove type check default true\n"))
 
-	parsedCommand := client.commandBuf.Next().(*Option)
+	parsedCommand := (<-client.commandBuf).(*Option)
 	if parsedCommand.Name != "Nullmove" {
 		t.Errorf("parsed invalid command %v", parsedCommand.Name)
 	}
@@ -342,7 +342,7 @@ func TestOptionParsing_ValidOptions(t *testing.T) {
 	}
 
 	for range options {
-		_ = client.commandBuf.Next().(*Option)
+		_ = (<-client.commandBuf).(*Option)
 	}
 
 }
@@ -358,7 +358,7 @@ func TestOptionParsing_ArbitraryWhiteSpace(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("option     name\t   \tBook Path type combo default \tDefault 1 var \t    Default \t2   var Default \t2\t\n"))
 
-	parsedCommand := client.commandBuf.Next().(*Option)
+	parsedCommand := (<-client.commandBuf).(*Option)
 
 	def := "Default \t2"
 	expected := &Option{
@@ -384,7 +384,7 @@ func TestOptionParsing_BadTokenBefore(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("joe mama option name Nullmove type check default true\n"))
 
-	parsedCommand := client.commandBuf.Next().(*Option)
+	parsedCommand := (<-client.commandBuf).(*Option)
 
 	def := "true"
 	expected := &Option{
@@ -409,7 +409,7 @@ func TestOptionParsing_BadTokenAtEnd(t *testing.T) {
 
 	dummy.stdoutWriter.Write([]byte("option name Nullmove type check my mama\n"))
 
-	parsedCommand := client.commandBuf.Next().(*Option)
+	parsedCommand := (<-client.commandBuf).(*Option)
 
 	expected := &Option{
 		Name:  "Nullmove",

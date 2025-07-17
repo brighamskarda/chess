@@ -15,11 +15,6 @@
 
 package ucigui
 
-import (
-	"context"
-	"errors"
-)
-
 // concurrentCircBuf is a thread-safe circular buffer that overwrites old values,
 // and blocks on Next() if nothing is available.
 type concurrentCircBuf[T any] struct {
@@ -44,70 +39,5 @@ func (cb *concurrentCircBuf[T]) Push(t T) {
 		// channel is full, discard oldest
 		<-cb.contents
 		cb.contents <- t
-	}
-}
-
-// concurrentBuf is a thread-safe buffer. Unlike circular buf it doesn't drop old values. It will just keep growing to accommodate unread values. Blocks next if nothing is available.
-type concurrentBuf[T any] struct {
-	inCh  chan T
-	outCh chan T
-	ctx   context.Context
-}
-
-func newConcBuf[T any](ctx context.Context) *concurrentBuf[T] {
-	cb := &concurrentBuf[T]{
-		inCh:  make(chan T),
-		outCh: make(chan T),
-		ctx:   ctx,
-	}
-	go cb.run()
-	return cb
-}
-
-func (cb *concurrentBuf[T]) run() {
-	var buffer []T
-	var outCh chan T
-	var next T
-	done := cb.ctx.Done()
-
-	for {
-		// If we have something to send, prepare the output
-		if len(buffer) > 0 {
-			outCh = cb.outCh
-			next = buffer[0]
-		} else {
-			outCh = nil // No value to send
-		}
-
-		select {
-		case item := <-cb.inCh:
-			buffer = append(buffer, item)
-		case outCh <- next: // blocks forever if nil
-			buffer = buffer[1:]
-		case <-done:
-			return
-		}
-	}
-}
-
-func (cb *concurrentBuf[T]) Push(t T) {
-	cb.inCh <- t
-}
-
-func (cb *concurrentBuf[T]) Next() T {
-	return <-cb.outCh
-}
-
-// NextWithContext blocks until the context expires, at which point it returns an error if no value was available.
-func (cb *concurrentBuf[T]) NextWithContext(ctx context.Context) (T, error) {
-	select {
-	case val := <-cb.outCh:
-		return val, nil
-	case <-ctx.Done():
-		var zero T
-		return zero, errors.New("could not get next value, context expired")
-	case <-cb.ctx.Done():
-		var zero T
-		return zero, errors.New("could not get next value, buffer parent context expired")
 	}
 }
