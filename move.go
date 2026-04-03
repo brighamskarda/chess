@@ -233,25 +233,25 @@ func isSquareDisambiguation(toSquare Square, pieceToMove Piece, pos *Position) b
 // UnmarshalText implements the [encoding.TextUnmarshaler] interface to read a move from a UCI compatible format. The format is <FromSquare><ToSquare><OptionalPromotion>, ex. a2c3q.
 func (m *Move) UnmarshalText(text []byte) error {
 	if len(text) < 4 || len(text) > 5 {
-		return fmt.Errorf("could not unmarshal move, expected text to be of len 4 or 5, got len(text) = %d", len(text))
+		return fmt.Errorf("could not unmarshal move %q, expected text to be of len 4 or 5, got len(text) = %d", text, len(text))
 	}
 	var fromSquare Square
 	err := fromSquare.UnmarshalText(text[0:2])
 	if err != nil {
-		return fmt.Errorf("could not unmarshal move: %w", err)
+		return fmt.Errorf("could not unmarshal move %q: %w", text, err)
 	}
 
 	var toSquare Square
 	err = toSquare.UnmarshalText(text[2:4])
 	if err != nil {
-		return fmt.Errorf("could not unmarshal move: %w", err)
+		return fmt.Errorf("could not unmarshal move %q: %w", text, err)
 	}
 
 	var promotion PieceType
 	if len(text) == 5 {
 		promotion, err = parsePieceType(text[4])
 		if err != nil {
-			return fmt.Errorf("could not unmarshal move: %w", err)
+			return fmt.Errorf("could not unmarshal move %q: %w", text, err)
 		}
 	}
 	m.FromSquare = fromSquare
