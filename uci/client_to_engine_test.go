@@ -366,15 +366,15 @@ func TestGoCmdUnmarshal(t *testing.T) {
 
 	if goCmd.searchMoves != nil ||
 		goCmd.ponder ||
-		goCmd.wtime != nil ||
-		goCmd.btime != nil ||
-		goCmd.winc != nil ||
-		goCmd.binc != nil ||
-		goCmd.movestogo != nil ||
-		goCmd.depth != nil ||
-		goCmd.nodes != nil ||
-		goCmd.mate != nil ||
-		goCmd.movetime != nil ||
+		goCmd.wtime.HasValue() ||
+		goCmd.btime.HasValue() ||
+		goCmd.winc.HasValue() ||
+		goCmd.binc.HasValue() ||
+		goCmd.movestogo.HasValue() ||
+		goCmd.depth.HasValue() ||
+		goCmd.nodes.HasValue() ||
+		goCmd.mate.HasValue() ||
+		goCmd.movetime.HasValue() ||
 		goCmd.infinite {
 		t.Error("variables were set for empty go command")
 	}
@@ -394,32 +394,32 @@ func validateGoCmd(goCmd *goCmd, t *testing.T) {
 	if !goCmd.ponder {
 		t.Error("ponder not set")
 	}
-	if goCmd.wtime == nil || *goCmd.wtime != 999 {
-		t.Error("wtime not set")
+	if !goCmd.wtime.HasValue() || goCmd.wtime.Value() != 999 {
+		t.Error("wtime not set correctly")
 	}
-	if goCmd.btime == nil || *goCmd.btime != 888 {
-		t.Error("btime not set")
+	if !goCmd.btime.HasValue() || goCmd.btime.Value() != 888 {
+		t.Error("btime not set correctly")
 	}
-	if goCmd.winc == nil || *goCmd.winc != 777 {
-		t.Error("winc not set")
+	if !goCmd.winc.HasValue() || goCmd.winc.Value() != 777 {
+		t.Error("winc not set correctly")
 	}
-	if goCmd.binc == nil || *goCmd.binc != 666 {
-		t.Error("binc not set")
+	if !goCmd.binc.HasValue() || goCmd.binc.Value() != 666 {
+		t.Error("binc not set correctly")
 	}
-	if goCmd.movestogo == nil || *goCmd.movestogo != 555 {
-		t.Error("movestogo not set")
+	if !goCmd.movestogo.HasValue() || goCmd.movestogo.Value() != 555 {
+		t.Error("movestogo not set correctly")
 	}
-	if goCmd.depth == nil || *goCmd.depth != 444 {
-		t.Error("depth not set")
+	if !goCmd.depth.HasValue() || goCmd.depth.Value() != 444 {
+		t.Error("depth not set correctly")
 	}
-	if goCmd.nodes == nil || *goCmd.nodes != 333 {
-		t.Error("nodes not set")
+	if !goCmd.nodes.HasValue() || goCmd.nodes.Value() != 333 {
+		t.Error("nodes not set correctly")
 	}
-	if goCmd.mate == nil || *goCmd.mate != 222 {
-		t.Error("mate not set")
+	if !goCmd.mate.HasValue() || goCmd.mate.Value() != 222 {
+		t.Error("mate not set correctly")
 	}
-	if goCmd.movetime == nil || *goCmd.movetime != 111 {
-		t.Error("movetime not set")
+	if !goCmd.movetime.HasValue() || goCmd.movetime.Value() != 111 {
+		t.Error("movetime not set correctly")
 	}
 	if !goCmd.infinite {
 		t.Error("infinite not set")

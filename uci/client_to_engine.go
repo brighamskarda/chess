@@ -543,24 +543,24 @@ type goCmd struct {
 	// on the suggested move.
 	ponder bool
 	// wtime - white has x msec left on the clock
-	wtime *int
+	wtime Optional[int]
 	// btime - black has x msec left on the clock
-	btime *int
+	btime Optional[int]
 	// winc - white increment per move in mseconds if x > 0
-	winc *int
+	winc Optional[int]
 	// binc - black increment per move in mseconds if x > 0
-	binc *int
+	binc Optional[int]
 	// movestogo - there are x moves to the next time control, this will only be sent if x > 0,
 	// if you don't get this and get the wtime and btime it's sudden death
-	movestogo *int
+	movestogo Optional[int]
 	// depth - search x plies only
-	depth *int
+	depth Optional[int]
 	// nodes - search x nodes only
-	nodes *int
+	nodes Optional[int]
 	// mate - search for a mate in x moves
-	mate *int
+	mate Optional[int]
 	// movetime search exactly x mseconds
-	movetime *int
+	movetime Optional[int]
 	// infinite search until the "stop" command. Do not exit the search without being told so in this mode!
 	infinite bool
 }
@@ -619,23 +619,23 @@ func (cmd *goCmd) parseFieldWithValue(fields [][]byte) error {
 
 	switch fieldName {
 	case "wtime":
-		cmd.wtime = &v
+		cmd.wtime = OptionalOf(v)
 	case "btime":
-		cmd.btime = &v
+		cmd.btime = OptionalOf(v)
 	case "winc":
-		cmd.winc = &v
+		cmd.winc = OptionalOf(v)
 	case "binc":
-		cmd.binc = &v
+		cmd.binc = OptionalOf(v)
 	case "movestogo":
-		cmd.movestogo = &v
+		cmd.movestogo = OptionalOf(v)
 	case "depth":
-		cmd.depth = &v
+		cmd.depth = OptionalOf(v)
 	case "nodes":
-		cmd.nodes = &v
+		cmd.nodes = OptionalOf(v)
 	case "mate":
-		cmd.mate = &v
+		cmd.mate = OptionalOf(v)
 	case "movetime":
-		cmd.movetime = &v
+		cmd.movetime = OptionalOf(v)
 	default:
 		return fmt.Errorf("could not unmarshal %v %q: unknown command, this indicates an error uci library, not user code.", fieldName, valueString)
 	}
