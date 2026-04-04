@@ -250,7 +250,7 @@ type setStringOptionCmd struct {
 	baseClientCommand
 	// name is the name/id of the option being set.
 	name string
-	// value is the string content assigned to this option.
+	// value is the string content assigned to this option. If <empty> was sent then this will be an empty string.
 	value string
 }
 
@@ -269,9 +269,12 @@ func (cmd *setStringOptionCmd) UnmarshalText(text []byte) error {
 
 	if value == "" {
 		return fmt.Errorf("could not unmarshal setStringOption command %q: empty value", text)
+	} else if value == "<empty>" {
+		cmd.value = ""
+	} else {
+		cmd.value = value
 	}
 
-	cmd.value = value
 	cmd.initBaseEngineCommand(text)
 	return nil
 }
