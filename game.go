@@ -17,6 +17,7 @@ package chess
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -1163,14 +1164,14 @@ func (g *Game) MarshalText() (text []byte, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal game: %w", err)
 	}
-	pgn := strings.Builder{}
+	pgn := bytes.Buffer{}
 	for i, l := range lines {
 		pgn.WriteString(l)
 		if i != len(lines)-1 {
 			pgn.WriteString("\n")
 		}
 	}
-	return []byte(pgn.String()), nil
+	return pgn.Bytes(), nil
 }
 
 func (g *Game) addTags(lines *[]string) error {
@@ -1428,12 +1429,12 @@ func (g *Game) MarshalTextReduced() (text []byte, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal game: %w", err)
 	}
-	pgn := strings.Builder{}
+	pgn := bytes.Buffer{}
 	for i, l := range lines {
 		pgn.WriteString(l)
 		if i != len(lines)-1 {
 			pgn.WriteString("\n")
 		}
 	}
-	return []byte(pgn.String()), nil
+	return pgn.Bytes(), nil
 }
