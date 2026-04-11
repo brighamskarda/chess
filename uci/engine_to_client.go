@@ -17,7 +17,6 @@ package uci
 
 import (
 	"bytes"
-	"encoding"
 	"fmt"
 	"strconv"
 
@@ -26,7 +25,7 @@ import (
 
 // clientToEngineCmd is an interface under which all uci commands from the engine to the client will be contained.
 type engineToClientCmd interface {
-	encoding.TextMarshaler
+	marshalText() ([]byte, error)
 }
 
 // idCmd
@@ -43,7 +42,7 @@ type idCmd struct {
 	id string
 }
 
-func (cmd *idCmd) MarshalText() ([]byte, error) {
+func (cmd *idCmd) marshalText() ([]byte, error) {
 	text := bytes.Buffer{}
 	text.WriteString("id ")
 	if cmd.isAuthor {
@@ -61,7 +60,7 @@ func (cmd *idCmd) MarshalText() ([]byte, error) {
 // has sent all infos and is ready in uci mode.
 type uciokCmd struct{}
 
-func (cmd *uciokCmd) MarshalText() ([]byte, error) {
+func (cmd *uciokCmd) marshalText() ([]byte, error) {
 	return []byte("uciok\n"), nil
 }
 
@@ -73,7 +72,7 @@ func (cmd *uciokCmd) MarshalText() ([]byte, error) {
 // and must always be answered with "isready".
 type readyokCmd struct{}
 
-func (cmd *readyokCmd) MarshalText() ([]byte, error) {
+func (cmd *readyokCmd) marshalText() ([]byte, error) {
 	return []byte("readyok\n"), nil
 }
 
@@ -91,7 +90,7 @@ type bestMoveCmd struct {
 	ponderMove *chess.Move
 }
 
-func (cmd *bestMoveCmd) MarshalText() ([]byte, error) {
+func (cmd *bestMoveCmd) marshalText() ([]byte, error) {
 	text := bytes.Buffer{}
 	text.WriteString("bestmove ")
 
@@ -137,7 +136,7 @@ const (
 	copyprotectError
 )
 
-func (cmd *copyprotectionCmd) MarshalText() ([]byte, error) {
+func (cmd *copyprotectionCmd) marshalText() ([]byte, error) {
 	switch *cmd {
 	case copyprotectChecking:
 		return []byte("copyprotection checking\n"), nil
@@ -174,7 +173,7 @@ const (
 	registerError
 )
 
-func (cmd *registrationCmd) MarshalText() ([]byte, error) {
+func (cmd *registrationCmd) marshalText() ([]byte, error) {
 	switch *cmd {
 	case registerChecking:
 		return []byte("registration checking\n"), nil
@@ -274,7 +273,7 @@ type infoCmd struct {
 	currline Optional[currentLine]
 }
 
-func (cmd *infoCmd) MarshalText() ([]byte, error) {
+func (cmd *infoCmd) marshalText() ([]byte, error) {
 	text := &bytes.Buffer{}
 	text.WriteString("info")
 
@@ -470,127 +469,159 @@ type infoScore struct {
 	isUpperbound bool
 }
 
-// checkOptionCmd - a checkbox that can either be true or false
+// OptionCmd represents an option that the chess engine supports. This is sent to the client so it knows what options it can set in the engine.
 //
-// This command tells the GUI which parameters can be changed in the engine.
-// This should be sent once at engine startup after the "uci" and the "id" commands
-// if any parameter can be changed in the engine.
-// The GUI should parse this and build a dialog for the user to change the settings.
-// Note that not every option needs to appear in this dialog as some options like
-// "Ponder", "UCI_AnalyseMode", etc. are better handled elsewhere or are set automatically.
-// If the user wants to change some settings, the GUI will send a "setoption" command to the engine.
-// Note that the GUI need not send the setoption command when starting the engine for every option if
-// it doesn't want to change the default value.
-// For all allowed combinations see the examples below,
-// as some combinations of this tokens don't make sense.
-// One string will be sent for each parameter.
-type checkOptionCmd struct {
-	// name <id>
-	// The option has the name id.
-	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
-	// Usually those options should not be displayed in the normal engine options window of the GUI but
-	// get a special treatment. "Pondering" for example should be set automatically when pondering is
-	// enabled or disabled in the GUI options. The same for "UCI_AnalyseMode" which should also be set
-	// automatically by the GUI.
-	//
-	// There are global variables defined for these predefined options.
-	name string
-	// defaultValue - the default value of this parameter is x
-	defaultValue bool
+// There is no need to make any types implementing this interface as all valid options can be represented using the structs provided in this module. See [CheckOptionCmd], [SpinOptionCmd], [ComboOptionCmd], [StringOptionCmd], and [ButtonOptionCmd]
+//
+// The following options are predefined in the UCI chess standard. Options with these names should not be used for anything else. Furthermore any options not listed below that are still prepended with "UCI_" will likely be ignored by the GUI.
+//   - <id> = Hash, type is spin
+//     the value in MB for memory for hash tables can be changed,
+//     this should be answered with the first "setoptions" command at program boot
+//     if the engine has sent the appropriate "option name Hash" command,
+//     which should be supported by all engines!
+//     So the engine should use a very small hash first as default.
+//   - <id> = NalimovPath, type string
+//     this is the path on the hard disk to the Nalimov compressed format.
+//     Multiple directories can be concatenated with ";"
+//   - <id> = NalimovCache, type spin
+//     this is the size in MB for the cache for the nalimov table bases
+//     These last two options should also be present in the initial options exchange dialog
+//     when the engine is booted if the engine supports it
+//   - <id> = Ponder, type check
+//     this means that the engine is able to ponder.
+//     The GUI will send this whenever pondering is possible or not.
+//     Note: The engine should not start pondering on its own if this is enabled, this option is only
+//     needed because the engine might change its time management algorithm when pondering is allowed.
+//   - <id> = OwnBook, type check
+//     this means that the engine has its own book which is accessed by the engine itself.
+//     if this is set, the engine takes care of the opening book and the GUI will never
+//     execute a move out of its book for the engine. If this is set to false by the GUI,
+//     the engine should not access its own book.
+//   - <id> = MultiPV, type spin
+//     the engine supports multi best line or k-best mode. the default value is 1
+//   - <id> = UCI_ShowCurrLine, type check, should be false by default,
+//     the engine can show the current line it is calculating. see "info currline" above.
+//   - <id> = UCI_ShowRefutations, type check, should be false by default,
+//     the engine can show a move and its refutation in a line. see "info refutations" above.
+//   - <id> = UCI_LimitStrength, type check, should be false by default,
+//     The engine is able to limit its strength to a specific Elo number,
+//     This should always be implemented together with "UCI_Elo".
+//   - <id> = UCI_Elo, type spin
+//     The engine can limit its strength in Elo within this interval.
+//     If UCI_LimitStrength is set to false, this value should be ignored.
+//     If UCI_LimitStrength is set to true, the engine should play with this specific strength.
+//     This should always be implemented together with "UCI_LimitStrength".
+//   - <id> = UCI_AnalyseMode, type check
+//     The engine wants to behave differently when analysing or playing a game.
+//     For example when playing it can use some kind of learning.
+//     This is set to false if the engine is playing a game, otherwise it is true.
+//   - <id> = UCI_Opponent, type string
+//     With this command the GUI can send the name, title, elo and if the engine is playing a human
+//     or computer to the engine.
+//     The format of the string has to be [GM|IM|FM|WGM|WIM|none] [<elo>|none] [computer|human] <name>
+//     Examples:
+//     "setoption name UCI_Opponent value GM 2800 human Gary Kasparov"
+//     "setoption name UCI_Opponent value none none computer Shredder"
+//   - <id> = UCI_EngineAbout, type string
+//     With this command, the engine tells the GUI information about itself, for example a license text,
+//     usually it doesn't make sense that the GUI changes this text with the setoption command.
+//     Example:
+//     "option name UCI_EngineAbout type string default Shredder by Stefan Meyer-Kahlen, see www.shredderchess.com"
+//   - <id> = UCI_ShredderbasesPath, type string
+//     this is either the path to the folder on the hard disk containing the Shredder endgame databases or
+//     the path and filename of one Shredder endgame datbase.
+//   - <id> = UCI_SetPositionValue, type string
+//     the GUI can send this to the engine to tell the engine to use a certain value in centipawns from white's
+//     point of view if evaluating this specifix position.
+//     The string can have the formats:
+//     <value> + <fen> | clear + <fen> | clearall
+type OptionCmd interface {
+	engineToClientCmd
+	// optionName should return the name/id of the option.
+	optionName() string
 }
 
-func (cmd *checkOptionCmd) MarshalText() ([]byte, error) {
+// CheckOptionCmd - a checkbox that can either be true or false
+//
+// see [OptionCmd]
+type CheckOptionCmd struct {
+	// Name <id> - the option has the Name id.
+	//
+	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
+	// See [OptionCmd] for more info
+	Name string
+	// DefaultValue - the default value of this parameter is x
+	DefaultValue bool
+}
+
+func (cmd *CheckOptionCmd) marshalText() ([]byte, error) {
 	text := &bytes.Buffer{}
-	startOptionCmd(text, cmd.name, "check")
+	startOptionCmd(text, cmd.Name, "check")
 	text.WriteString(" default ")
-	text.WriteString(strconv.FormatBool(cmd.defaultValue))
+	text.WriteString(strconv.FormatBool(cmd.DefaultValue))
 	text.WriteByte('\n')
 	return text.Bytes(), nil
 }
 
-// spinOptionCmd - a spin wheel that can be an integer in a certain range
-//
-// This command tells the GUI which parameters can be changed in the engine.
-// This should be sent once at engine startup after the "uci" and the "id" commands
-// if any parameter can be changed in the engine.
-// The GUI should parse this and build a dialog for the user to change the settings.
-// Note that not every option needs to appear in this dialog as some options like
-// "Ponder", "UCI_AnalyseMode", etc. are better handled elsewhere or are set automatically.
-// If the user wants to change some settings, the GUI will send a "setoption" command to the engine.
-// Note that the GUI need not send the setoption command when starting the engine for every option if
-// it doesn't want to change the default value.
-// For all allowed combinations see the examples below,
-// as some combinations of this tokens don't make sense.
-// One string will be sent for each parameter.
-type spinOptionCmd struct {
-	// name <id>
-	// The option has the name id.
-	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
-	// Usually those options should not be displayed in the normal engine options window of the GUI but
-	// get a special treatment. "Pondering" for example should be set automatically when pondering is
-	// enabled or disabled in the GUI options. The same for "UCI_AnalyseMode" which should also be set
-	// automatically by the GUI.
-	//
-	// There are global variables defined for these predefined options.
-	name string
-	// defaultValue - the default value of this parameter is x
-	defaultValue int
-	// min - the minimum value of this parameter is x
-	min int
-	// max - the maximum value of this parameter is x
-	max int
+func (cmd *CheckOptionCmd) optionName() string {
+	return cmd.Name
 }
 
-func (cmd *spinOptionCmd) MarshalText() ([]byte, error) {
+// SpinOptionCmd - a spin wheel that can be an integer in a certain range
+//
+// see [OptionCmd]
+type SpinOptionCmd struct {
+	// Name <id> - the option has the Name id.
+	//
+	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
+	// See [OptionCmd] for more info
+	Name string
+	// DefaultValue - the default value of this parameter is x
+	DefaultValue int
+	// Min - the minimum value of this parameter is x
+	Min int
+	// Max - the maximum value of this parameter is x
+	Max int
+}
+
+func (cmd *SpinOptionCmd) marshalText() ([]byte, error) {
 	text := &bytes.Buffer{}
-	startOptionCmd(text, cmd.name, "spin")
+	startOptionCmd(text, cmd.Name, "spin")
 	text.WriteString(" default ")
-	text.WriteString(strconv.Itoa(cmd.defaultValue))
+	text.WriteString(strconv.Itoa(cmd.DefaultValue))
 	text.WriteString(" min ")
-	text.WriteString(strconv.Itoa(cmd.min))
+	text.WriteString(strconv.Itoa(cmd.Min))
 	text.WriteString(" max ")
-	text.WriteString(strconv.Itoa(cmd.max))
+	text.WriteString(strconv.Itoa(cmd.Max))
 	text.WriteByte('\n')
 	return text.Bytes(), nil
 }
 
-// comboOptionCmd - a combo box that can have different predefined strings as a value
-//
-// This command tells the GUI which parameters can be changed in the engine.
-// This should be sent once at engine startup after the "uci" and the "id" commands
-// if any parameter can be changed in the engine.
-// The GUI should parse this and build a dialog for the user to change the settings.
-// Note that not every option needs to appear in this dialog as some options like
-// "Ponder", "UCI_AnalyseMode", etc. are better handled elsewhere or are set automatically.
-// If the user wants to change some settings, the GUI will send a "setoption" command to the engine.
-// Note that the GUI need not send the setoption command when starting the engine for every option if
-// it doesn't want to change the default value.
-// For all allowed combinations see the examples below,
-// as some combinations of this tokens don't make sense.
-// One string will be sent for each parameter.
-type comboOptionCmd struct {
-	// name <id>
-	// The option has the name id.
-	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
-	// Usually those options should not be displayed in the normal engine options window of the GUI but
-	// get a special treatment. "Pondering" for example should be set automatically when pondering is
-	// enabled or disabled in the GUI options. The same for "UCI_AnalyseMode" which should also be set
-	// automatically by the GUI.
-	//
-	// There are global variables defined for these predefined options.
-	name string
-	// defaultValue - the default value of this parameter is x
-	defaultValue string
-	// variants - the predefined possible values for the parameter
-	variants []string
+func (cmd *SpinOptionCmd) optionName() string {
+	return cmd.Name
 }
 
-func (cmd *comboOptionCmd) MarshalText() ([]byte, error) {
+// ComboOptionCmd - a combo box that can have different predefined strings as a value
+//
+// see [OptionCmd]
+type ComboOptionCmd struct {
+	// Name <id> - the option has the Name id.
+	//
+	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
+	// See [OptionCmd] for more info
+	Name string
+	// DefaultValue - the default value of this parameter is x
+	DefaultValue string
+	// Variants - the predefined possible values for the parameter
+	Variants []string
+}
+
+func (cmd *ComboOptionCmd) marshalText() ([]byte, error) {
 	text := &bytes.Buffer{}
-	startOptionCmd(text, cmd.name, "combo")
+	startOptionCmd(text, cmd.Name, "combo")
 	text.WriteString(" default ")
-	text.WriteString(cmd.defaultValue)
-	for _, v := range cmd.variants {
+	text.WriteString(cmd.DefaultValue)
+	for _, v := range cmd.Variants {
 		text.WriteString(" var ")
 		text.WriteString(v)
 	}
@@ -598,80 +629,60 @@ func (cmd *comboOptionCmd) MarshalText() ([]byte, error) {
 	return text.Bytes(), nil
 }
 
-// buttonOptionCmd - a button that can be pressed to send a command to the engine
-//
-// This command tells the GUI which parameters can be changed in the engine.
-// This should be sent once at engine startup after the "uci" and the "id" commands
-// if any parameter can be changed in the engine.
-// The GUI should parse this and build a dialog for the user to change the settings.
-// Note that not every option needs to appear in this dialog as some options like
-// "Ponder", "UCI_AnalyseMode", etc. are better handled elsewhere or are set automatically.
-// If the user wants to change some settings, the GUI will send a "setoption" command to the engine.
-// Note that the GUI need not send the setoption command when starting the engine for every option if
-// it doesn't want to change the default value.
-// For all allowed combinations see the examples below,
-// as some combinations of this tokens don't make sense.
-// One string will be sent for each parameter.
-type buttonOptionCmd struct {
-	// name <id>
-	// The option has the name id.
-	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
-	// Usually those options should not be displayed in the normal engine options window of the GUI but
-	// get a special treatment. "Pondering" for example should be set automatically when pondering is
-	// enabled or disabled in the GUI options. The same for "UCI_AnalyseMode" which should also be set
-	// automatically by the GUI.
-	//
-	// There are global variables defined for these predefined options.
-	name string
+func (cmd *ComboOptionCmd) optionName() string {
+	return cmd.Name
 }
 
-func (cmd *buttonOptionCmd) MarshalText() ([]byte, error) {
+// ButtonOptionCmd - a button that can be pressed to send a command to the engine
+//
+// see [OptionCmd]
+type ButtonOptionCmd struct {
+	// Name <id> - the option has the Name id.
+	//
+	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
+	// See [OptionCmd] for more info
+	Name string
+}
+
+func (cmd *ButtonOptionCmd) marshalText() ([]byte, error) {
 	text := &bytes.Buffer{}
-	startOptionCmd(text, cmd.name, "button")
+	startOptionCmd(text, cmd.Name, "button")
 	text.WriteByte('\n')
 	return text.Bytes(), nil
 }
 
-// stringOptionCmd -a text field that has a string as a value, an empty string has the value "<empty>"
-//
-// This command tells the GUI which parameters can be changed in the engine.
-// This should be sent once at engine startup after the "uci" and the "id" commands
-// if any parameter can be changed in the engine.
-// The GUI should parse this and build a dialog for the user to change the settings.
-// Note that not every option needs to appear in this dialog as some options like
-// "Ponder", "UCI_AnalyseMode", etc. are better handled elsewhere or are set automatically.
-// If the user wants to change some settings, the GUI will send a "setoption" command to the engine.
-// Note that the GUI need not send the setoption command when starting the engine for every option if
-// it doesn't want to change the default value.
-// For all allowed combinations see the examples below,
-// as some combinations of this tokens don't make sense.
-// One string will be sent for each parameter.
-type stringOptionCmd struct {
-	// name <id>
-	// The option has the name id.
-	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
-	// Usually those options should not be displayed in the normal engine options window of the GUI but
-	// get a special treatment. "Pondering" for example should be set automatically when pondering is
-	// enabled or disabled in the GUI options. The same for "UCI_AnalyseMode" which should also be set
-	// automatically by the GUI.
-	//
-	// There are global variables defined for these predefined options.
-	name string
-	// defaultValue - the default value of this parameter is x. An empty string will be encoded to <empty>.
-	defaultValue string
+func (cmd *ButtonOptionCmd) optionName() string {
+	return cmd.Name
 }
 
-func (cmd *stringOptionCmd) MarshalText() ([]byte, error) {
+// StringOptionCmd -a text field that has a string as a value, an empty string has the value "<empty>"
+//
+// see [OptionCmd]
+type StringOptionCmd struct {
+	// Name <id> - the option has the Name id.
+	//
+	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
+	// See [OptionCmd] for more info
+	Name string
+	// DefaultValue - the default value of this parameter is x. An empty string will be encoded to <empty>.
+	DefaultValue string
+}
+
+func (cmd *StringOptionCmd) marshalText() ([]byte, error) {
 	text := &bytes.Buffer{}
-	startOptionCmd(text, cmd.name, "string")
+	startOptionCmd(text, cmd.Name, "string")
 	text.WriteString(" default ")
-	if len(cmd.defaultValue) > 0 {
-		text.WriteString(cmd.defaultValue)
+	if len(cmd.DefaultValue) > 0 {
+		text.WriteString(cmd.DefaultValue)
 	} else {
 		text.WriteString("<empty>")
 	}
 	text.WriteByte('\n')
 	return text.Bytes(), nil
+}
+
+func (cmd *StringOptionCmd) optionName() string {
+	return cmd.Name
 }
 
 // startOptionCmd starts marshalling an option command. It is the same for every type. "option name <id> type <t>"

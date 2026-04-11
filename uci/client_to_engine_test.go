@@ -16,6 +16,7 @@
 package uci
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -155,23 +156,6 @@ func TestStringOptionCommand(t *testing.T) {
 	// Invalid case: empty string
 	if err := strOption.UnmarshalText([]byte("setoption name Author value \n")); err == nil {
 		t.Errorf("expected error for empty string value")
-	}
-}
-
-func TestComboOptionCommand(t *testing.T) {
-	comboOption := setComboOptionCmd{}
-
-	// Valid case
-	if err := comboOption.UnmarshalText([]byte("setoption name Style  Boy value Aggressive  Man\n")); err != nil {
-		t.Errorf("expected no error, got %v", err)
-	}
-	if comboOption.value != "Aggressive  Man" || comboOption.name != "Style  Boy" {
-		t.Errorf("incorrect combo parse: got %s", comboOption.value)
-	}
-
-	// Invalid: Missing "value" keyword
-	if err := comboOption.UnmarshalText([]byte("setoption name Style Aggressive\n")); err == nil {
-		t.Errorf("expected error for missing 'value' keyword")
 	}
 }
 
@@ -445,5 +429,60 @@ func TestGoCmdUnmarshalError(t *testing.T) {
 
 	if err := goCmd.UnmarshalText([]byte("go searchmove\n")); err == nil {
 		t.Errorf("incorrect result for invalid go command, expected error: invalid command")
+	}
+}
+
+func TestParseClientToEngineCmd_AllTypes(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string // prefix or type check
+	}{
+		{"uci", "uci \n", "*uci.uciCmd"},
+		{"debug", "debug on\n", "*uci.debugCmd"},
+		{"isready", "isready \n", "*uci.isReadyCmd"},
+		{"setoption check", "setoption name MyCheck value true\n", "*uci.setCheckOptionCmd"},
+		{"setoption spin", "setoption name MySpin value 10\n", "*uci.setSpinOptionCmd"},
+		{"setoption string", "setoption name MyStr value hello\n", "*uci.setStringOptionCmd"},
+		{"setoption button", "setoption name MyButton\n", "*uci.setButtonOptionCmd"},
+		{"register", "register later\n", "*uci.registerCmd"},
+		{"ucinewgame", "ucinewgame \n", "*uci.uciNewGameCmd"},
+		{"position", "position startpos moves e2e4\n", "*uci.positionCmd"},
+		{"go", "go infinite\n", "*uci.goCmd"},
+		{"stop", "stop \n", "*uci.stopCmd"},
+		{"ponderhit", "ponderhit \n", "*uci.ponderhitCmd"},
+		{"quit", "quit \n", "*uci.quitCmd"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd, err := parseClientToEngineCmd([]byte(tt.input))
+			if err != nil {
+				t.Fatalf("failed to parse %q: %v", tt.name, err)
+			}
+			actualType := fmt.Sprintf("%T", cmd)
+			if actualType != tt.expected {
+				t.Errorf("expected type %s, got %s", tt.expected, actualType)
+			}
+		})
+	}
+}
+
+func TestParseClientToEngineCmd_LeadingInvalidWords(t *testing.T) {
+	// The implementation uses strings.Index to find the first valid keyword.
+	// This ensures that "garbage uci" still parses as a uciCmd.
+	input := "garbage words uci \n"
+	cmd, err := parseClientToEngineCmd([]byte(input))
+	if err != nil {
+		t.Fatalf("expected successful parse despite leading garbage, got error: %v", err)
+	}
+
+	if _, ok := cmd.(*uciCmd); !ok {
+		t.Errorf("expected *uci.uciCmd, got %T", cmd)
+	}
+
+	// Verify it captured the text starting from the valid command
+	if string(cmd.getCmdText()) != "uci \n" {
+		t.Errorf("expected command text to be 'uci \\n', got %q", string(cmd.getCmdText()))
 	}
 }

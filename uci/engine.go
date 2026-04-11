@@ -1,0 +1,47 @@
+// Copyright (C) 2026 Brigham Skarda
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package uci
+
+// ChessEngine is an interface that defines common functions a chess engine should have. By following this interface, users can plug their chess engine into a [UciEngineBroker] to automatically gain all the benefits of having a UCI compliant chess engine.
+type ChessEngine interface {
+	// Initialize will be the first function called on the chess engine. It will be called exactly once and should be used to initialize any internal state the engine relies on.
+	//
+	// Keep in mind that if this function takes too long, the GUI make kill the engine.
+	Initialize()
+
+	// Name should return the name of the chess engine. It can contain spaces, but should not contain new lines.
+	//
+	// A good name is something like "Super Powerful Engine v1.2"
+	Name() string
+
+	// Author should return the names of the chess engine developers. It can contain spaces, but should not contain new lines.
+	//
+	// It may be appropriate to link to a separate authors file if there are a lot of authors.
+	Author() string
+
+	// Options should return the options supported by this engine. These options will be send to the GUI so the user may modify them.
+	Options() []OptionCmd
+
+	// Quit can be called at any time and thus should be handled asynchronously (though this function should not return until all cleanup is complete.). This is the broker's way of asking the engine to nicely stop its operations. Failure to do so promptly may result in the engine being forcibly stopped by the GUI or operating system.
+	//
+	// While many engines will not need to do anything in this function, there are some important things certain engines may need to do, such as:
+	//
+	// * Finishing writes to files (to prevent invalid file states for future runs)
+	// * Releasing remote software licenses
+	//
+	// Quit will only be called once.
+	Quit()
+}

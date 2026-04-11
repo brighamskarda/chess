@@ -27,7 +27,7 @@ func TestIdCommandMarshal(t *testing.T) {
 		id:       "Brigham Skarda",
 	}
 
-	text, err := cmd.MarshalText()
+	text, err := cmd.marshalText()
 	if err != nil {
 		t.Error("got unexpected error")
 	}
@@ -41,7 +41,7 @@ func TestIdCommandMarshal(t *testing.T) {
 		id:       "Brigham Skarda",
 	}
 
-	text, err = cmd.MarshalText()
+	text, err = cmd.marshalText()
 	if err != nil {
 		t.Error("got unexpected error")
 	}
@@ -54,7 +54,7 @@ func TestIdCommandMarshal(t *testing.T) {
 func TestUciokCommandMarshal(t *testing.T) {
 	var cmd engineToClientCmd = &uciokCmd{}
 
-	text, err := cmd.MarshalText()
+	text, err := cmd.marshalText()
 	if err != nil {
 		t.Error("got unexpected error")
 	}
@@ -67,7 +67,7 @@ func TestUciokCommandMarshal(t *testing.T) {
 func TestReadyokCommandMarshal(t *testing.T) {
 	var cmd engineToClientCmd = &readyokCmd{}
 
-	text, err := cmd.MarshalText()
+	text, err := cmd.marshalText()
 	if err != nil {
 		t.Error("got unexpected error")
 	}
@@ -83,7 +83,7 @@ func TestBestMoveCommandMarshal(t *testing.T) {
 		ponderMove: &chess.Move{FromSquare: chess.A1, ToSquare: chess.A2, Promotion: chess.Knight},
 	}
 
-	text, err := cmd.MarshalText()
+	text, err := cmd.marshalText()
 	if err != nil {
 		t.Error("got unexpected error")
 	}
@@ -96,7 +96,7 @@ func TestBestMoveCommandMarshal(t *testing.T) {
 		move: chess.Move{FromSquare: chess.A1, ToSquare: chess.A2},
 	}
 
-	text, err = cmd.MarshalText()
+	text, err = cmd.marshalText()
 	if err != nil {
 		t.Error("got unexpected error")
 	}
@@ -110,7 +110,7 @@ func TestCopyprotectionCommandMarshal(t *testing.T) {
 	copyprotectCmd := copyprotectChecking
 	var cmd engineToClientCmd = &copyprotectCmd
 
-	text, err := cmd.MarshalText()
+	text, err := cmd.marshalText()
 	if err != nil {
 		t.Error("got unexpected error")
 	}
@@ -120,7 +120,7 @@ func TestCopyprotectionCommandMarshal(t *testing.T) {
 	}
 
 	copyprotectCmd = copyprotectOk
-	text, err = copyprotectCmd.MarshalText()
+	text, err = copyprotectCmd.marshalText()
 	if err != nil {
 		t.Error("got unexpected error")
 	}
@@ -130,7 +130,7 @@ func TestCopyprotectionCommandMarshal(t *testing.T) {
 	}
 
 	copyprotectCmd = copyprotectError
-	text, err = copyprotectCmd.MarshalText()
+	text, err = copyprotectCmd.marshalText()
 	if err != nil {
 		t.Error("got unexpected error")
 	}
@@ -144,7 +144,7 @@ func TestRegistrationCommandMarshal(t *testing.T) {
 	registrationCmd := registerChecking
 	var cmd engineToClientCmd = &registrationCmd
 
-	text, err := cmd.MarshalText()
+	text, err := cmd.marshalText()
 	if err != nil {
 		t.Error("got unexpected error")
 	}
@@ -154,7 +154,7 @@ func TestRegistrationCommandMarshal(t *testing.T) {
 	}
 
 	registrationCmd = registerOk
-	text, err = registrationCmd.MarshalText()
+	text, err = registrationCmd.marshalText()
 	if err != nil {
 		t.Error("got unexpected error")
 	}
@@ -164,7 +164,7 @@ func TestRegistrationCommandMarshal(t *testing.T) {
 	}
 
 	registrationCmd = registerError
-	text, err = registrationCmd.MarshalText()
+	text, err = registrationCmd.marshalText()
 	if err != nil {
 		t.Error("got unexpected error")
 	}
@@ -200,7 +200,7 @@ func TestInfoCommandMarshal_AllFields(t *testing.T) {
 		stringMsg: OptionalOf("engine is thinking deeply"),
 	}
 
-	text, err := cmd.MarshalText()
+	text, err := cmd.marshalText()
 	if err != nil {
 		t.Fatalf("failed to marshal: %v", err)
 	}
@@ -314,7 +314,7 @@ func TestInfoCommandMarshal(t *testing.T) {
 			// Using pointer to cmd to satisfy potential engineToClientCmd interface
 			var cmd engineToClientCmd = &tt.cmd
 
-			text, err := cmd.MarshalText()
+			text, err := cmd.marshalText()
 			if err != nil {
 				t.Fatalf("got unexpected error: %v", err)
 			}
@@ -334,43 +334,43 @@ func TestOptionCommands_UCICompliance(t *testing.T) {
 	}{
 		{
 			name: "Type Check - Pondering ability",
-			cmd: &checkOptionCmd{
-				name:         "Ponder",
-				defaultValue: true,
+			cmd: &CheckOptionCmd{
+				Name:         "Ponder",
+				DefaultValue: true,
 			},
 			expected: "option name Ponder type check default true\n",
 		},
 		{
 			name: "Type Spin - Hash size with range",
-			cmd: &spinOptionCmd{
-				name:         "Hash",
-				defaultValue: 1,
-				min:          1,
-				max:          128,
+			cmd: &SpinOptionCmd{
+				Name:         "Hash",
+				DefaultValue: 1,
+				Min:          1,
+				Max:          128,
 			},
 			expected: "option name Hash type spin default 1 min 1 max 128\n",
 		},
 		{
 			name: "Type Combo - Playing styles",
-			cmd: &comboOptionCmd{
-				name:         "Style",
-				defaultValue: "Normal",
-				variants:     []string{"Solid", "Normal", "Risky"},
+			cmd: &ComboOptionCmd{
+				Name:         "Style",
+				DefaultValue: "Normal",
+				Variants:     []string{"Solid", "Normal", "Risky"},
 			},
 			expected: "option name Style type combo default Normal var Solid var Normal var Risky\n",
 		},
 		{
 			name: "Type Button - Clear internal state",
-			cmd: &buttonOptionCmd{
-				name: "Clear Hash",
+			cmd: &ButtonOptionCmd{
+				Name: "Clear Hash",
 			},
 			expected: "option name Clear Hash type button\n",
 		},
 		{
 			name: "Type String - Empty path handling",
-			cmd: &stringOptionCmd{
-				name:         "NalimovPath",
-				defaultValue: "",
+			cmd: &StringOptionCmd{
+				Name:         "NalimovPath",
+				DefaultValue: "",
 			},
 			expected: "option name NalimovPath type string default <empty>\n",
 		},
@@ -378,7 +378,7 @@ func TestOptionCommands_UCICompliance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			text, err := tt.cmd.MarshalText()
+			text, err := tt.cmd.marshalText()
 			if err != nil {
 				t.Fatalf("Failed to marshal %s: %v", tt.name, err)
 			}

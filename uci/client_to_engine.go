@@ -20,6 +20,7 @@ import (
 	"encoding"
 	"fmt"
 	"strconv"
+	"unicode"
 
 	"github.com/brighamskarda/chess/v2"
 )
@@ -62,7 +63,7 @@ func (cmd *uciCmd) UnmarshalText(text []byte) error {
 
 // debugCmd [ on | off ]
 //
-// Switch the debugCmd mode of the engine on and off.In debugCmd mode the engine should send additional infos to the GUI, e.g. with the "info string" command,to help debugging, e.g. the commands that the engine has received etc.This mode should be switched off by default and this command can be sentany time, also when the engine is thinking.
+// Switch the debugCmd mode of the engine on and off. In debugCmd mode the engine should send additional infos to the GUI, e.g. with the "info string" command,to help debugging, e.g. the commands that the engine has received etc.This mode should be switched off by default and this command can be sent any time, also when the engine is thinking.
 type debugCmd struct {
 	baseClientCommand
 	// on is true if the engine should be set to debug mode.
@@ -149,10 +150,6 @@ func getOptionValue(text []byte) string {
 // This is sent to the engine when the user wants to change the internal parameters of the engine. For the "button" type no value is needed. One string will be sent for each parameter and this will only be sent when the engine is waiting. The name and value of the option in <id> should not be case sensitive and can include spaces. The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing, for example do not use <name> = "draw value". Here are some strings for the example below:
 //
 //	"setoption name Nullmove value true\n"
-//	"setoption name Selectivity value 3\n"
-//	"setoption name Style value Risky\n"
-//	"setoption name Clear Hash\n"
-//	"setoption name NalimovPath value c:\chess\tb\4;c:\chess\tb\5\n"
 type setCheckOptionCmd struct {
 	baseClientCommand
 	// name is the name/id of the option being set.
@@ -196,11 +193,7 @@ func (cmd *setCheckOptionCmd) UnmarshalText(text []byte) error {
 //
 // This is sent to the engine when the user wants to change the internal parameters of the engine. For the "button" type no value is needed. One string will be sent for each parameter and this will only be sent when the engine is waiting. The name and value of the option in <id> should not be case sensitive and can include spaces. The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing, for example do not use <name> = "draw value". Here are some strings for the example below:
 //
-//	"setoption name Nullmove value true\n"
 //	"setoption name Selectivity value 3\n"
-//	"setoption name Style value Risky\n"
-//	"setoption name Clear Hash\n"
-//	"setoption name NalimovPath value c:\chess\tb\4;c:\chess\tb\5\n"
 type setSpinOptionCmd struct {
 	baseClientCommand
 	// name is the name/id of the option being set.
@@ -232,7 +225,7 @@ func (cmd *setSpinOptionCmd) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// setStringOptionCmd is an option with the string type.
+// setStringOptionCmd is an option with the string **or combo** type.
 //
 //   - string
 //     a text field that has a string as a value, an empty string has the value "<empty>"
@@ -241,11 +234,7 @@ func (cmd *setSpinOptionCmd) UnmarshalText(text []byte) error {
 //
 // This is sent to the engine when the user wants to change the internal parameters of the engine. For the "button" type no value is needed. One string will be sent for each parameter and this will only be sent when the engine is waiting. The name and value of the option in <id> should not be case sensitive and can include spaces. The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing, for example do not use <name> = "draw value". Here are some strings for the example below:
 //
-//	"setoption name Nullmove value true\n"
-//	"setoption name Selectivity value 3\n"
 //	"setoption name Style value Risky\n"
-//	"setoption name Clear Hash\n"
-//	"setoption name NalimovPath value c:\chess\tb\4;c:\chess\tb\5\n"
 type setStringOptionCmd struct {
 	baseClientCommand
 	// name is the name/id of the option being set.
@@ -267,58 +256,15 @@ func (cmd *setStringOptionCmd) UnmarshalText(text []byte) error {
 
 	value := getOptionValue(text)
 
-	if value == "" {
+	switch value {
+	case "":
 		return fmt.Errorf("could not unmarshal setStringOption command %q: empty value", text)
-	} else if value == "<empty>" {
+	case "<empty>":
 		cmd.value = ""
-	} else {
+	default:
 		cmd.value = value
 	}
 
-	cmd.initBaseEngineCommand(text)
-	return nil
-}
-
-// setComboOptionCmd is an option with the combo type.
-//
-//   - combo
-//     a combo box that can have different predefined strings as a value
-//
-// name <id> [value <x>]
-//
-// This is sent to the engine when the user wants to change the internal parameters of the engine. For the "button" type no value is needed. One string will be sent for each parameter and this will only be sent when the engine is waiting. The name and value of the option in <id> should not be case sensitive and can include spaces. The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing, for example do not use <name> = "draw value". Here are some strings for the example below:
-//
-//	"setoption name Nullmove value true\n"
-//	"setoption name Selectivity value 3\n"
-//	"setoption name Style value Risky\n"
-//	"setoption name Clear Hash\n"
-//	"setoption name NalimovPath value c:\chess\tb\4;c:\chess\tb\5\n"
-type setComboOptionCmd struct {
-	baseClientCommand
-	// name is the name/id of the option being set.
-	name string
-	// value is the selected string from the available combo choices.
-	value string
-}
-
-func (cmd *setComboOptionCmd) UnmarshalText(text []byte) error {
-	err := validateSetOption(text)
-	if err != nil {
-		return err
-	}
-
-	cmd.name = getOptionName(text)
-	if cmd.name == "" {
-		return fmt.Errorf("could not unmarshal setOption command %q: empty option name", text)
-	}
-
-	value := getOptionValue(text)
-
-	if value == "" {
-		return fmt.Errorf("could not unmarshal setComboOption command %q: empty value", text)
-	}
-
-	cmd.value = value
 	cmd.initBaseEngineCommand(text)
 	return nil
 }
@@ -332,11 +278,7 @@ func (cmd *setComboOptionCmd) UnmarshalText(text []byte) error {
 //
 // This is sent to the engine when the user wants to change the internal parameters of the engine. For the "button" type no value is needed. One string will be sent for each parameter and this will only be sent when the engine is waiting. The name and value of the option in <id> should not be case sensitive and can include spaces. The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing, for example do not use <name> = "draw value". Here are some strings for the example below:
 //
-//	"setoption name Nullmove value true\n"
-//	"setoption name Selectivity value 3\n"
-//	"setoption name Style value Risky\n"
 //	"setoption name Clear Hash\n"
-//	"setoption name NalimovPath value c:\chess\tb\4;c:\chess\tb\5\n"
 type setButtonOptionCmd struct {
 	baseClientCommand
 	// name is the name/id of the button to be "pressed".
@@ -701,4 +643,104 @@ func (cmd *quitCmd) UnmarshalText(text []byte) error {
 	}
 	cmd.initBaseEngineCommand(text)
 	return nil
+}
+
+// unmarshalOptionCommand first tries to unmarshal the check option, then the spin option, then the string option, then the button option.
+func unmarshalOptionCommand(text []byte) (clientToEngineCmd, error) {
+	// check option
+	cmd, err1 := unmarshalClientToEngineCmd[setCheckOptionCmd](text)
+	if err1 == nil {
+		return cmd, nil
+	}
+
+	// spin option
+	cmd, err2 := unmarshalClientToEngineCmd[setSpinOptionCmd](text)
+	if err2 == nil {
+		return cmd, nil
+	}
+
+	// string/combo option
+	cmd, err3 := unmarshalClientToEngineCmd[setStringOptionCmd](text)
+	if err3 == nil {
+		return cmd, nil
+	}
+
+	// button option
+	cmd, err4 := unmarshalClientToEngineCmd[setButtonOptionCmd](text)
+	if err4 == nil {
+		return cmd, nil
+	}
+
+	return nil, fmt.Errorf("could not unmarshal setoption command: "+
+		"4 separate parses where attempted and all failed, each of there errors are provided:"+
+		"\n\t%w\n\t%w\n\t%w\n\t%w", err1, err2, err3, err4)
+}
+
+// commandSet is used to lookup the specific parses for different commands based on the first word in the command.
+var commandSet = map[string]func([]byte) (clientToEngineCmd, error){
+	"uci":        unmarshalClientToEngineCmd[uciCmd],
+	"debug":      unmarshalClientToEngineCmd[debugCmd],
+	"isready":    unmarshalClientToEngineCmd[isReadyCmd],
+	"setoption":  unmarshalOptionCommand,
+	"register":   unmarshalClientToEngineCmd[registerCmd],
+	"ucinewgame": unmarshalClientToEngineCmd[uciNewGameCmd],
+	"position":   unmarshalClientToEngineCmd[positionCmd],
+	"go":         unmarshalClientToEngineCmd[goCmd],
+	"stop":       unmarshalClientToEngineCmd[stopCmd],
+	"ponderhit":  unmarshalClientToEngineCmd[ponderhitCmd],
+	"quit":       unmarshalClientToEngineCmd[quitCmd],
+}
+
+// parseClientToEngineCmd attempts to parse any client command and return the corresponding clientToEngineCmd.
+//
+// Parsing is based on the first word in the command. If the first word not a valid command, the it will continue on to the second word, and so on. If no valid command is found, or parsing of the specified command failed, an error is returned.
+func parseClientToEngineCmd(text []byte) (clientToEngineCmd, error) {
+	cursor := 0
+	for cursor < len(text) {
+		// 1. Find the start of the next field (first non-space character)
+		start := bytes.IndexFunc(text[cursor:], func(r rune) bool {
+			return !unicode.IsSpace(r)
+		})
+
+		// If no more non-space characters are found, we're done
+		if start == -1 {
+			break
+		}
+		start += cursor // Adjust 'start' to be relative to the beginning of 'text'
+
+		// 2. Find the end of this field (the next space character)
+		end := bytes.IndexFunc(text[start:], unicode.IsSpace)
+
+		if end == -1 {
+			// No more spaces, so the field goes to the end of the slice
+			end = len(text)
+		} else {
+			end += start
+		}
+
+		// 3. Extract the field and check the map
+		field := string(text[start:end])
+		if unmarshalFunc, ok := commandSet[field]; ok {
+			// Lazy Match: Return as soon as we hit a valid command
+			return unmarshalFunc(text[start:])
+		}
+
+		// 4. Move the cursor forward to search the next field
+		cursor = end
+	}
+
+	return nil, fmt.Errorf("could not parse client to engine command %q: no valid command keyword was found", text)
+}
+
+// A generic function that will parse an engine command an return the value or an error, all at once. (no need for a separate declaration and call to UnmarshalText)
+func unmarshalClientToEngineCmd[T any, PT interface {
+	*T
+	clientToEngineCmd
+}](text []byte) (clientToEngineCmd, error) {
+	var result PT = new(T)
+	err := result.UnmarshalText(text)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
