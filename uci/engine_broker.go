@@ -23,11 +23,8 @@ import (
 	"sync"
 )
 
-// inputLineBufferSize is the number of lines that should be buffered from the [UciEngineBroker.Input]. Having a buffer can increase throughput.
-const inputLineBufferSize = 16
-
 // inputCommandBufferSize is the number of parsed commands that should be buffered while waiting for another command to execute. Similar to [inputLineBufferSize], having a buffer here and increase throughput.
-const inputCommandBufferSize = 4
+const inputCommandBufferSize = 16
 
 // outputCommandBufferSize is the number of commands to buffer for the output stream. Having a buffer can increase command throughput.
 const outputCommandBufferSize = 16
@@ -67,15 +64,13 @@ type UciEngineBroker struct {
 func (broker *UciEngineBroker) Start() {
 	// TODO set up listeners for shutdown events like SIGTERM
 
-	inputLines := make(chan []byte, inputLineBufferSize)
 	inputCommands := make(chan clientToEngineCmd, inputCommandBufferSize)
 	outputCommands := make(chan engineToClientCmd, outputCommandBufferSize)
 	broker.outputCommands = outputCommands
 	broker.ctx, broker.ctxCancel = context.WithCancel(context.Background())
 
-	go broker.inputParserLoop(broker.Input, inputLines)
-	go broker.clientCommandParserLoop(inputLines, inputCommands)
-	go broker.commandOutputLoop(broker.Output, outputCommands)
+	go broker.commandInputLoop(inputCommands)
+	go broker.commandOutputLoop(outputCommands)
 	broker.executeCommands(inputCommands)
 }
 
@@ -86,35 +81,32 @@ func (broker *UciEngineBroker) printError(err string) {
 	broker.errorLocker.Unlock()
 }
 
-// inputParserLoop reads lines of text from the input, and puts them into lines. The function closes the channel and reader, then exits when input returns an error or when broker.ctx is cancelled. The rest of the data will be sent on an error, even if it doesn't end in new line.
-func (broker *UciEngineBroker) inputParserLoop(input io.ReadCloser, lines chan<- []byte) {
-	defer input.Close()
-	defer close(lines)
+// readLines reads lines from the brokers input and calls broker.ctxCancel() if there is an error reading. It is common practice for UCI chess engine to shutdown once stdin has been closed.
+func (broker *UciEngineBroker) readLines(line chan<- []byte) {
+	defer close(line)
+	bufReader := bufio.NewReader(broker.Input)
 
-	bufReader := bufio.NewReader(input)
+	l, err := bufReader.ReadBytes('\n')
+	for ; err == nil; l, err = bufReader.ReadBytes('\n') {
+		select {
+		case <-broker.ctx.Done():
+			return
+		case line <- l:
+		}
+	}
+
+	broker.ctxCancel()
+}
+
+// commandInputLoop reads from lines and parses them as [clientToEngineCmd]s. These commands are then sent to the provided output channel. Onces all lines are read and the channel is closed, the commands channel is closed.
+//
+// As per the UCI specification unknown commands are simply ignored and new commands will continue to be parsed.
+func (broker *UciEngineBroker) commandInputLoop(commands chan<- clientToEngineCmd) {
+	defer close(commands)
+	defer broker.Input.Close()
 
 	line := make(chan []byte)
-
-	go func() {
-		defer close(line)
-
-		l, err := bufReader.ReadBytes('\n')
-		for ; err == nil; l, err = bufReader.ReadBytes('\n') {
-			select {
-			case <-broker.ctx.Done():
-				return
-			case line <- l:
-			}
-		}
-
-		if len(l) > 0 {
-			select {
-			case <-broker.ctx.Done():
-				return
-			case line <- l:
-			}
-		}
-	}()
+	go broker.readLines(line)
 
 Loop:
 	for {
@@ -122,26 +114,6 @@ Loop:
 		case <-broker.ctx.Done():
 			break Loop
 		case value, ok := <-line:
-			if ok {
-				lines <- value
-			} else {
-				break Loop
-			}
-		}
-	}
-}
-
-// clientCommandParserLoop reads from lines and parses them as [clientToEngineCmd]s. These commands are then sent to the provided output channel. Onces all lines are read and the channel is closed, the commands channel is closed.
-//
-// As per the UCI specification unknown commands are simply ignored and new commands will continue to be parsed.
-func (broker *UciEngineBroker) clientCommandParserLoop(lines <-chan []byte, commands chan<- clientToEngineCmd) {
-	defer close(commands)
-Loop:
-	for {
-		select {
-		case <-broker.ctx.Done():
-			break Loop
-		case value, ok := <-lines:
 			if ok {
 				cmd, err := parseClientToEngineCmd(value)
 				if err != nil {
@@ -163,10 +135,11 @@ Loop:
 	}
 }
 
-// commandOutputLoop marshals the engineToClientCommands and outputs them to the writer until the channel is closed.
-func (broker *UciEngineBroker) commandOutputLoop(output io.WriteCloser, commands <-chan engineToClientCmd) {
-	defer output.Close()
+// commandOutputLoop marshals the engineToClientCommands and outputs them to the writer until the channel is closed. If there is an error when writing to the output the broker context is cancelled since this is a pretty good sign that something has gone wrong and the engine should shut down.
+func (broker *UciEngineBroker) commandOutputLoop(commands <-chan engineToClientCmd) {
+	defer cleanOutChannel(commands)
 	defer broker.ctxCancel()
+	defer broker.Output.Close()
 
 Loop:
 	for {
@@ -181,10 +154,10 @@ Loop:
 					continue Loop
 				}
 
-				_, err = output.Write(text)
+				_, err = broker.Output.Write(text)
 				if err != nil {
 					broker.printError(fmt.Sprintf("error encountered while trying to write to output, closing output writer and shutting down: %v", err))
-					broker.ctxCancel()
+					break Loop
 				}
 			} else {
 				break Loop
@@ -193,9 +166,18 @@ Loop:
 	}
 }
 
+// cleanOutChannel ensures that a channel is read from until it is closed to prevent deadlocks
+func cleanOutChannel[T any](ch <-chan T) {
+	for {
+		_, ok := <-ch
+		if !ok {
+			break
+		}
+	}
+}
+
 // executeCommands is the core of the UciEngineBroker. It takes all the commands that are being parsed and translates them into function calls to the engine.
 func (broker *UciEngineBroker) executeCommands(inputCommands <-chan clientToEngineCmd) {
-	defer broker.ctxCancel()
 	defer close(broker.outputCommands)
 
 	for {
@@ -213,6 +195,7 @@ func (broker *UciEngineBroker) executeCommands(inputCommands <-chan clientToEngi
 	}
 }
 
+// doCommand calls different command handlers based on the underlying type of the cmd.
 func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
 	switch cmd.(type) {
 	case *uciCmd:
