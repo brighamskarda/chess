@@ -20,7 +20,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 )
 
 // inputCommandBufferSize is the number of parsed commands that should be buffered while waiting for another command to execute. Similar to [inputLineBufferSize], having a buffer here and increase throughput.
@@ -36,6 +39,8 @@ const errorReportingLocation = "https://github.com/brighamskarda/chess/issues"
 //
 // ChessEngines should do all of their logging through info strings, but this broker
 type UciEngineBroker struct {
+	// Engine is where the actual logic of the chess engine is contained. When the broker receives commands from the UCI client, it will translate those commands into the appropriate calls to the engine.
+	Engine ChessEngine
 	// Input is the source from which the UciEngineBroker will read commands from the UCI client.
 	//
 	// In most cases this should be [os.Stdin]
@@ -50,8 +55,6 @@ type UciEngineBroker struct {
 	Error io.Writer
 	// errorLocker ensures only one go routine writes to Error at a time.
 	errorLocker sync.Mutex
-	// Engine is where the actual logic of the chess engine is contained. When the broker receives commands from the UCI client, it will translate those commands into the appropriate calls to the engine.
-	Engine ChessEngine
 	// ctx indicates if the engine should keep running, or if it should shutdown.
 	ctx context.Context
 	// ctxCancel should be called when the program needs to shutdown. It will close ctx resulting in all parts of the uci broker and engine to shutdown.
@@ -69,6 +72,7 @@ func (broker *UciEngineBroker) Start() {
 	broker.outputCommands = outputCommands
 	broker.ctx, broker.ctxCancel = context.WithCancel(context.Background())
 
+	go broker.signalListener()
 	go broker.commandInputLoop(inputCommands)
 	go broker.commandOutputLoop(outputCommands)
 	broker.executeCommands(inputCommands)
@@ -79,6 +83,15 @@ func (broker *UciEngineBroker) printError(err string) {
 	broker.errorLocker.Lock()
 	fmt.Fprintln(broker.Error, "UciEngineBroker error:", err)
 	broker.errorLocker.Unlock()
+}
+
+// signalListener ensures that the uci engine broker context is cancelled when a sigterm or sigint is received. Should work on windows and linux.
+func (broker *UciEngineBroker) signalListener() {
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+
+	<-ch
+	broker.ctxCancel()
 }
 
 // readLines reads lines from the brokers input and calls broker.ctxCancel() if there is an error reading. It is common practice for UCI chess engine to shutdown once stdin has been closed.

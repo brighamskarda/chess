@@ -25,6 +25,10 @@ import (
 
 func makeOsPipe(t *testing.T) (*os.File, *os.File) {
 	reader, writer, err := os.Pipe()
+	t.Cleanup(func() {
+		reader.Close()
+		writer.Close()
+	})
 	if err != nil {
 		t.Fatalf("failed to make pipe: %v", err)
 	}
@@ -88,7 +92,7 @@ func TestEngineShutsDownWhenStdinIsClosed(t *testing.T) {
 		if broker.Engine.(*mockEngine).quit != 1 {
 			t.Errorf("broker did not call Quit on the engine exactly 1 time")
 		}
-	case <-time.After(time.Second * 10):
+	case <-time.After(time.Second):
 		// Failure: The broker did not shut down within the 1-second timeout.
 		t.Errorf("engine did not shut down within 1 second of stdin being closed")
 	}
@@ -154,7 +158,6 @@ func testOutput(reader *bufio.Reader, expected string, t *testing.T) {
 // TestEngineInitialization tests that the broker outputs id, author, options, and uciok after receiving a uci command.
 func TestEngineInitialization(t *testing.T) {
 	stdinW, stdoutR := startNewUciBroker(t)
-	defer stdinW.Close()
 
 	_, err := stdinW.WriteString("uci\n")
 	if err != nil {
@@ -171,4 +174,8 @@ func TestEngineInitialization(t *testing.T) {
 	testOutput(output, "option name stringOpt type string default sss\n", t)
 	testOutput(output, "option name buttonOpt type button\n", t)
 	testOutput(output, "uciok\n", t)
+}
+
+func TestEngineQuitsOnInterrupt(t *testing.T) {
+	t.Log("Unfortunately there is no great way to test signals on windows, this is a test that needs to be done by hand.")
 }
