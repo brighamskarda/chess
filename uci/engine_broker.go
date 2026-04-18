@@ -253,9 +253,13 @@ func (broker *UciEngineBroker) executeCommands(inputCmds <-chan clientToEngineCm
 
 // doCommand calls different command handlers based on the underlying type of the cmd.
 func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd, outputCmds chan<- engineToClientCmd) {
-	switch cmd.(type) {
+	switch c := cmd.(type) {
 	case *uciCmd:
 		broker.handleUciCommand(outputCmds)
+	case *debugCmd:
+		broker.handleDebugCommand(c.on)
+	case *isReadyCmd:
+		broker.handleIsReadyCommand(outputCmds)
 	default:
 		broker.printError(fmt.Sprintf("command with unknown type %T received in UciEngineBroker. This indicates an internal library error. Please report such errors to %v", cmd, errorReportingLocation))
 	}
@@ -314,4 +318,12 @@ func (broker *UciEngineBroker) makeInfoChannel() chan<- *InfoCmd {
 		}
 	}()
 	return ch
+}
+
+func (broker *UciEngineBroker) handleDebugCommand(debug bool) {
+	broker.Engine.SetDebug(debug)
+}
+
+func (broker *UciEngineBroker) handleIsReadyCommand(outputCmds chan<- engineToClientCmd) {
+	outputCmds <- &readyOkCmd{}
 }

@@ -68,7 +68,8 @@ func (e *maliciousEngine) Initialize() {
 // TestEngineShutsDownWhenStdinIsClose ensures that best practice is followed by making sure the engine shuts down when it detects stdin has been closed.
 func TestEngineShutsDownWhenStdinIsClosed(t *testing.T) {
 	stdinR, stdinW := makeOsPipe(t)
-	broker := makeUciEngineBroker(stdinR, DiscardWriteCloser{io.Discard})
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
 
 	startReturned := make(chan struct{})
 	go func() {
@@ -80,6 +81,9 @@ func TestEngineShutsDownWhenStdinIsClosed(t *testing.T) {
 	if err != nil {
 		t.Errorf("problem writing to stdin: %v", err)
 	}
+	// Read something to ensure engine initializes.
+	stdoutR.Read(make([]byte, 1))
+
 	err = stdinW.Close()
 	if err != nil {
 		t.Errorf("problem closing stdin: %v", err)
@@ -90,7 +94,7 @@ func TestEngineShutsDownWhenStdinIsClosed(t *testing.T) {
 	case <-startReturned:
 		// Success: The broker.Start() returned as expected after stdin was closed.
 		if broker.Engine.(*mockEngine).quit != 1 {
-			t.Errorf("broker did not call Quit on the engine exactly 1 time")
+			t.Errorf("broker did not call Quit on the engine exactly 1 time, was called %v times", broker.Engine.(*mockEngine).quit)
 		}
 	case <-time.After(time.Second):
 		// Failure: The broker did not shut down within the 1-second timeout.
@@ -178,4 +182,72 @@ func TestEngineInitialization(t *testing.T) {
 
 func TestEngineQuitsOnInterrupt(t *testing.T) {
 	t.Log("Unfortunately there is no great way to test signals on windows, this is a test that needs to be done by hand.")
+}
+
+// TestEngineInitialization tests that the broker outputs id, author, options, and uciok after receiving a uci command.
+func TestEngineDebugMode(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	go broker.Start()
+
+	_, err := stdinW.WriteString("debug on\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("isready\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	// wait for readyok to indicate the commands have been processed
+	stdoutR.Read(make([]byte, 256))
+
+	expectedVal := 1
+	actualVal := broker.Engine.(*mockEngine).debug
+	if expectedVal != actualVal {
+		t.Errorf("expected Engine.Debug to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
+	expectedBool := true
+	actualBool := broker.Engine.(*mockEngine).debugState
+	if expectedBool != actualBool {
+		t.Errorf("expected Engine.DebugState to be %v , but was %v", expectedBool, actualBool)
+	}
+
+	_, err = stdinW.WriteString("debug off\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("isready\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	// wait for readyok to indicate the commands have been processed
+	stdoutR.Read(make([]byte, 256))
+
+	expectedVal = 2
+	actualVal = broker.Engine.(*mockEngine).debug
+	if expectedVal != actualVal {
+		t.Errorf("expected Engine.Debug to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
+	expectedBool = false
+	actualBool = broker.Engine.(*mockEngine).debugState
+	if expectedBool != actualBool {
+		t.Errorf("expected Engine.DebugState to be %v , but was %v", expectedBool, actualBool)
+	}
+}
+
+// TestEngineInitialization tests that the broker outputs id, author, options, and uciok after receiving a uci command.
+func TestIsReady(t *testing.T) {
+	stdinW, stdoutR := startNewUciBroker(t)
+
+	_, err := stdinW.WriteString("isready\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	output := bufio.NewReader(stdoutR)
+
+	testOutput(output, "readyok\n", t)
+
 }

@@ -37,11 +37,16 @@ type ChessEngine interface {
 	// Options should return the options supported by this engine. These options will be send to the GUI so the user may modify them.
 	Options() []OptionCmd
 
-	// Quit can be called at any time and thus should be handled asynchronously (though this function should not return until all cleanup is complete.). This is the broker's way of asking the engine to nicely stop its operations. Failure to do so promptly may result in the engine being forcibly stopped by the GUI or operating system.
+	// SetDebug will receive a true when the client requests debug mode, otherwise will be false. This function can be called asynchronously at any time. The engine should default to normal operations (debug = false).
+	//
+	// When debug mode is on, the engine should send out additional infos that may aid development.
+	SetDebug(bool)
+
+	// Quit can be called asynchronously at any time. Quit should not return until all cleanup is complete. This is the broker's way of asking the engine to nicely stop its operations. Failure to do so promptly may result in the engine being forcibly stopped by the GUI or operating system.
 	//
 	// While many engines will not need to do anything in this function, there are some important things certain engines may need to do, such as:
 	//
-	// * Finishing writes to files (to prevent invalid file states for future runs)
+	// * Finishing writes to files (to prevent invalid file states)
 	// * Releasing remote software licenses
 	//
 	// Quit will only be called once.

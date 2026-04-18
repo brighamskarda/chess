@@ -65,7 +65,7 @@ func TestUciokCommandMarshal(t *testing.T) {
 }
 
 func TestReadyokCommandMarshal(t *testing.T) {
-	var cmd engineToClientCmd = &readyokCmd{}
+	var cmd engineToClientCmd = &readyOkCmd{}
 
 	text, err := cmd.marshalText()
 	if err != nil {
@@ -107,7 +107,7 @@ func TestBestMoveCommandMarshal(t *testing.T) {
 }
 
 func TestCopyprotectionCommandMarshal(t *testing.T) {
-	copyprotectCmd := copyprotectChecking
+	copyprotectCmd := copyProtectChecking
 	var cmd engineToClientCmd = &copyprotectCmd
 
 	text, err := cmd.marshalText()
@@ -119,7 +119,7 @@ func TestCopyprotectionCommandMarshal(t *testing.T) {
 		t.Errorf("got %q, expected %q", text, expected)
 	}
 
-	copyprotectCmd = copyprotectOk
+	copyprotectCmd = copyProtectOk
 	text, err = copyprotectCmd.marshalText()
 	if err != nil {
 		t.Error("got unexpected error")
@@ -129,7 +129,7 @@ func TestCopyprotectionCommandMarshal(t *testing.T) {
 		t.Errorf("got %q, expected %q", text, expected)
 	}
 
-	copyprotectCmd = copyprotectError
+	copyprotectCmd = copyProtectError
 	text, err = copyprotectCmd.marshalText()
 	if err != nil {
 		t.Error("got unexpected error")
@@ -184,10 +184,10 @@ func TestInfoCommandMarshal_AllFields(t *testing.T) {
 		MultiPv:  OptionalOf(1),
 		Score: OptionalOf(InfoScore{Score: 35,
 			IsMate:       true,
-			IsLowerbound: true}),
+			IsLowerBound: true}),
 		CurrMove:       OptionalOf(chess.Move{FromSquare: chess.G1, ToSquare: chess.F3}),
 		CurrMoveNumber: OptionalOf(1),
-		Hashfull:       OptionalOf(500),
+		HashFull:       OptionalOf(500),
 		Nps:            OptionalOf(450000),
 		TbHits:         OptionalOf(100),
 		SbHits:         OptionalOf(50),
@@ -252,7 +252,7 @@ func TestInfoCommandMarshal(t *testing.T) {
 				Score: OptionalOf(InfoScore{
 					Score:        5,
 					IsMate:       true,
-					IsUpperbound: true,
+					IsUpperBound: true,
 				}),
 			},
 			expected: "info score mate 5 upperbound\n",
@@ -273,7 +273,7 @@ func TestInfoCommandMarshal(t *testing.T) {
 			cmd: InfoCmd{
 				CurrMove:       OptionalOf(chess.Move{FromSquare: chess.G1, ToSquare: chess.F3}),
 				CurrMoveNumber: OptionalOf(1),
-				Hashfull:       OptionalOf(400),
+				HashFull:       OptionalOf(400),
 			},
 			expected: "info currmove g1f3 currmovenumber 1 hashfull 400\n",
 		},

@@ -17,12 +17,14 @@ package uci
 
 // mockEngine simply keeps track of how many times each of its functions are called. Used for testing.
 type mockEngine struct {
-	output chan<- *InfoCmd
+	output     chan<- *InfoCmd
+	debugState bool
 
 	initialize int
 	name       int
 	author     int
 	options    int
+	debug      int
 	quit       int
 }
 
@@ -67,6 +69,11 @@ func (engine *mockEngine) Options() []OptionCmd {
 			Name: "buttonOpt",
 		},
 	}
+}
+
+func (engine *mockEngine) SetDebug(value bool) {
+	engine.debugState = value
+	engine.debug++
 }
 
 func (engine *mockEngine) Quit() {

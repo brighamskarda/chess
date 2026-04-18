@@ -64,15 +64,15 @@ func (cmd *uciokCmd) marshalText() ([]byte, error) {
 	return []byte("uciok\n"), nil
 }
 
-// readyokCmd
+// readyOkCmd
 // This must be sent when the engine has received an "isready" command and has
 // processed all input and is ready to accept new commands now.
 // It is usually sent after a command that can take some time to be able to wait for the engine,
 // but it can be used anytime, even when the engine is searching,
 // and must always be answered with "isready".
-type readyokCmd struct{}
+type readyOkCmd struct{}
 
-func (cmd *readyokCmd) marshalText() ([]byte, error) {
+func (cmd *readyOkCmd) marshalText() ([]byte, error) {
 	return []byte("readyok\n"), nil
 }
 
@@ -114,7 +114,7 @@ func (cmd *bestMoveCmd) marshalText() ([]byte, error) {
 	return text.Bytes(), nil
 }
 
-// copyprotectionCmd - this is needed for copyprotected engines. After the uciok command the engine can tell the GUI,
+// copyProtectionCmd - this is needed for copyprotected engines. After the uciok command the engine can tell the GUI,
 // that it will check the copy protection now. This is done by "copyprotection checking".
 // If the check is ok the engine should send "copyprotection ok", otherwise "copyprotection error".
 // If there is an error the engine should not function properly but should not quit alone.
@@ -128,21 +128,21 @@ func (cmd *bestMoveCmd) marshalText() ([]byte, error) {
 //	    TellGUI("copyprotection ok\n");
 //	else
 //	   TellGUI("copyprotection error\n");
-type copyprotectionCmd uint8
+type copyProtectionCmd uint8
 
 const (
-	copyprotectChecking copyprotectionCmd = iota
-	copyprotectOk
-	copyprotectError
+	copyProtectChecking copyProtectionCmd = iota
+	copyProtectOk
+	copyProtectError
 )
 
-func (cmd *copyprotectionCmd) marshalText() ([]byte, error) {
+func (cmd *copyProtectionCmd) marshalText() ([]byte, error) {
 	switch *cmd {
-	case copyprotectChecking:
+	case copyProtectChecking:
 		return []byte("copyprotection checking\n"), nil
-	case copyprotectOk:
+	case copyProtectOk:
 		return []byte("copyprotection ok\n"), nil
-	case copyprotectError:
+	case copyProtectError:
 		return []byte("copyprotection error\n"), nil
 	default:
 		return nil, fmt.Errorf("could not marshal copyprotection command: invalid value %v", *cmd)
@@ -237,8 +237,8 @@ type InfoCmd struct {
 	// for the first move x should be 1 not 0.
 	CurrMoveNumber Optional[int]
 
-	// Hashfull <x> - the hash is x permill full, the engine should send this info regularly
-	Hashfull Optional[int]
+	// HashFull <x> - the hash is x permill full, the engine should send this info regularly
+	HashFull Optional[int]
 
 	// Nps <x> - x nodes per second searched, the engine should send this info regularly
 	Nps Optional[int]
@@ -278,21 +278,21 @@ func (cmd *InfoCmd) marshalText() ([]byte, error) {
 	text.WriteString("info")
 
 	cmd.marshalDepth(text)
-	cmd.marshalSeldepth(text)
+	cmd.marshalSelDepth(text)
 	cmd.marshalTime(text)
 	cmd.marshalNodes(text)
 	cmd.marshalPv(text)
-	cmd.marshalMultipv(text)
+	cmd.marshalMultiPv(text)
 	cmd.marshalScore(text)
-	cmd.marshalCurrmove(text)
-	cmd.marshalCurrmovenumber(text)
-	cmd.marshalHashfull(text)
+	cmd.marshalCurrMove(text)
+	cmd.marshalCurrMoveNumber(text)
+	cmd.marshalHashFull(text)
 	cmd.marshalNps(text)
-	cmd.marshalTbhits(text)
-	cmd.marshalSbhits(text)
-	cmd.marshalCpuload(text)
+	cmd.marshalTbHits(text)
+	cmd.marshalSbHits(text)
+	cmd.marshalCpuLoad(text)
 	cmd.marshalRefutation(text)
-	cmd.marshalCurrline(text)
+	cmd.marshalCurrLine(text)
 	// it is important that the string message is marshaled last as everything after it is considered part of the string to the client.
 	cmd.marshalString(text)
 
@@ -307,7 +307,7 @@ func (cmd *InfoCmd) marshalDepth(text *bytes.Buffer) {
 	}
 }
 
-func (cmd *InfoCmd) marshalSeldepth(text *bytes.Buffer) {
+func (cmd *InfoCmd) marshalSelDepth(text *bytes.Buffer) {
 	if cmd.SelDepth.HasValue() {
 		text.WriteString(" seldepth ")
 		text.WriteString(strconv.Itoa(cmd.SelDepth.Value()))
@@ -343,7 +343,7 @@ func (cmd *InfoCmd) marshalPv(text *bytes.Buffer) {
 	}
 }
 
-func (cmd *InfoCmd) marshalMultipv(text *bytes.Buffer) {
+func (cmd *InfoCmd) marshalMultiPv(text *bytes.Buffer) {
 	if cmd.MultiPv.HasValue() {
 		text.WriteString(" multipv ")
 		text.WriteString(strconv.Itoa(cmd.MultiPv.Value()))
@@ -364,16 +364,16 @@ func (cmd *InfoCmd) marshalScore(text *bytes.Buffer) {
 
 		text.WriteString(strconv.Itoa(value.Score))
 
-		if value.IsLowerbound {
+		if value.IsLowerBound {
 			text.WriteString(" lowerbound")
 		}
-		if value.IsUpperbound {
+		if value.IsUpperBound {
 			text.WriteString(" upperbound")
 		}
 	}
 }
 
-func (cmd *InfoCmd) marshalCurrmove(text *bytes.Buffer) {
+func (cmd *InfoCmd) marshalCurrMove(text *bytes.Buffer) {
 	if cmd.CurrMove.HasValue() {
 		text.WriteString(" currmove ")
 		moveText, _ := cmd.CurrMove.Value().MarshalText()
@@ -381,17 +381,17 @@ func (cmd *InfoCmd) marshalCurrmove(text *bytes.Buffer) {
 	}
 }
 
-func (cmd *InfoCmd) marshalCurrmovenumber(text *bytes.Buffer) {
+func (cmd *InfoCmd) marshalCurrMoveNumber(text *bytes.Buffer) {
 	if cmd.CurrMoveNumber.HasValue() {
 		text.WriteString(" currmovenumber ")
 		text.WriteString(strconv.Itoa(cmd.CurrMoveNumber.Value()))
 	}
 }
 
-func (cmd *InfoCmd) marshalHashfull(text *bytes.Buffer) {
-	if cmd.Hashfull.HasValue() {
+func (cmd *InfoCmd) marshalHashFull(text *bytes.Buffer) {
+	if cmd.HashFull.HasValue() {
 		text.WriteString(" hashfull ")
-		text.WriteString(strconv.Itoa(cmd.Hashfull.Value()))
+		text.WriteString(strconv.Itoa(cmd.HashFull.Value()))
 	}
 }
 
@@ -402,21 +402,21 @@ func (cmd *InfoCmd) marshalNps(text *bytes.Buffer) {
 	}
 }
 
-func (cmd *InfoCmd) marshalTbhits(text *bytes.Buffer) {
+func (cmd *InfoCmd) marshalTbHits(text *bytes.Buffer) {
 	if cmd.TbHits.HasValue() {
 		text.WriteString(" tbhits ")
 		text.WriteString(strconv.Itoa(cmd.TbHits.Value()))
 	}
 }
 
-func (cmd *InfoCmd) marshalSbhits(text *bytes.Buffer) {
+func (cmd *InfoCmd) marshalSbHits(text *bytes.Buffer) {
 	if cmd.SbHits.HasValue() {
 		text.WriteString(" sbhits ")
 		text.WriteString(strconv.Itoa(cmd.SbHits.Value()))
 	}
 }
 
-func (cmd *InfoCmd) marshalCpuload(text *bytes.Buffer) {
+func (cmd *InfoCmd) marshalCpuLoad(text *bytes.Buffer) {
 	if cmd.CpuLoad.HasValue() {
 		text.WriteString(" cpuload ")
 		text.WriteString(strconv.Itoa(cmd.CpuLoad.Value()))
@@ -430,7 +430,7 @@ func (cmd *InfoCmd) marshalRefutation(text *bytes.Buffer) {
 	}
 }
 
-func (cmd *InfoCmd) marshalCurrline(text *bytes.Buffer) {
+func (cmd *InfoCmd) marshalCurrLine(text *bytes.Buffer) {
 	if cmd.CurrLine.HasValue() {
 		currLine := cmd.CurrLine.Value()
 
@@ -463,10 +463,10 @@ type InfoScore struct {
 	Score int
 	// IsMate is true if the score represents how many plies until mate. Otherwise score is assumed to be the engines evaluation in centipawns.
 	IsMate bool
-	// IsLowerbound indicates that this score is a IsLowerbound. Should be false if upperbound is set.
-	IsLowerbound bool
-	// IsUpperbound indicates that this score is an IsUpperbound. Should be false if lowerbound is set.
-	IsUpperbound bool
+	// IsLowerBound indicates that this score is a IsLowerBound. Should be false if upperbound is set.
+	IsLowerBound bool
+	// IsUpperBound indicates that this score is an IsUpperBound. Should be false if lowerbound is set.
+	IsUpperBound bool
 }
 
 // OptionCmd represents an option that the chess engine supports. This is sent to the client so it knows what options it can set in the engine.
