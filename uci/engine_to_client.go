@@ -186,7 +186,7 @@ func (cmd *registrationCmd) marshalText() ([]byte, error) {
 	}
 }
 
-// infoCmd - the engine wants to send information to the GUI. This should be done whenever one of the info has changed.
+// InfoCmd - the engine wants to send information to the GUI. This should be done whenever one of the info has changed.
 // The engine can send only selected infos or multiple infos with one info command,
 // e.g. "info currmove e2e4 currmovenumber 1" or
 //
@@ -196,84 +196,84 @@ func (cmd *registrationCmd) marshalText() ([]byte, error) {
 // e.g. "info depth 2 score cp 214 time 1242 nodes 2124 nps 34928 pv e2e4 e7e5 g1f3"
 // I suggest to start sending "currmove", "currmovenumber", "currline" and "refutation" only after one second
 // to avoid too much traffic.
-type infoCmd struct {
-	// depth <x> - search depth in plies
-	depth Optional[int]
+type InfoCmd struct {
+	// Depth <x> - search Depth in plies
+	Depth Optional[int]
 
-	// seldepth <x> - selective search depth in plies,
-	// if the engine sends seldepth there must also be a "depth" present in the same string.
-	seldepth Optional[int]
+	// SelDepth <x> - selective search depth in plies,
+	// if the engine sends SelDepth there must also be a "depth" present in the same string.
+	SelDepth Optional[int]
 
-	// time <x> - the time searched in ms, this should be sent together with the pv.
-	time Optional[int]
+	// Time <x> - the Time searched in ms, this should be sent together with the pv.
+	Time Optional[int]
 
-	// nodes <x> - x nodes searched, the engine should send this info regularly
-	nodes Optional[int]
+	// Nodes <x> - x Nodes searched, the engine should send this info regularly
+	Nodes Optional[int]
 
-	// pv <move1> ... <movei> - the best line found
-	pv []chess.Move
+	// Pv <move1> ... <movei> - the best line found
+	Pv []chess.Move
 
-	// multipv <num> - this for the multi pv mode.
-	// for the best move/pv add "multipv 1" in the string when you send the pv.
+	// MultiPv <num> - this for the multi pv mode.
+	// for the best move/pv add "MultiPv 1" in the string when you send the pv.
 	// in k-best mode always send all k variants in k strings together.
-	multipv Optional[int]
+	MultiPv Optional[int]
 
-	// score
+	// Score
 	// 	* cp <x>
-	// 		the score from the engine's point of view in centipawns.
+	// 		the Score from the engine's point of view in centipawns.
 	// 	* mate <y>
 	// 		mate in y moves, not plies.
 	// 		If the engine is getting mated use negative values for y.
 	// 	* lowerbound
-	//       the score is just a lower bound.
+	//       the Score is just a lower bound.
 	// 	* upperbound
-	// 	   the score is just an upper bound.
-	score Optional[infoScore]
+	// 	   the Score is just an upper bound.
+	Score Optional[InfoScore]
 
-	// currmove <move> - currently searching this move
-	currmove Optional[chess.Move]
+	// CurrMove <move> - currently searching this move
+	CurrMove Optional[chess.Move]
 
-	// currmovenumber <x> - currently searching move number x,
+	// CurrMoveNumber <x> - currently searching move number x,
 	// for the first move x should be 1 not 0.
-	currmovenumber Optional[int]
+	CurrMoveNumber Optional[int]
 
-	// hashfull <x> - the hash is x permill full, the engine should send this info regularly
-	hashfull Optional[int]
+	// Hashfull <x> - the hash is x permill full, the engine should send this info regularly
+	Hashfull Optional[int]
 
-	// nps <x> - x nodes per second searched, the engine should send this info regularly
-	nps Optional[int]
+	// Nps <x> - x nodes per second searched, the engine should send this info regularly
+	Nps Optional[int]
 
-	// tbhits <x> - x positions where found in the endgame table bases
-	tbhits Optional[int]
+	// TbHits <x> - x positions where found in the endgame table bases
+	TbHits Optional[int]
 
-	// sbhits <x> - x positions where found in the shredder endgame databases
-	sbhits Optional[int]
+	// SbHits <x> - x positions where found in the shredder endgame databases
+	SbHits Optional[int]
 
-	// cpuload <x> - the cpu usage of the engine is x permill.
-	cpuload Optional[int]
+	// CpuLoad <x> - the cpu usage of the engine is x permill.
+	CpuLoad Optional[int]
 
 	// string <str> - any string str which will be displayed by the engine,
 	// if there is a string command the rest of the line will be interpreted as <str>.
-	stringMsg Optional[string]
+	StringMsg Optional[string]
 
-	// refutation <move1> <move2> ... <movei>
+	// Refutation <move1> <move2> ... <movei>
 	// move <move1> is refuted by the line <move2> ... <movei>, i can be any number >= 1.
-	// Example: after move d1h5 is searched, the engine can send "info refutation d1h5 g6h5"
+	// Example: after move d1h5 is searched, the engine can send "info Refutation d1h5 g6h5"
 	// if g6h5 is the best answer after d1h5 or if g6h5 refutes the move d1h5.
-	// if there is no refutation for d1h5 found, the engine should just send "info refutation d1h5"
+	// if there is no Refutation for d1h5 found, the engine should just send "info Refutation d1h5"
 	// The engine should only send this if the option "UCI_ShowRefutations" is set to true.
-	refutation []chess.Move
+	Refutation []chess.Move
 
-	// currline <cpunr> <move1> ... <movei>
+	// CurrLine <cpunr> <move1> ... <movei>
 	// this is the current line the engine is calculating. <cpunr> is the number of the cpu
 	// if the engine is running on more than one cpu. <cpunr> = 1,2,3....
 	// if the engine is just using one cpu, <cpunr> can be omitted.
 	// If <cpunr> is greater than 1, always send all k lines in k strings together.
 	// The engine should only send this if the option "UCI_ShowCurrLine" is set to true.
-	currline Optional[currentLine]
+	CurrLine Optional[CurrentLine]
 }
 
-func (cmd *infoCmd) marshalText() ([]byte, error) {
+func (cmd *InfoCmd) marshalText() ([]byte, error) {
 	text := &bytes.Buffer{}
 	text.WriteString("info")
 
@@ -300,31 +300,31 @@ func (cmd *infoCmd) marshalText() ([]byte, error) {
 	return text.Bytes(), nil
 }
 
-func (cmd *infoCmd) marshalDepth(text *bytes.Buffer) {
-	if cmd.depth.HasValue() {
+func (cmd *InfoCmd) marshalDepth(text *bytes.Buffer) {
+	if cmd.Depth.HasValue() {
 		text.WriteString(" depth ")
-		text.WriteString(strconv.Itoa(cmd.depth.Value()))
+		text.WriteString(strconv.Itoa(cmd.Depth.Value()))
 	}
 }
 
-func (cmd *infoCmd) marshalSeldepth(text *bytes.Buffer) {
-	if cmd.seldepth.HasValue() {
+func (cmd *InfoCmd) marshalSeldepth(text *bytes.Buffer) {
+	if cmd.SelDepth.HasValue() {
 		text.WriteString(" seldepth ")
-		text.WriteString(strconv.Itoa(cmd.seldepth.Value()))
+		text.WriteString(strconv.Itoa(cmd.SelDepth.Value()))
 	}
 }
 
-func (cmd *infoCmd) marshalTime(text *bytes.Buffer) {
-	if cmd.time.HasValue() {
+func (cmd *InfoCmd) marshalTime(text *bytes.Buffer) {
+	if cmd.Time.HasValue() {
 		text.WriteString(" time ")
-		text.WriteString(strconv.Itoa(cmd.time.Value()))
+		text.WriteString(strconv.Itoa(cmd.Time.Value()))
 	}
 }
 
-func (cmd *infoCmd) marshalNodes(text *bytes.Buffer) {
-	if cmd.nodes.HasValue() {
+func (cmd *InfoCmd) marshalNodes(text *bytes.Buffer) {
+	if cmd.Nodes.HasValue() {
 		text.WriteString(" nodes ")
-		text.WriteString(strconv.Itoa(cmd.nodes.Value()))
+		text.WriteString(strconv.Itoa(cmd.Nodes.Value()))
 	}
 }
 
@@ -336,137 +336,137 @@ func marshalMoveList(moves []chess.Move, text *bytes.Buffer) {
 	}
 }
 
-func (cmd *infoCmd) marshalPv(text *bytes.Buffer) {
-	if cmd.pv != nil {
+func (cmd *InfoCmd) marshalPv(text *bytes.Buffer) {
+	if cmd.Pv != nil {
 		text.WriteString(" pv")
-		marshalMoveList(cmd.pv, text)
+		marshalMoveList(cmd.Pv, text)
 	}
 }
 
-func (cmd *infoCmd) marshalMultipv(text *bytes.Buffer) {
-	if cmd.multipv.HasValue() {
+func (cmd *InfoCmd) marshalMultipv(text *bytes.Buffer) {
+	if cmd.MultiPv.HasValue() {
 		text.WriteString(" multipv ")
-		text.WriteString(strconv.Itoa(cmd.multipv.Value()))
+		text.WriteString(strconv.Itoa(cmd.MultiPv.Value()))
 	}
 }
 
-func (cmd *infoCmd) marshalScore(text *bytes.Buffer) {
-	if cmd.score.HasValue() {
+func (cmd *InfoCmd) marshalScore(text *bytes.Buffer) {
+	if cmd.Score.HasValue() {
 		text.WriteString(" score ")
 
-		value := cmd.score.Value()
+		value := cmd.Score.Value()
 
-		if value.isMate {
+		if value.IsMate {
 			text.WriteString("mate ")
 		} else {
 			text.WriteString("cp ")
 		}
 
-		text.WriteString(strconv.Itoa(value.score))
+		text.WriteString(strconv.Itoa(value.Score))
 
-		if value.isLowerbound {
+		if value.IsLowerbound {
 			text.WriteString(" lowerbound")
 		}
-		if value.isUpperbound {
+		if value.IsUpperbound {
 			text.WriteString(" upperbound")
 		}
 	}
 }
 
-func (cmd *infoCmd) marshalCurrmove(text *bytes.Buffer) {
-	if cmd.currmove.HasValue() {
+func (cmd *InfoCmd) marshalCurrmove(text *bytes.Buffer) {
+	if cmd.CurrMove.HasValue() {
 		text.WriteString(" currmove ")
-		moveText, _ := cmd.currmove.Value().MarshalText()
+		moveText, _ := cmd.CurrMove.Value().MarshalText()
 		text.Write(moveText)
 	}
 }
 
-func (cmd *infoCmd) marshalCurrmovenumber(text *bytes.Buffer) {
-	if cmd.currmovenumber.HasValue() {
+func (cmd *InfoCmd) marshalCurrmovenumber(text *bytes.Buffer) {
+	if cmd.CurrMoveNumber.HasValue() {
 		text.WriteString(" currmovenumber ")
-		text.WriteString(strconv.Itoa(cmd.currmovenumber.Value()))
+		text.WriteString(strconv.Itoa(cmd.CurrMoveNumber.Value()))
 	}
 }
 
-func (cmd *infoCmd) marshalHashfull(text *bytes.Buffer) {
-	if cmd.hashfull.HasValue() {
+func (cmd *InfoCmd) marshalHashfull(text *bytes.Buffer) {
+	if cmd.Hashfull.HasValue() {
 		text.WriteString(" hashfull ")
-		text.WriteString(strconv.Itoa(cmd.hashfull.Value()))
+		text.WriteString(strconv.Itoa(cmd.Hashfull.Value()))
 	}
 }
 
-func (cmd *infoCmd) marshalNps(text *bytes.Buffer) {
-	if cmd.nps.HasValue() {
+func (cmd *InfoCmd) marshalNps(text *bytes.Buffer) {
+	if cmd.Nps.HasValue() {
 		text.WriteString(" nps ")
-		text.WriteString(strconv.Itoa(cmd.nps.Value()))
+		text.WriteString(strconv.Itoa(cmd.Nps.Value()))
 	}
 }
 
-func (cmd *infoCmd) marshalTbhits(text *bytes.Buffer) {
-	if cmd.tbhits.HasValue() {
+func (cmd *InfoCmd) marshalTbhits(text *bytes.Buffer) {
+	if cmd.TbHits.HasValue() {
 		text.WriteString(" tbhits ")
-		text.WriteString(strconv.Itoa(cmd.tbhits.Value()))
+		text.WriteString(strconv.Itoa(cmd.TbHits.Value()))
 	}
 }
 
-func (cmd *infoCmd) marshalSbhits(text *bytes.Buffer) {
-	if cmd.sbhits.HasValue() {
+func (cmd *InfoCmd) marshalSbhits(text *bytes.Buffer) {
+	if cmd.SbHits.HasValue() {
 		text.WriteString(" sbhits ")
-		text.WriteString(strconv.Itoa(cmd.sbhits.Value()))
+		text.WriteString(strconv.Itoa(cmd.SbHits.Value()))
 	}
 }
 
-func (cmd *infoCmd) marshalCpuload(text *bytes.Buffer) {
-	if cmd.cpuload.HasValue() {
+func (cmd *InfoCmd) marshalCpuload(text *bytes.Buffer) {
+	if cmd.CpuLoad.HasValue() {
 		text.WriteString(" cpuload ")
-		text.WriteString(strconv.Itoa(cmd.cpuload.Value()))
+		text.WriteString(strconv.Itoa(cmd.CpuLoad.Value()))
 	}
 }
 
-func (cmd *infoCmd) marshalRefutation(text *bytes.Buffer) {
-	if cmd.refutation != nil {
+func (cmd *InfoCmd) marshalRefutation(text *bytes.Buffer) {
+	if cmd.Refutation != nil {
 		text.WriteString(" refutation")
-		marshalMoveList(cmd.refutation, text)
+		marshalMoveList(cmd.Refutation, text)
 	}
 }
 
-func (cmd *infoCmd) marshalCurrline(text *bytes.Buffer) {
-	if cmd.currline.HasValue() {
-		currLine := cmd.currline.Value()
+func (cmd *InfoCmd) marshalCurrline(text *bytes.Buffer) {
+	if cmd.CurrLine.HasValue() {
+		currLine := cmd.CurrLine.Value()
 
 		text.WriteString(" currline")
-		if currLine.cpunr.HasValue() {
+		if currLine.CpuNr.HasValue() {
 			text.WriteByte(' ')
-			text.WriteString(strconv.Itoa(currLine.cpunr.Value()))
+			text.WriteString(strconv.Itoa(currLine.CpuNr.Value()))
 		}
 
-		marshalMoveList(currLine.moves, text)
+		marshalMoveList(currLine.Moves, text)
 	}
 }
 
-func (cmd *infoCmd) marshalString(text *bytes.Buffer) {
-	if cmd.stringMsg.HasValue() {
+func (cmd *InfoCmd) marshalString(text *bytes.Buffer) {
+	if cmd.StringMsg.HasValue() {
 		text.WriteString(" string ")
-		text.WriteString(cmd.stringMsg.Value())
+		text.WriteString(cmd.StringMsg.Value())
 	}
 }
 
-// currentLine is used in [infoCmd] to show the current line the engine is calculating.
-type currentLine struct {
-	cpunr Optional[int]
-	moves []chess.Move
+// CurrentLine is used in [InfoCmd] to show the current line the engine is calculating.
+type CurrentLine struct {
+	CpuNr Optional[int]
+	Moves []chess.Move
 }
 
-// score is used in [infoCmd] to show the current line the engine is calculating.
-type infoScore struct {
-	// score is the score
-	score int
-	// isMate is true if the score represents how many plies until mate. Otherwise score is assumed to be the engines evaluation in centipawns.
-	isMate bool
-	// isLowerbound indicates that this score is a isLowerbound. Should be false if upperbound is set.
-	isLowerbound bool
-	// isUpperbound indicates that this score is an isUpperbound. Should be false if lowerbound is set.
-	isUpperbound bool
+// score is used in [InfoCmd] to show the current line the engine is calculating.
+type InfoScore struct {
+	// Score is the Score
+	Score int
+	// IsMate is true if the score represents how many plies until mate. Otherwise score is assumed to be the engines evaluation in centipawns.
+	IsMate bool
+	// IsLowerbound indicates that this score is a IsLowerbound. Should be false if upperbound is set.
+	IsLowerbound bool
+	// IsUpperbound indicates that this score is an IsUpperbound. Should be false if lowerbound is set.
+	IsUpperbound bool
 }
 
 // OptionCmd represents an option that the chess engine supports. This is sent to the client so it knows what options it can set in the engine.

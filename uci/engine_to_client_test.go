@@ -175,29 +175,29 @@ func TestRegistrationCommandMarshal(t *testing.T) {
 }
 
 func TestInfoCommandMarshal_AllFields(t *testing.T) {
-	cmd := &infoCmd{
-		depth:    OptionalOf(20),
-		seldepth: OptionalOf(25),
-		time:     OptionalOf(1200),
-		nodes:    OptionalOf(5000000),
-		pv:       []chess.Move{{FromSquare: chess.E2, ToSquare: chess.E4}, {FromSquare: chess.E7, ToSquare: chess.E5}},
-		multipv:  OptionalOf(1),
-		score: OptionalOf(infoScore{score: 35,
-			isMate:       true,
-			isLowerbound: true}),
-		currmove:       OptionalOf(chess.Move{FromSquare: chess.G1, ToSquare: chess.F3}),
-		currmovenumber: OptionalOf(1),
-		hashfull:       OptionalOf(500),
-		nps:            OptionalOf(450000),
-		tbhits:         OptionalOf(100),
-		sbhits:         OptionalOf(50),
-		cpuload:        OptionalOf(200),
-		refutation:     []chess.Move{{FromSquare: chess.D1, ToSquare: chess.H5}, {FromSquare: chess.G6, ToSquare: chess.H5}},
-		currline: OptionalOf(currentLine{
-			cpunr: OptionalOf(1),
-			moves: []chess.Move{{FromSquare: chess.A2, ToSquare: chess.A4}},
+	cmd := &InfoCmd{
+		Depth:    OptionalOf(20),
+		SelDepth: OptionalOf(25),
+		Time:     OptionalOf(1200),
+		Nodes:    OptionalOf(5000000),
+		Pv:       []chess.Move{{FromSquare: chess.E2, ToSquare: chess.E4}, {FromSquare: chess.E7, ToSquare: chess.E5}},
+		MultiPv:  OptionalOf(1),
+		Score: OptionalOf(InfoScore{Score: 35,
+			IsMate:       true,
+			IsLowerbound: true}),
+		CurrMove:       OptionalOf(chess.Move{FromSquare: chess.G1, ToSquare: chess.F3}),
+		CurrMoveNumber: OptionalOf(1),
+		Hashfull:       OptionalOf(500),
+		Nps:            OptionalOf(450000),
+		TbHits:         OptionalOf(100),
+		SbHits:         OptionalOf(50),
+		CpuLoad:        OptionalOf(200),
+		Refutation:     []chess.Move{{FromSquare: chess.D1, ToSquare: chess.H5}, {FromSquare: chess.G6, ToSquare: chess.H5}},
+		CurrLine: OptionalOf(CurrentLine{
+			CpuNr: OptionalOf(1),
+			Moves: []chess.Move{{FromSquare: chess.A2, ToSquare: chess.A4}},
 		}),
-		stringMsg: OptionalOf("engine is thinking deeply"),
+		StringMsg: OptionalOf("engine is thinking deeply"),
 	}
 
 	text, err := cmd.marshalText()
@@ -220,48 +220,48 @@ func TestInfoCommandMarshal_AllFields(t *testing.T) {
 func TestInfoCommandMarshal(t *testing.T) {
 	tests := []struct {
 		name     string
-		cmd      infoCmd
+		cmd      InfoCmd
 		expected string
 	}{
 		{
 			name:     "Empty Info",
-			cmd:      infoCmd{},
+			cmd:      InfoCmd{},
 			expected: "info\n",
 		},
 		{
 			name: "Basic Search Stats",
-			cmd: infoCmd{
-				depth: OptionalOf(12),
-				nodes: OptionalOf(123456),
-				nps:   OptionalOf(100000),
+			cmd: InfoCmd{
+				Depth: OptionalOf(12),
+				Nodes: OptionalOf(123456),
+				Nps:   OptionalOf(100000),
 			},
 			expected: "info depth 12 nodes 123456 nps 100000\n",
 		},
 		{
 			name: "Score Centipawns",
-			cmd: infoCmd{
-				score: OptionalOf(infoScore{
-					score: -45,
+			cmd: InfoCmd{
+				Score: OptionalOf(InfoScore{
+					Score: -45,
 				}),
 			},
 			expected: "info score cp -45\n",
 		},
 		{
 			name: "Score Mate and Upperbound",
-			cmd: infoCmd{
-				score: OptionalOf(infoScore{
-					score:        5,
-					isMate:       true,
-					isUpperbound: true,
+			cmd: InfoCmd{
+				Score: OptionalOf(InfoScore{
+					Score:        5,
+					IsMate:       true,
+					IsUpperbound: true,
 				}),
 			},
 			expected: "info score mate 5 upperbound\n",
 		},
 		{
 			name: "PV with Moves",
-			cmd: infoCmd{
-				depth: OptionalOf(2),
-				pv: []chess.Move{
+			cmd: InfoCmd{
+				Depth: OptionalOf(2),
+				Pv: []chess.Move{
 					{FromSquare: chess.E2, ToSquare: chess.E4},
 					{FromSquare: chess.E7, ToSquare: chess.E5},
 				},
@@ -270,19 +270,19 @@ func TestInfoCommandMarshal(t *testing.T) {
 		},
 		{
 			name: "Current Move and Progress",
-			cmd: infoCmd{
-				currmove:       OptionalOf(chess.Move{FromSquare: chess.G1, ToSquare: chess.F3}),
-				currmovenumber: OptionalOf(1),
-				hashfull:       OptionalOf(400),
+			cmd: InfoCmd{
+				CurrMove:       OptionalOf(chess.Move{FromSquare: chess.G1, ToSquare: chess.F3}),
+				CurrMoveNumber: OptionalOf(1),
+				Hashfull:       OptionalOf(400),
 			},
 			expected: "info currmove g1f3 currmovenumber 1 hashfull 400\n",
 		},
 		{
 			name: "Current Line with CPU",
-			cmd: infoCmd{
-				currline: OptionalOf(currentLine{
-					cpunr: OptionalOf(1),
-					moves: []chess.Move{
+			cmd: InfoCmd{
+				CurrLine: OptionalOf(CurrentLine{
+					CpuNr: OptionalOf(1),
+					Moves: []chess.Move{
 						{FromSquare: chess.D2, ToSquare: chess.D4},
 						{FromSquare: chess.D7, ToSquare: chess.D5},
 					},
@@ -292,8 +292,8 @@ func TestInfoCommandMarshal(t *testing.T) {
 		},
 		{
 			name: "Refutation Line",
-			cmd: infoCmd{
-				refutation: []chess.Move{
+			cmd: InfoCmd{
+				Refutation: []chess.Move{
 					{FromSquare: chess.D1, ToSquare: chess.H5},
 					{FromSquare: chess.G6, ToSquare: chess.H5},
 				},
@@ -302,8 +302,8 @@ func TestInfoCommandMarshal(t *testing.T) {
 		},
 		{
 			name: "Arbitrary String",
-			cmd: infoCmd{
-				stringMsg: OptionalOf("checking for early draw"),
+			cmd: InfoCmd{
+				StringMsg: OptionalOf("checking for early draw"),
 			},
 			expected: "info string checking for early draw\n",
 		},

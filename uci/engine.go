@@ -19,8 +19,10 @@ package uci
 type ChessEngine interface {
 	// Initialize will be the first function called on the chess engine. It will be called exactly once and should be used to initialize any internal state the engine relies on.
 	//
-	// Keep in mind that if this function takes too long, the GUI make kill the engine.
-	Initialize()
+	// A channel is provided via which the engine can send info commands to the UCI chess client. The [InfoCmd] documentation should give a good idea of what kind of info can be sent. Sending commands with only [InfoCmd.StringMsg] can be very useful for debugging. The channel will be buffered and is designed to ingest large amounts of information at once. The channel is meant to be owned by the chess engine, and thus will not be closed outside of it.
+	//
+	// Keep in mind that if this function takes too long, the GUI may kill the engine.
+	Initialize(chan<- *InfoCmd)
 
 	// Name should return the name of the chess engine. It can contain spaces, but should not contain new lines.
 	//

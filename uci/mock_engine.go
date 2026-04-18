@@ -17,6 +17,8 @@ package uci
 
 // mockEngine simply keeps track of how many times each of its functions are called. Used for testing.
 type mockEngine struct {
+	output chan<- *InfoCmd
+
 	initialize int
 	name       int
 	author     int
@@ -24,7 +26,8 @@ type mockEngine struct {
 	quit       int
 }
 
-func (engine *mockEngine) Initialize() {
+func (engine *mockEngine) Initialize(o chan<- *InfoCmd) {
+	engine.output = o
 	engine.initialize++
 }
 

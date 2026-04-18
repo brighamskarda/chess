@@ -32,6 +32,9 @@ const inputCommandBufferSize = 16
 // outputCommandBufferSize is the number of commands to buffer for the output stream. Having a buffer can increase command throughput.
 const outputCommandBufferSize = 16
 
+// infoBufferSize is the number of info commands that can be buffered from the engine. This is fairly large to prevent blocking the engine.
+const infoBufferSize = 128
+
 // errorReportingLocation is where users should report internal library errors that are printed out.
 const errorReportingLocation = "https://github.com/brighamskarda/chess/issues"
 
@@ -59,23 +62,30 @@ type UciEngineBroker struct {
 	ctx context.Context
 	// ctxCancel should be called when the program needs to shutdown. It will close ctx resulting in all parts of the uci broker and engine to shutdown.
 	ctxCancel context.CancelFunc
-	// outputCommands is the queue of commands to be sent back to the client.
-	outputCommands chan<- engineToClientCmd
+	// mainOutputCommands is the queue of commands being sent to the client. It should be fed with channels made from [UciEngineBroker.makeOutputCommandsChannel]. Lookup the "fan-in" idiom for more info.
+	mainOutputCommands chan engineToClientCmd
+	// outputCommandsWG indicates when the main output commands channel can be closed. It means that all all channels feeding into it have been closed.
+	outputCommandsWG sync.WaitGroup
 }
 
 // Starts the UciEngineBroker. This function will not return until the UCI client requests the engine to shutdown. Until then it will read stdin for commands from the UCI client, and it will send command from the engine back the the UCI client via stdout.
 func (broker *UciEngineBroker) Start() {
-	// TODO set up listeners for shutdown events like SIGTERM
-
+	// setup input and output channels
 	inputCommands := make(chan clientToEngineCmd, inputCommandBufferSize)
-	outputCommands := make(chan engineToClientCmd, outputCommandBufferSize)
-	broker.outputCommands = outputCommands
+	broker.mainOutputCommands = make(chan engineToClientCmd, outputCommandBufferSize)
 	broker.ctx, broker.ctxCancel = context.WithCancel(context.Background())
 
+	// setup read and write loops
 	go broker.signalListener()
 	go broker.commandInputLoop(inputCommands)
-	go broker.commandOutputLoop(outputCommands)
-	broker.executeCommands(inputCommands)
+	go broker.commandOutputLoop(broker.mainOutputCommands)
+
+	// Setup first output channel and start go routine that waits to close the main output commands buffer.
+	outputCmds := broker.makeOutputCommandsChannel(outputCommandBufferSize)
+	go closeOnWg(&broker.outputCommandsWG, broker.mainOutputCommands)
+
+	// Start executing commands received from the client. Runs a loop til program termination.
+	broker.executeCommands(inputCommands, outputCmds)
 }
 
 // printError wraps writes to Error in a mutex lock in case a non-concurrent writer is provided.
@@ -83,6 +93,37 @@ func (broker *UciEngineBroker) printError(err string) {
 	broker.errorLocker.Lock()
 	fmt.Fprintln(broker.Error, "UciEngineBroker error:", err)
 	broker.errorLocker.Unlock()
+}
+
+// makeOutputCommandsChannel returns a channel that is being forwarded to the the main outputCommands channel, and is part of the outputCommandsWG.
+func (broker *UciEngineBroker) makeOutputCommandsChannel(bufferSize int) chan<- engineToClientCmd {
+	ch := make(chan engineToClientCmd, bufferSize)
+	broker.outputCommandsWG.Add(1)
+	go func() {
+		defer cleanOutChannel(ch)
+		defer broker.outputCommandsWG.Done()
+	Loop:
+		for {
+			select {
+			case <-broker.ctx.Done():
+				break Loop
+			case cmd, ok := <-ch:
+				if ok {
+					broker.mainOutputCommands <- cmd
+				} else {
+					break Loop
+				}
+			}
+
+		}
+	}()
+	return ch
+}
+
+// closeOnWg will close the channel once the the wait group is done waiting.
+func closeOnWg(wg *sync.WaitGroup, ch chan<- engineToClientCmd) {
+	wg.Wait()
+	close(ch)
 }
 
 // signalListener ensures that the uci engine broker context is cancelled when a sigterm or sigint is received. Should work on windows and linux.
@@ -190,17 +231,17 @@ func cleanOutChannel[T any](ch <-chan T) {
 }
 
 // executeCommands is the core of the UciEngineBroker. It takes all the commands that are being parsed and translates them into function calls to the engine.
-func (broker *UciEngineBroker) executeCommands(inputCommands <-chan clientToEngineCmd) {
-	defer close(broker.outputCommands)
+func (broker *UciEngineBroker) executeCommands(inputCmds <-chan clientToEngineCmd, outputCmds chan<- engineToClientCmd) {
+	defer close(outputCmds)
 
 	for {
 		select {
 		case <-broker.ctx.Done():
 			broker.Engine.Quit()
 			return
-		case cmd, ok := <-inputCommands:
+		case cmd, ok := <-inputCmds:
 			if ok {
-				broker.doCommand(cmd)
+				broker.doCommand(cmd, outputCmds)
 			} else {
 				broker.ctxCancel()
 			}
@@ -209,36 +250,60 @@ func (broker *UciEngineBroker) executeCommands(inputCommands <-chan clientToEngi
 }
 
 // doCommand calls different command handlers based on the underlying type of the cmd.
-func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
+func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd, outputCmds chan<- engineToClientCmd) {
 	switch cmd.(type) {
 	case *uciCmd:
-		broker.handleUciCommand()
+		broker.handleUciCommand(outputCmds)
 	default:
 		broker.printError(fmt.Sprintf("command with unknown type %T received in UciEngineBroker. This indicates an internal library error. Please report such errors to %v", cmd, errorReportingLocation))
 	}
 }
 
-func (broker *UciEngineBroker) handleUciCommand() {
-	broker.Engine.Initialize()
+func (broker *UciEngineBroker) handleUciCommand(outputCmds chan<- engineToClientCmd) {
+	broker.Engine.Initialize(broker.makeInfoChannel())
 
 	// send out the engine name
-	broker.outputCommands <- &idCmd{
+	outputCmds <- &idCmd{
 		isAuthor: false,
 		id:       broker.Engine.Name(),
 	}
 
 	// send out the engine author
-	broker.outputCommands <- &idCmd{
+	outputCmds <- &idCmd{
 		isAuthor: true,
 		id:       broker.Engine.Author(),
 	}
 
 	// send out the engine options
 	for _, opt := range broker.Engine.Options() {
-		broker.outputCommands <- opt
+		outputCmds <- opt
 	}
 
 	// send uciok
-	broker.outputCommands <- &uciokCmd{}
+	outputCmds <- &uciokCmd{}
 
+}
+
+func (broker *UciEngineBroker) makeInfoChannel() chan<- *InfoCmd {
+	ch := make(chan *InfoCmd, infoBufferSize)
+	broker.outputCommandsWG.Add(1)
+	go func() {
+		defer cleanOutChannel(ch)
+		defer broker.outputCommandsWG.Done()
+	Loop:
+		for {
+			select {
+			case <-broker.ctx.Done():
+				break Loop
+			case cmd, ok := <-ch:
+				if ok {
+					broker.mainOutputCommands <- cmd
+				} else {
+					break Loop
+				}
+			}
+
+		}
+	}()
+	return ch
 }
