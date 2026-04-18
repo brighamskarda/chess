@@ -64,8 +64,10 @@ type UciEngineBroker struct {
 	ctxCancel context.CancelFunc
 	// mainOutputCommands is the queue of commands being sent to the client. It should be fed with channels made from [UciEngineBroker.makeOutputCommandsChannel]. Lookup the "fan-in" idiom for more info.
 	mainOutputCommands chan engineToClientCmd
-	// outputCommandsWG indicates when the main output commands channel can be closed. It means that all all channels feeding into it have been closed.
-	outputCommandsWG sync.WaitGroup
+	// outputCommandsWg indicates when the main output commands channel can be closed. It means that all all channels feeding into it have been closed.
+	outputCommandsWg sync.WaitGroup
+	// engineQuitWg indicates that Engine.Quit has finished being called, and the program can exit.
+	engineQuitWg sync.WaitGroup
 }
 
 // Starts the UciEngineBroker. This function will not return until the UCI client requests the engine to shutdown. Until then it will read stdin for commands from the UCI client, and it will send command from the engine back the the UCI client via stdout.
@@ -82,10 +84,11 @@ func (broker *UciEngineBroker) Start() {
 
 	// Setup first output channel and start go routine that waits to close the main output commands buffer.
 	outputCmds := broker.makeOutputCommandsChannel(outputCommandBufferSize)
-	go closeOnWg(&broker.outputCommandsWG, broker.mainOutputCommands)
+	go closeOnWg(&broker.outputCommandsWg, broker.mainOutputCommands)
 
 	// Start executing commands received from the client. Runs a loop til program termination.
 	broker.executeCommands(inputCommands, outputCmds)
+	broker.engineQuitWg.Wait()
 }
 
 // printError wraps writes to Error in a mutex lock in case a non-concurrent writer is provided.
@@ -98,10 +101,10 @@ func (broker *UciEngineBroker) printError(err string) {
 // makeOutputCommandsChannel returns a channel that is being forwarded to the the main outputCommands channel, and is part of the outputCommandsWG.
 func (broker *UciEngineBroker) makeOutputCommandsChannel(bufferSize int) chan<- engineToClientCmd {
 	ch := make(chan engineToClientCmd, bufferSize)
-	broker.outputCommandsWG.Add(1)
+	broker.outputCommandsWg.Add(1)
 	go func() {
 		defer cleanOutChannel(ch)
-		defer broker.outputCommandsWG.Done()
+		defer broker.outputCommandsWg.Done()
 	Loop:
 		for {
 			select {
@@ -237,7 +240,6 @@ func (broker *UciEngineBroker) executeCommands(inputCmds <-chan clientToEngineCm
 	for {
 		select {
 		case <-broker.ctx.Done():
-			broker.Engine.Quit()
 			return
 		case cmd, ok := <-inputCmds:
 			if ok {
@@ -262,6 +264,13 @@ func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd, outputCmds chan<
 func (broker *UciEngineBroker) handleUciCommand(outputCmds chan<- engineToClientCmd) {
 	broker.Engine.Initialize(broker.makeInfoChannel())
 
+	// Increment the wait group so that the program doesn't exit until Quit has finished.
+	broker.engineQuitWg.Add(1)
+	context.AfterFunc(broker.ctx, func() {
+		defer broker.engineQuitWg.Done()
+		broker.Engine.Quit()
+	})
+
 	// send out the engine name
 	outputCmds <- &idCmd{
 		isAuthor: false,
@@ -281,15 +290,14 @@ func (broker *UciEngineBroker) handleUciCommand(outputCmds chan<- engineToClient
 
 	// send uciok
 	outputCmds <- &uciokCmd{}
-
 }
 
 func (broker *UciEngineBroker) makeInfoChannel() chan<- *InfoCmd {
 	ch := make(chan *InfoCmd, infoBufferSize)
-	broker.outputCommandsWG.Add(1)
+	broker.outputCommandsWg.Add(1)
 	go func() {
 		defer cleanOutChannel(ch)
-		defer broker.outputCommandsWG.Done()
+		defer broker.outputCommandsWg.Done()
 	Loop:
 		for {
 			select {
