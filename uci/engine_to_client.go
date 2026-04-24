@@ -1,15 +1,15 @@
 // Copyright (C) 2026 Brigham Skarda
-
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -36,7 +36,8 @@ type engineToClientCmd interface {
 //     this must be sent after receiving the "uci" command to identify the engine,
 //     e.g. "id author Stefan MK\n"
 type idCmd struct {
-	// isAuthor is true if this is an author id command. If it is false then it is assumed to be the name id command.
+	// isAuthor is true if this is an author id command.
+	// If it is false then it is assumed to be the name id command.
 	isAuthor bool
 	// id is either the name of the engine, or the author of the engine.
 	id string
@@ -78,7 +79,8 @@ func (cmd *readyOkCmd) marshalText() ([]byte, error) {
 
 // bestMoveCmd - bestmove <move1> [ ponder <move2> ]
 // the engine has stopped searching and found the move <move> best in this position.
-// the engine can send the move it likes to ponder on. The engine must not start pondering automatically.
+//
+// The engine can send the move it likes to ponder on. The engine must not start pondering automatically.
 // this command must always be sent if the engine stops searching, also in pondering mode if there is a
 // "stop" command, so for every "go" command a "bestmove" command is needed!
 // Directly before that the engine should send a final "info" command with the final search information,
@@ -114,7 +116,9 @@ func (cmd *bestMoveCmd) marshalText() ([]byte, error) {
 	return text.Bytes(), nil
 }
 
-// copyProtectionCmd - this is needed for copyprotected engines. After the uciok command the engine can tell the GUI,
+// copyProtectionCmd - this is needed for copyprotected engines.
+//
+// After the uciok command the engine can tell the GUI,
 // that it will check the copy protection now. This is done by "copyprotection checking".
 // If the check is ok the engine should send "copyprotection ok", otherwise "copyprotection error".
 // If there is an error the engine should not function properly but should not quit alone.
@@ -150,6 +154,7 @@ func (cmd *copyProtectionCmd) marshalText() ([]byte, error) {
 }
 
 // registrationCmd - this is needed for engines that need a username and/or a code to function with all features.
+//
 // Analog to the "copyprotection" command the engine can send "registration checking"
 // after the uciok command followed by either "registration ok" or "registration error".
 // Also after every attempt to register the engine it should answer with "registration checking"
@@ -187,6 +192,7 @@ func (cmd *registrationCmd) marshalText() ([]byte, error) {
 }
 
 // InfoCmd - the engine wants to send information to the GUI. This should be done whenever one of the info has changed.
+//
 // The engine can send only selected infos or multiple infos with one info command,
 // e.g. "info currmove e2e4 currmovenumber 1" or
 //
@@ -200,25 +206,28 @@ type InfoCmd struct {
 	// Depth <x> - search Depth in plies
 	Depth Optional[int]
 
-	// SelDepth <x> - selective search depth in plies,
-	// if the engine sends SelDepth there must also be a "depth" present in the same string.
+	// SelDepth <x> - selective search depth in plies.
+	//
+	// If the engine sends SelDepth there must also be a "depth" present in the same string.
 	SelDepth Optional[int]
 
 	// Time <x> - the Time searched in ms, this should be sent together with the pv.
 	Time Optional[int]
 
-	// Nodes <x> - x Nodes searched, the engine should send this info regularly
+	// Nodes <x> - x Nodes searched, the engine should send this info regularly.
 	Nodes Optional[int]
 
-	// Pv <move1> ... <movei> - the best line found
+	// Pv <move1> ... <movei> - the best line found.
 	Pv []chess.Move
 
 	// MultiPv <num> - this for the multi pv mode.
-	// for the best move/pv add "MultiPv 1" in the string when you send the pv.
+	//
+	// For the best move/pv add "MultiPv 1" in the string when you send the pv.
 	// in k-best mode always send all k variants in k strings together.
 	MultiPv Optional[int]
 
 	// Score
+	//
 	// 	* cp <x>
 	// 		the Score from the engine's point of view in centipawns.
 	// 	* mate <y>
@@ -230,33 +239,34 @@ type InfoCmd struct {
 	// 	   the Score is just an upper bound.
 	Score Optional[InfoScore]
 
-	// CurrMove <move> - currently searching this move
+	// CurrMove <move> - currently searching this move.
 	CurrMove Optional[chess.Move]
 
-	// CurrMoveNumber <x> - currently searching move number x,
-	// for the first move x should be 1 not 0.
+	// CurrMoveNumber <x> - currently searching move number x, for the first move x should be 1 not 0.
 	CurrMoveNumber Optional[int]
 
-	// HashFull <x> - the hash is x permill full, the engine should send this info regularly
+	// HashFull <x> - the hash is x permill full, the engine should send this info regularly.
 	HashFull Optional[int]
 
-	// Nps <x> - x nodes per second searched, the engine should send this info regularly
+	// Nps <x> - x nodes per second searched, the engine should send this info regularly.
 	Nps Optional[int]
 
-	// TbHits <x> - x positions where found in the endgame table bases
+	// TbHits <x> - x positions where found in the endgame table bases.
 	TbHits Optional[int]
 
-	// SbHits <x> - x positions where found in the shredder endgame databases
+	// SbHits <x> - x positions where found in the shredder endgame databases.
 	SbHits Optional[int]
 
 	// CpuLoad <x> - the cpu usage of the engine is x permill.
 	CpuLoad Optional[int]
 
-	// string <str> - any string str which will be displayed by the engine,
+	// string <str> - any string str which will be displayed by the engine.
+	//
 	// if there is a string command the rest of the line will be interpreted as <str>.
 	StringMsg Optional[string]
 
 	// Refutation <move1> <move2> ... <movei>
+	//
 	// move <move1> is refuted by the line <move2> ... <movei>, i can be any number >= 1.
 	// Example: after move d1h5 is searched, the engine can send "info Refutation d1h5 g6h5"
 	// if g6h5 is the best answer after d1h5 or if g6h5 refutes the move d1h5.
@@ -265,7 +275,8 @@ type InfoCmd struct {
 	Refutation []chess.Move
 
 	// CurrLine <cpunr> <move1> ... <movei>
-	// this is the current line the engine is calculating. <cpunr> is the number of the cpu
+	//
+	// This is the current line the engine is calculating. <cpunr> is the number of the cpu
 	// if the engine is running on more than one cpu. <cpunr> = 1,2,3....
 	// if the engine is just using one cpu, <cpunr> can be omitted.
 	// If <cpunr> is greater than 1, always send all k lines in k strings together.
@@ -457,23 +468,31 @@ type CurrentLine struct {
 	Moves []chess.Move
 }
 
-// score is used in [InfoCmd] to show the current line the engine is calculating.
+// InfoScore is used in [InfoCmd] to show the current line the engine is calculating.
 type InfoScore struct {
 	// Score is the Score
 	Score int
-	// IsMate is true if the score represents how many plies until mate. Otherwise score is assumed to be the engines evaluation in centipawns.
+	// IsMate is true if the score represents how many plies until mate.
+	// Otherwise score is assumed to be the engines evaluation in centipawns.
 	IsMate bool
-	// IsLowerBound indicates that this score is a IsLowerBound. Should be false if upperbound is set.
+	// IsLowerBound indicates that this score is a IsLowerBound.
+	// Should be false if upperbound is set.
 	IsLowerBound bool
-	// IsUpperBound indicates that this score is an IsUpperBound. Should be false if lowerbound is set.
+	// IsUpperBound indicates that this score is an IsUpperBound.
+	// Should be false if lowerbound is set.
 	IsUpperBound bool
 }
 
-// OptionCmd represents an option that the chess engine supports. This is sent to the client so it knows what options it can set in the engine.
+// OptionCmd represents an option that the chess engine supports.
 //
-// There is no need to make any types implementing this interface as all valid options can be represented using the structs provided in this module. See [CheckOptionCmd], [SpinOptionCmd], [ComboOptionCmd], [StringOptionCmd], and [ButtonOptionCmd]
+// This is sent to the client so it knows what options it can set in the engine.
+// There is no need to make any types implementing this interface
+// as all valid options can be represented using the structs provided in this module.
+// See [CheckOptionCmd], [SpinOptionCmd], [ComboOptionCmd], [StringOptionCmd], and [ButtonOptionCmd]
 //
-// The following options are predefined in the UCI chess standard. Options with these names should not be used for anything else. Furthermore any options not listed below that are still prepended with "UCI_" will likely be ignored by the GUI.
+// The following options are predefined in the UCI chess standard.
+// Options with these names should not be used for anything else.
+// Furthermore any options not listed below that are still prepended with "UCI_" will likely be ignored by the GUI.
 //   - <id> = Hash, type is spin
 //     the value in MB for memory for hash tables can be changed,
 //     this should be answered with the first "setoptions" command at program boot
@@ -541,13 +560,14 @@ type OptionCmd interface {
 	optionName() string
 }
 
-// CheckOptionCmd - a checkbox that can either be true or false
+// CheckOptionCmd - a checkbox that can either be true or false.
 //
 // see [OptionCmd]
 type CheckOptionCmd struct {
 	// Name <id> - the option has the Name id.
 	//
-	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
+	// Certain options have a fixed value for <id>,
+	// which means that the semantics of this option is fixed.
 	// See [OptionCmd] for more info
 	Name string
 	// DefaultValue - the default value of this parameter is x
@@ -567,13 +587,14 @@ func (cmd *CheckOptionCmd) optionName() string {
 	return cmd.Name
 }
 
-// SpinOptionCmd - a spin wheel that can be an integer in a certain range
+// SpinOptionCmd - a spin wheel that can be an integer in a certain range.
 //
 // see [OptionCmd]
 type SpinOptionCmd struct {
 	// Name <id> - the option has the Name id.
 	//
-	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
+	// Certain options have a fixed value for <id>,
+	// which means that the semantics of this option is fixed.
 	// See [OptionCmd] for more info
 	Name string
 	// DefaultValue - the default value of this parameter is x
@@ -601,13 +622,14 @@ func (cmd *SpinOptionCmd) optionName() string {
 	return cmd.Name
 }
 
-// ComboOptionCmd - a combo box that can have different predefined strings as a value
+// ComboOptionCmd - a combo box that can have different predefined strings as a value.
 //
 // see [OptionCmd]
 type ComboOptionCmd struct {
 	// Name <id> - the option has the Name id.
 	//
-	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
+	// Certain options have a fixed value for <id>,
+	// which means that the semantics of this option is fixed.
 	// See [OptionCmd] for more info
 	Name string
 	// DefaultValue - the default value of this parameter is x
@@ -633,13 +655,14 @@ func (cmd *ComboOptionCmd) optionName() string {
 	return cmd.Name
 }
 
-// ButtonOptionCmd - a button that can be pressed to send a command to the engine
+// ButtonOptionCmd - a button that can be pressed to send a command to the engine.
 //
 // see [OptionCmd]
 type ButtonOptionCmd struct {
 	// Name <id> - the option has the Name id.
 	//
-	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
+	// Certain options have a fixed value for <id>,
+	// which means that the semantics of this option is fixed.
 	// See [OptionCmd] for more info
 	Name string
 }
@@ -655,13 +678,14 @@ func (cmd *ButtonOptionCmd) optionName() string {
 	return cmd.Name
 }
 
-// StringOptionCmd -a text field that has a string as a value, an empty string has the value "<empty>"
+// StringOptionCmd - a text field that has a string as a value, an empty string has the value "<empty>".
 //
 // see [OptionCmd]
 type StringOptionCmd struct {
 	// Name <id> - the option has the Name id.
 	//
-	// Certain options have a fixed value for <id>, which means that the semantics of this option is fixed.
+	// Certain options have a fixed value for <id>,
+	// which means that the semantics of this option is fixed.
 	// See [OptionCmd] for more info
 	Name string
 	// DefaultValue - the default value of this parameter is x. An empty string will be encoded to <empty>.
@@ -685,7 +709,9 @@ func (cmd *StringOptionCmd) optionName() string {
 	return cmd.Name
 }
 
-// startOptionCmd starts marshalling an option command. It is the same for every type. "option name <id> type <t>"
+// startOptionCmd starts marshalling an option command.
+//
+// It is the same for every type. "option name <id> type <t>"
 func startOptionCmd(text *bytes.Buffer, name string, optionType string) {
 	text.WriteString("option name ")
 	text.WriteString(name)

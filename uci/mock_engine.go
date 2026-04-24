@@ -15,7 +15,9 @@
 
 package uci
 
-// mockEngine simply keeps track of how many times each of its functions are called. Used for testing.
+// mockEngine simply keeps track of how many times each of its functions are called.
+//
+// Used for testing.
 type mockEngine struct {
 	output     chan<- *InfoCmd
 	debugState bool

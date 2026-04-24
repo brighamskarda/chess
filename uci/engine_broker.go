@@ -1,15 +1,15 @@
 // Copyright (C) 2026 Brigham Skarda
-
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -26,23 +26,33 @@ import (
 	"syscall"
 )
 
-// inputCommandBufferSize is the number of parsed commands that should be buffered while waiting for another command to execute. Similar to [inputLineBufferSize], having a buffer here and increase throughput.
+// inputCommandBufferSize is the number of parsed commands that should be buffered while waiting for another command to execute.
+//
+// Having a buffer here and increase throughput.
 const inputCommandBufferSize = 16
 
-// outputCommandBufferSize is the number of commands to buffer for the output stream. Having a buffer can increase command throughput.
+// outputCommandBufferSize is the number of commands to buffer for the output stream.
+//
+// Having a buffer can increase command throughput.
 const outputCommandBufferSize = 16
 
-// infoBufferSize is the number of info commands that can be buffered from the engine. This is fairly large to prevent blocking the engine.
+// infoBufferSize is the number of info commands that can be buffered from the engine.
+//
+// This is fairly large to prevent blocking the engine.
 const infoBufferSize = 128
 
 // errorReportingLocation is where users should report internal library errors that are printed out.
 const errorReportingLocation = "https://github.com/brighamskarda/chess/issues"
 
-// UciEngineBroker will automatically handle all UCI communication for a [ChessEngine]. Having a broker significantly simplifies the development of a chess engine as the engine can be developed without worrying about the complexities of the Universal Chess Interface (UCI).
+// UciEngineBroker will automatically handle all UCI communication for a [ChessEngine].
 //
-// ChessEngines should do all of their logging through info strings, but this broker
+// Having a broker significantly simplifies the development of a chess engine
+// as the engine can be developed without worrying about the complexities of the Universal Chess Interface (UCI).
 type UciEngineBroker struct {
-	// Engine is where the actual logic of the chess engine is contained. When the broker receives commands from the UCI client, it will translate those commands into the appropriate calls to the engine.
+	// Engine is where the actual logic of the chess engine is contained.
+	//
+	// When the broker receives commands from the UCI client,
+	// it will translate those commands into the appropriate calls to the engine.
 	Engine ChessEngine
 	// Input is the source from which the UciEngineBroker will read commands from the UCI client.
 	//
@@ -52,7 +62,10 @@ type UciEngineBroker struct {
 	//
 	// In most cases this should be [os.Stdout]
 	Output io.WriteCloser
-	// Error is where the UciEngineBroker will log errors that shouldn't be sent to the client. In most cases it should be pretty empty as errors will only occur if the client is sending invalid or malformed UCI commands.
+	// Error is where the UciEngineBroker will log errors that shouldn't be sent to the client.
+	//
+	// In most cases it should be pretty empty as errors will only occur
+	// if the client is sending invalid or malformed UCI commands.
 	//
 	// In most cases this should be [os.Stderr]
 	Error io.Writer
@@ -60,17 +73,28 @@ type UciEngineBroker struct {
 	errorLocker sync.Mutex
 	// ctx indicates if the engine should keep running, or if it should shutdown.
 	ctx context.Context
-	// ctxCancel should be called when the program needs to shutdown. It will close ctx resulting in all parts of the uci broker and engine to shutdown.
+	// ctxCancel should be called when the program needs to shutdown.
+	//
+	// It will close ctx resulting in all parts of the uci broker and engine to shutdown.
 	ctxCancel context.CancelFunc
-	// mainOutputCommands is the queue of commands being sent to the client. It should be fed with channels made from [UciEngineBroker.makeOutputCommandsChannel]. Lookup the "fan-in" idiom for more info.
+	// mainOutputCommands is the queue of commands being sent to the client.
+	//
+	// It should be fed with channels made from [UciEngineBroker.makeOutputCommandsChannel]. Lookup the "fan-in" idiom for more info.
 	mainOutputCommands chan engineToClientCmd
-	// outputCommandsWg indicates when the main output commands channel can be closed. It means that all all channels feeding into it have been closed.
+	// outputCommandsWg indicates when the main output commands channel can be closed.
+	//
+	// It means that all all channels feeding into it have been closed.
 	outputCommandsWg sync.WaitGroup
-	// engineQuitWg indicates that Engine.Quit has finished being called, and the program can exit.
+	// engineQuitWg indicates that Engine.Quit has finished being called,
+	// and the program can exit.
 	engineQuitWg sync.WaitGroup
 }
 
-// Starts the UciEngineBroker. This function will not return until the UCI client requests the engine to shutdown. Until then it will read stdin for commands from the UCI client, and it will send command from the engine back the the UCI client via stdout.
+// Start the UciEngineBroker.
+//
+// This function will not return until the UCI client requests the engine to shutdown or there is an error.
+// Until then it will read stdin for commands from the UCI client,
+// and it will send commands from the engine back the the UCI client via stdout.
 func (broker *UciEngineBroker) Start() {
 	// setup input and output channels
 	inputCommands := make(chan clientToEngineCmd, inputCommandBufferSize)
@@ -98,7 +122,8 @@ func (broker *UciEngineBroker) printError(err string) {
 	broker.errorLocker.Unlock()
 }
 
-// makeOutputCommandsChannel returns a channel that is being forwarded to the the main outputCommands channel, and is part of the outputCommandsWG.
+// makeOutputCommandsChannel returns a channel that is being forwarded to the the main outputCommands channel,
+// and is part of the outputCommandsWG.
 func (broker *UciEngineBroker) makeOutputCommandsChannel(bufferSize int) chan<- engineToClientCmd {
 	ch := make(chan engineToClientCmd, bufferSize)
 	broker.outputCommandsWg.Add(1)
@@ -129,7 +154,9 @@ func closeOnWg(wg *sync.WaitGroup, ch chan<- engineToClientCmd) {
 	close(ch)
 }
 
-// signalListener ensures that the uci engine broker context is cancelled when a sigterm or sigint is received. Should work on windows and linux.
+// signalListener ensures that the uci engine broker context is cancelled when a sigterm or sigint is received.
+//
+// Should work on windows and linux.
 func (broker *UciEngineBroker) signalListener() {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
@@ -138,7 +165,9 @@ func (broker *UciEngineBroker) signalListener() {
 	broker.ctxCancel()
 }
 
-// readLines reads lines from the brokers input and calls broker.ctxCancel() if there is an error reading. It is common practice for UCI chess engine to shutdown once stdin has been closed.
+// readLines reads lines from the brokers input and calls broker.ctxCancel() if there is an error reading.
+//
+// It is common practice for UCI chess engine to shutdown once stdin has been closed.
 func (broker *UciEngineBroker) readLines(line chan<- []byte) {
 	defer close(line)
 	bufReader := bufio.NewReader(broker.Input)
@@ -155,7 +184,10 @@ func (broker *UciEngineBroker) readLines(line chan<- []byte) {
 	broker.ctxCancel()
 }
 
-// commandInputLoop reads from lines and parses them as [clientToEngineCmd]s. These commands are then sent to the provided output channel. Onces all lines are read and the channel is closed, the commands channel is closed.
+// commandInputLoop reads from lines and parses them as [clientToEngineCmd]s.
+//
+// These commands are then sent to the provided output channel.
+// Onces all lines are read and the channel is closed, the commands channel is closed.
 //
 // As per the UCI specification unknown commands are simply ignored and new commands will continue to be parsed.
 func (broker *UciEngineBroker) commandInputLoop(commands chan<- clientToEngineCmd) {
@@ -192,7 +224,10 @@ Loop:
 	}
 }
 
-// commandOutputLoop marshals the engineToClientCommands and outputs them to the writer until the channel is closed. If there is an error when writing to the output the broker context is cancelled since this is a pretty good sign that something has gone wrong and the engine should shut down.
+// commandOutputLoop marshals the engineToClientCommands and outputs them to the writer until the channel is closed.
+//
+// If there is an error when writing to the output the broker context is cancelled.
+// This is a pretty good sign that something has gone wrong and the engine should shut down.
 func (broker *UciEngineBroker) commandOutputLoop(commands <-chan engineToClientCmd) {
 	defer cleanOutChannel(commands)
 	defer broker.ctxCancel()
@@ -233,7 +268,7 @@ func cleanOutChannel[T any](ch <-chan T) {
 	}
 }
 
-// executeCommands is the core of the UciEngineBroker. It takes all the commands that are being parsed and translates them into function calls to the engine.
+// executeCommands takes all the commands that are being parsed and translates them into function calls to the engine.
 func (broker *UciEngineBroker) executeCommands(inputCmds <-chan clientToEngineCmd, outputCmds chan<- engineToClientCmd) {
 	defer close(outputCmds)
 

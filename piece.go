@@ -1,15 +1,15 @@
 // Copyright (C) 2025 Brigham Skarda
-
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -21,7 +21,9 @@ import (
 	"unicode"
 )
 
-// PieceType represents the type of a piece like a rook or a queen. See also [Piece].
+// PieceType represents the type of a piece like a rook or a queen.
+//
+// See also [Piece].
 type PieceType uint8
 
 const (
@@ -34,7 +36,9 @@ const (
 	King
 )
 
-// String returns a single lowercase letter representation of pt if valid, else an error indicating an unknown piece type.
+// String returns a single lowercase letter representation of the piece type (-prnbqk).
+//
+// If the piece type is invalid a string is returned indicating an unknown piece type.
 func (pt PieceType) String() string {
 	switch pt {
 	case NoPieceType:
@@ -75,7 +79,9 @@ func parsePieceType(b byte) (PieceType, error) {
 	}
 }
 
-// Piece represents a chess piece with type and color. The zero value is [NoPiece].
+// Piece represents a chess piece with type and color.
+//
+// The zero value is [NoPiece].
 type Piece struct {
 	Color Color
 	Type  PieceType
@@ -99,9 +105,11 @@ var (
 	BlackKing   = Piece{Type: King, Color: Black}
 )
 
-// String returns a single letter representation of p if valid, else an error indicating an unknown piece.
+// String returns a single letter representation of the piece (-prnbqkPRNBQK).
 //
 // White pieces are uppercase and black pieces are lowercase.
+//
+// If the piece is invalid an error string is returned indicating an unknown piece.
 func (p Piece) String() string {
 	if p.Color == White {
 		return strings.ToUpper(p.Type.String())

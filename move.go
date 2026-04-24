@@ -1,15 +1,15 @@
 // Copyright (C) 2025 Brigham Skarda
-
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -24,7 +24,10 @@ import (
 	"unicode"
 )
 
-// Move represents a UCI chess move. UCI chess moves are easily represented by three fields: FromSquare, ToSquare, and an optional Promotion. [UCI Specification]
+// Move represents a UCI chess move.
+//
+// UCI chess moves are easily represented by three fields:
+// FromSquare, ToSquare, and an optional Promotion. [UCI Specification]
 //
 // [UCI Specification]: https://www.shredderchess.com/download/div/uci.zip
 type Move struct {
@@ -33,7 +36,11 @@ type Move struct {
 	Promotion  PieceType
 }
 
-// MarshalText implements the [encoding.TextMarshaler] interface to encode a move into a UCI compatible format. The form is <FromSquare><ToSquare><OptionalPromotion>, ex. "a7a8q". If fromsquare, tosquare, and promotion are all 0 then "0000" is returned as per the [UCI specification]. An error may be returned if a field is missing or malformed.
+// MarshalText provides a UCI compatible representation of the square in the form <FromSquare><ToSquare><OptionalPromotion>, ex. "a7a8q".
+//
+// The form is <FromSquare><ToSquare><OptionalPromotion>, ex. "a7a8q".
+// If FromSquare, ToSquare, and Promotion are all 0 then "0000" is returned as per the [UCI specification].
+// An error may be returned if a field is missing or malformed.
 //
 // [UCI specification]: https://www.shredderchess.com/download/div/uci.zip
 func (m Move) MarshalText() (text []byte, err error) {
@@ -56,7 +63,10 @@ func (m Move) MarshalText() (text []byte, err error) {
 	return text, nil
 }
 
-// String provides a UCI compatible representation of the square in the form <FromSquare><ToSquare><OptionalPromotion>, ex. "a7a8q". If fromsquare, tosquare, and promotion are all 0 then "0000" is returned as per the [UCI specification]. An error string is returned if any of the fields are invalid.
+// String provides a UCI compatible representation of the square in the form <FromSquare><ToSquare><OptionalPromotion>, ex. "a7a8q".
+//
+// If FromSquare, Tosquare, and Promotion are all 0 then "0000" is returned as per the [UCI specification].
+// An error string is returned if any of the fields are invalid.
 //
 // [UCI specification]: https://www.shredderchess.com/download/div/uci.zip
 func (m Move) String() string {
@@ -67,9 +77,12 @@ func (m Move) String() string {
 	return string(text)
 }
 
-// StringSAN provides a move in standard algebraic notation as specified in the [PGN specification].
+// StringSAN provides a move in standard algebraic notation as specified in the [PGN specification] (ex. "Nce2").
 //
-// pos is required to convert a move to SAN. pos should be the position before the move. An error is returned if an SAN string could not be generated with the given move and position. This does not necessarily test for move legality, should this be an illegal move, unexpected results may occur.
+// pos is required to convert a move to SAN.
+// pos should be the position before the move.
+// An error is returned if an SAN string could not be generated with the given move and position.
+// This does not necessarily test for move legality, should this be an illegal move, unexpected results may occur.
 //
 // [PGN specification]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
 func (m Move) StringSAN(pos *Position) (string, error) {
@@ -230,7 +243,9 @@ func isSquareDisambiguation(toSquare Square, pieceToMove Piece, pos *Position) b
 	return len(legalMoves) > 1
 }
 
-// UnmarshalText implements the [encoding.TextUnmarshaler] interface to read a move from a UCI compatible format. The format is <FromSquare><ToSquare><OptionalPromotion>, ex. a2c3q.
+// UnmarshalText parses a move in [UCI] format, <FromSquare><ToSquare><OptionalPromotion>, ex. "a7a8q".
+//
+// [UCI]: https://www.shredderchess.com/download/div/uci.zip
 func (m *Move) UnmarshalText(text []byte) error {
 	if len(text) < 4 || len(text) > 5 {
 		return fmt.Errorf("could not unmarshal move %q, expected text to be of len 4 or 5, got len(text) = %d", text, len(text))
@@ -273,7 +288,9 @@ const (
 	castleMove
 )
 
-// ParseSANMove parses a chess move provided in [Standard Algebraic Notation]. Standard Algebraic notation requires position information to know how moves should be parsed. An error is provided if the move could not be parsed.
+// ParseSANMove parses a chess move provided in [Standard Algebraic Notation] (ex. "Nce2").
+//
+// Standard Algebraic notation requires position information to know how moves should be parsed. An error is provided if the move could not be parsed.
 //
 // [Standard Algebraic Notation]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c8.2.3
 func ParseSANMove(san string, pos *Position) (Move, error) {

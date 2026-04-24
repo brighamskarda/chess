@@ -1,15 +1,15 @@
 // Copyright (C) 2026 Brigham Skarda
-
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -28,7 +28,9 @@ import (
 // clientToEngineCmd is an interface under which all uci commands from the client to the engine will be contained.
 type clientToEngineCmd interface {
 	encoding.TextUnmarshaler
-	// getCmdText returns the full message received to construct the command. The message should be copied so the user can modify it.
+	// getCmdText returns the full message received to construct the command.
+	//
+	// The message should be copied so the user can modify it.
 	getCmdText() []byte
 }
 
@@ -43,12 +45,20 @@ func (cmd *baseClientCommand) getCmdText() []byte {
 	return bytes.Clone(cmd.message)
 }
 
-// initBaseEngineCommand initializes the base engine command in the same way for any type that contains it. It ensures the text is copied so it can't be modified by outside sources.
+// initBaseEngineCommand initializes the base engine command in the same way for any type that contains it.
+//
+// It ensures the text is copied so it can't be modified by outside sources.
 func (cmd *baseClientCommand) initBaseEngineCommand(text []byte) {
 	cmd.message = bytes.Clone(text)
 }
 
-// uciCmd tells engine to use the uciCmd (universal chess interface), this will be sent once as a first command after program boot to tell the engine to switch to uciCmd mode. After receiving the uciCmd command the engine must identify itself with the "id" command and send the "option" commands to tell the GUI which engine settings the engine supports if any. After that the engine should send "uciok" to acknowledge the uciCmd mode. If no uciok is sent within a certain time period, the engine task will be killed by the GUI.
+// uciCmd tells engine to enter uci mode uci.
+//
+// This will be sent once as a first command after program boot to tell the engine to switch to uciCmd mode.
+// After receiving the uciCmd command the engine must identify itself with the "id" command and send the "option" commands
+// to tell the GUI which engine settings the engine supports if any.
+// After that the engine should send "uciok" to acknowledge the uciCmd mode.
+// If no uciok is sent within a certain time period, the engine task will be killed by the GUI.
 type uciCmd struct {
 	baseClientCommand
 }
@@ -63,7 +73,10 @@ func (cmd *uciCmd) UnmarshalText(text []byte) error {
 
 // debugCmd [ on | off ]
 //
-// Switch the debugCmd mode of the engine on and off. In debugCmd mode the engine should send additional infos to the GUI, e.g. with the "info string" command,to help debugging, e.g. the commands that the engine has received etc.This mode should be switched off by default and this command can be sent any time, also when the engine is thinking.
+// Switch the debugCmd mode of the engine on and off.
+// In debugCmd mode the engine should send additional infos to the GUI, e.g. with the "info string" command,
+// to help debugging, e.g. the commands that the engine has received etc.
+// This mode should be switched off by default and this command can be sent any time, also when the engine is thinking.
 type debugCmd struct {
 	baseClientCommand
 	// on is true if the engine should be set to debug mode.
@@ -91,7 +104,14 @@ func (cmd *debugCmd) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// isReadyCmd is used to synchronize the engine with the GUI. When the GUI has sent a command or multiple commands that can take some time to complete, this command can be used to wait for the engine to be ready again or to ping the engine to find out if it is still alive. E.g. this should be sent after setting the path to the tablebases as this can take some time. This command is also required once before the engine is asked to do any search to wait for the engine to finish initializing. This command must always be answered with "readyok" and can be sent also when the engine is calculating in which case the engine should also immediately answer with "readyok" without stopping the search.
+// isReadyCmd is used to synchronize the engine with the GUI.
+//
+// When the GUI has sent a command or multiple commands that can take some time to complete,
+// this command can be used to wait for the engine to be ready again or to ping the engine to find out if it is still alive.
+// E.g. this should be sent after setting the path to the tablebases as this can take some time.
+// This command is also required once before the engine is asked to do any search to wait for the engine to finish initializing.
+// This command must always be answered with "readyok"
+// and can be sent also when the engine is calculating in which case the engine should also immediately answer with "readyok" without stopping the search.
 type isReadyCmd struct {
 	baseClientCommand
 }
@@ -104,7 +124,9 @@ func (cmd *isReadyCmd) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// validateSetOption ensure the first two words are setoption and name. It returns an error if they are not.
+// validateSetOption ensure the first two words are setoption and name.
+//
+// It returns an error if they are not.
 func validateSetOption(text []byte) error {
 	words := bytes.Fields(text)
 	if len(words) < 3 {
@@ -147,7 +169,12 @@ func getOptionValue(text []byte) string {
 //
 // name <id> [value <x>]
 //
-// This is sent to the engine when the user wants to change the internal parameters of the engine. For the "button" type no value is needed. One string will be sent for each parameter and this will only be sent when the engine is waiting. The name and value of the option in <id> should not be case sensitive and can include spaces. The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing, for example do not use <name> = "draw value". Here are some strings for the example below:
+// This is sent to the engine when the user wants to change the internal parameters of the engine.
+// For the "button" type no value is needed.
+// One string will be sent for each parameter and this will only be sent when the engine is waiting.
+// The name and value of the option in <id> should not be case sensitive and can include spaces.
+// The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing,
+// for example do not use <name> = "draw value". Here are some strings for the example below:
 //
 //	"setoption name Nullmove value true\n"
 type setCheckOptionCmd struct {
@@ -191,7 +218,12 @@ func (cmd *setCheckOptionCmd) UnmarshalText(text []byte) error {
 //
 // name <id> [value <x>]
 //
-// This is sent to the engine when the user wants to change the internal parameters of the engine. For the "button" type no value is needed. One string will be sent for each parameter and this will only be sent when the engine is waiting. The name and value of the option in <id> should not be case sensitive and can include spaces. The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing, for example do not use <name> = "draw value". Here are some strings for the example below:
+// This is sent to the engine when the user wants to change the internal parameters of the engine.
+// For the "button" type no value is needed.
+// One string will be sent for each parameter and this will only be sent when the engine is waiting.
+// The name and value of the option in <id> should not be case sensitive and can include spaces.
+// The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing,
+// for example do not use <name> = "draw value". Here are some strings for the example below:
 //
 //	"setoption name Selectivity value 3\n"
 type setSpinOptionCmd struct {
@@ -232,7 +264,12 @@ func (cmd *setSpinOptionCmd) UnmarshalText(text []byte) error {
 //
 // name <id> [value <x>]
 //
-// This is sent to the engine when the user wants to change the internal parameters of the engine. For the "button" type no value is needed. One string will be sent for each parameter and this will only be sent when the engine is waiting. The name and value of the option in <id> should not be case sensitive and can include spaces. The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing, for example do not use <name> = "draw value". Here are some strings for the example below:
+// This is sent to the engine when the user wants to change the internal parameters of the engine.
+// For the "button" type no value is needed.
+// One string will be sent for each parameter and this will only be sent when the engine is waiting.
+// The name and value of the option in <id> should not be case sensitive and can include spaces.
+// The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing,
+// for example do not use <name> = "draw value". Here are some strings for the example below:
 //
 //	"setoption name Style value Risky\n"
 type setStringOptionCmd struct {
@@ -276,7 +313,13 @@ func (cmd *setStringOptionCmd) UnmarshalText(text []byte) error {
 //
 // name <id> [value <x>]
 //
-// This is sent to the engine when the user wants to change the internal parameters of the engine. For the "button" type no value is needed. One string will be sent for each parameter and this will only be sent when the engine is waiting. The name and value of the option in <id> should not be case sensitive and can include spaces. The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing, for example do not use <name> = "draw value". Here are some strings for the example below:
+// This is sent to the engine when the user wants to change the internal parameters of the engine.
+// For the "button" type no value is needed.
+// One string will be sent for each parameter and this will only be sent when the engine is waiting.
+// The name and value of the option in <id> should not be case sensitive and can include spaces.
+// The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing,
+// for example do not use <name> = "draw value".
+// Here are some strings for the example below:
 //
 //	"setoption name Clear Hash\n"
 type setButtonOptionCmd struct {
@@ -310,7 +353,9 @@ const (
 )
 
 // registerCmd is the command to try to register an engine or to tell the engine that registration
-// will be done later. This command should always be sent if the engine	has sent "registration error"
+// will be done later.
+//
+// This command should always be sent if the engine	has sent "registration error"
 // at program startup.
 // The following tokens are allowed:
 //   - later
@@ -361,7 +406,9 @@ func (cmd *registerCmd) UnmarshalText(text []byte) error {
 }
 
 // uciNewGameCmd is sent to the engine when the next search (started with "position" and "go") will be from
-// a different game. This can be a new game the engine should play or a new game it should analyse but
+// a different game.
+//
+// This can be a new game the engine should play or a new game it should analyse but
 // also the next position from a testsuite with positions only.
 // If the GUI hasn't sent a "ucinewgame" before the first "position" command, the engine shouldn't
 // expect any further ucinewgame commands as the GUI is probably not supporting the ucinewgame command.
@@ -391,7 +438,8 @@ type positionCmd struct {
 	baseClientCommand
 	// position is the position that should be set by the chess engine.
 	position *chess.Position
-	// moves are the moves that should be applied to the position. If "moves" was not sent, then this is nil. If moves was sent, but was not followed by an moves then this is an empty slice.
+	// moves are the moves that should be applied to the position.
+	// If "moves" was not sent, then this is nil. If moves was sent, but was not followed by an moves then this is an empty slice.
 	moves []chess.Move
 }
 
@@ -443,7 +491,8 @@ func (cmd *positionCmd) parseFen(text []byte) error {
 
 // parseMoves parses the moves from the position command.
 //
-// If moves does not exist, sets the moves to nil. If there was a problem unmarshaling any of the moves an error will be returned.
+// If moves does not exist, sets the moves to nil.
+// If there was a problem unmarshaling any of the moves an error will be returned.
 func (cmd *positionCmd) parseMoves(text []byte) error {
 	startIndex := bytes.Index(text, []byte("moves"))
 	if startIndex == -1 {
@@ -473,11 +522,13 @@ func (cmd *positionCmd) parseMoves(text []byte) error {
 type goCmd struct {
 	baseClientCommand
 	// searchmoves <move1> .... <movei>
+	//
 	// restrict search to this moves only
 	// Example: After "position startpos" and "go infinite searchmoves e2e4 d2d4"
 	// the engine should only search the two moves e2e4 and d2d4 in the initial position.
 	searchMoves []chess.Move
 	// ponder start searching in pondering mode.
+	//
 	// Do not exit the search in ponder mode, even if it's mate!
 	// This means that the last move sent in in the position string is the ponder move.
 	// The engine can do what it wants to do, but after a "ponderhit" command
@@ -506,7 +557,9 @@ type goCmd struct {
 	mate Optional[int]
 	// movetime search exactly x mseconds
 	movetime Optional[int]
-	// infinite search until the "stop" command. Do not exit the search without being told so in this mode!
+	// infinite search until the "stop" command.
+	//
+	// Do not exit the search without being told so in this mode!
 	infinite bool
 }
 
@@ -549,8 +602,11 @@ func (cmd *goCmd) parseFields(fields [][]byte) error {
 	return nil
 }
 
-// parseFieldWithValue parses goCmd fields that have a number after them. Expects the first field to be the name, and the second field to be the value.
-// Returns an error if there is no second field, or there was a problem parsing it. A first field is expected though.
+// parseFieldWithValue parses goCmd fields that have a number after them.
+//
+// Expects the first field to be the name, and the second field to be the value.
+// Returns an error if there is no second field, or there was a problem parsing it.
+// A first field is expected though.
 func (cmd *goCmd) parseFieldWithValue(fields [][]byte) error {
 	fieldName := string(fields[0])
 	if len(fields) < 2 {
@@ -587,7 +643,9 @@ func (cmd *goCmd) parseFieldWithValue(fields [][]byte) error {
 	return nil
 }
 
-// parseSearchMoves parses the fields into chess moves until a field fails to be parsed. The return value will never be null, though it may be empty.
+// parseSearchMoves parses the fields into chess moves until a field fails to be parsed.
+//
+// The return value will never be null, though it may be empty.
 // the number of fields parsed can be extrapolated from the length of the return value.
 func parseSearchMoves(fields [][]byte) []chess.Move {
 	moves := []chess.Move{}
@@ -618,8 +676,10 @@ func (cmd *stopCmd) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// ponderhitCmd - the user has played the expected move. This will be sent if the engine was told to ponder on the same move
-// the user has played. The engine should continue searching but switch from pondering to normal search.
+// ponderhitCmd - the user has played the expected move.
+//
+// This will be sent if the engine was told to ponder on the same move the user has played.
+// The engine should continue searching but switch from pondering to normal search.
 type ponderhitCmd struct {
 	baseClientCommand
 }
@@ -693,7 +753,9 @@ var commandSet = map[string]func([]byte) (clientToEngineCmd, error){
 
 // parseClientToEngineCmd attempts to parse any client command and return the corresponding clientToEngineCmd.
 //
-// Parsing is based on the first word in the command. If the first word not a valid command, the it will continue on to the second word, and so on. If no valid command is found, or parsing of the specified command failed, an error is returned.
+// Parsing is based on the first word in the command.
+// If the first word not a valid command, the it will continue on to the second word, and so on.
+// If no valid command is found, or parsing of the specified command failed, an error is returned.
 func parseClientToEngineCmd(text []byte) (clientToEngineCmd, error) {
 	cursor := 0
 	for cursor < len(text) {
@@ -732,7 +794,9 @@ func parseClientToEngineCmd(text []byte) (clientToEngineCmd, error) {
 	return nil, fmt.Errorf("could not parse client to engine command %q: no valid command keyword was found", text)
 }
 
-// A generic function that will parse an engine command an return the value or an error, all at once. (no need for a separate declaration and call to UnmarshalText)
+// A generic function that will parse an engine command an return the value or an error, all at once.
+//
+// (no need for a separate declaration and call to UnmarshalText)
 func unmarshalClientToEngineCmd[T any, PT interface {
 	*T
 	clientToEngineCmd

@@ -1,15 +1,15 @@
 // Copyright (C) 2025 Brigham Skarda
-
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -20,7 +20,8 @@ import (
 	"sync"
 )
 
-// Huge thanks to Chess Programming and his example implementation of magic bitboards. It was extremely useful. https://youtu.be/4ohJQ9pCkHI?si=4QQG2BntrELO2JYi
+// Huge thanks to Chess Programming and his example implementation of magic bitboards.
+// It was extremely useful. https://youtu.be/4ohJQ9pCkHI?si=4QQG2BntrELO2JYi
 
 var rookRelevantBits = [64]int{
 	12, 11, 11, 11, 11, 11, 11, 12,
