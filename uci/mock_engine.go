@@ -19,7 +19,7 @@ package uci
 //
 // Used for testing.
 type mockEngine struct {
-	output     chan<- *InfoCmd
+	output     func(*InfoCmd)
 	debugState bool
 
 	initialize int
@@ -30,7 +30,7 @@ type mockEngine struct {
 	quit       int
 }
 
-func (engine *mockEngine) Initialize(o chan<- *InfoCmd) {
+func (engine *mockEngine) Initialize(o func(*InfoCmd)) {
 	engine.output = o
 	engine.initialize++
 }

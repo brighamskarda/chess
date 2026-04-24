@@ -20,26 +20,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/signal"
+	"reflect"
 	"sync"
 	"syscall"
 )
-
-// inputCommandBufferSize is the number of parsed commands that should be buffered while waiting for another command to execute.
-//
-// Having a buffer here and increase throughput.
-const inputCommandBufferSize = 16
-
-// outputCommandBufferSize is the number of commands to buffer for the output stream.
-//
-// Having a buffer can increase command throughput.
-const outputCommandBufferSize = 16
-
-// infoBufferSize is the number of info commands that can be buffered from the engine.
-//
-// This is fairly large to prevent blocking the engine.
-const infoBufferSize = 128
 
 // errorReportingLocation is where users should report internal library errors that are printed out.
 const errorReportingLocation = "https://github.com/brighamskarda/chess/issues"
@@ -54,115 +41,128 @@ type UciEngineBroker struct {
 	// When the broker receives commands from the UCI client,
 	// it will translate those commands into the appropriate calls to the engine.
 	Engine ChessEngine
+
 	// Input is the source from which the UciEngineBroker will read commands from the UCI client.
 	//
 	// In most cases this should be [os.Stdin]
-	Input io.ReadCloser
+	Input io.Reader
+
 	// Output is the destination to which the engine commands will be sent to the UCI client.
 	//
-	// In most cases this should be [os.Stdout]
-	Output io.WriteCloser
-	// Error is where the UciEngineBroker will log errors that shouldn't be sent to the client.
+	// In most cases this should be [os.Stdout].
+	Output io.Writer
+
+	// outputLocker ensures only one go routine writes to Error at a time.
+	outputLocker sync.Mutex
+
+	// Log is where the broker can output information outside of normal engine communication.
 	//
-	// In most cases it should be pretty empty as errors will only occur
-	// if the client is sending invalid or malformed UCI commands.
+	// Log is an optional field.
+	// But Logs provide information on how the broker is running,
+	// and report errors that are encountered.
+	// It is recommended that a logger with at least a level of [slog.Error] is provided.
+	// Here is a simple logger you can provided that logs errors to [os.Stderr].
 	//
-	// In most cases this should be [os.Stderr]
-	Error io.Writer
-	// errorLocker ensures only one go routine writes to Error at a time.
-	errorLocker sync.Mutex
+	//		slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
+	//
+	// Log should not write to the same location as [UciEngineBroker.Output].
+	// [os.Stderr] and external files are great places to log to.
+	Log *slog.Logger
+
 	// ctx indicates if the engine should keep running, or if it should shutdown.
 	ctx context.Context
+
 	// ctxCancel should be called when the program needs to shutdown.
 	//
 	// It will close ctx resulting in all parts of the uci broker and engine to shutdown.
-	ctxCancel context.CancelFunc
-	// mainOutputCommands is the queue of commands being sent to the client.
+	ctxCancel context.CancelCauseFunc
+
+	// quitWg makes sure the engine has shutdown before the broker stops.
+	quitWg sync.WaitGroup
+
+	// DisableSignalHandling removes the default signaling functionality.
 	//
-	// It should be fed with channels made from [UciEngineBroker.makeOutputCommandsChannel]. Lookup the "fan-in" idiom for more info.
-	mainOutputCommands chan engineToClientCmd
-	// outputCommandsWg indicates when the main output commands channel can be closed.
-	//
-	// It means that all all channels feeding into it have been closed.
-	outputCommandsWg sync.WaitGroup
-	// engineQuitWg indicates that Engine.Quit has finished being called,
-	// and the program can exit.
-	engineQuitWg sync.WaitGroup
+	// By default the broker will automatically shutdown
+	// when it receives the appropriate signal from the OS.
+	// This functionality always desirable so this flag is provided.
+	DisableSignalHandling bool
 }
 
 // Start the UciEngineBroker.
 //
-// This function will not return until the UCI client requests the engine to shutdown or there is an error.
-// Until then it will read stdin for commands from the UCI client,
-// and it will send commands from the engine back the the UCI client via stdout.
-func (broker *UciEngineBroker) Start() {
-	// setup input and output channels
-	inputCommands := make(chan clientToEngineCmd, inputCommandBufferSize)
-	broker.mainOutputCommands = make(chan engineToClientCmd, outputCommandBufferSize)
-	broker.ctx, broker.ctxCancel = context.WithCancel(context.Background())
-
-	// setup read and write loops
-	go broker.signalListener()
-	go broker.commandInputLoop(inputCommands)
-	go broker.commandOutputLoop(broker.mainOutputCommands)
-
-	// Setup first output channel and start go routine that waits to close the main output commands buffer.
-	outputCmds := broker.makeOutputCommandsChannel(outputCommandBufferSize)
-	go closeOnWg(&broker.outputCommandsWg, broker.mainOutputCommands)
-
-	// Start executing commands received from the client. Runs a loop til program termination.
-	broker.executeCommands(inputCommands, outputCmds)
-	broker.engineQuitWg.Wait()
-}
-
-// printError wraps writes to Error in a mutex lock in case a non-concurrent writer is provided.
-func (broker *UciEngineBroker) printError(err string) {
-	broker.errorLocker.Lock()
-	fmt.Fprintln(broker.Error, "UciEngineBroker error:", err)
-	broker.errorLocker.Unlock()
-}
-
-// makeOutputCommandsChannel returns a channel that is being forwarded to the the main outputCommands channel,
-// and is part of the outputCommandsWG.
-func (broker *UciEngineBroker) makeOutputCommandsChannel(bufferSize int) chan<- engineToClientCmd {
-	ch := make(chan engineToClientCmd, bufferSize)
-	broker.outputCommandsWg.Add(1)
-	go func() {
-		defer cleanOutChannel(ch)
-		defer broker.outputCommandsWg.Done()
-	Loop:
-		for {
-			select {
-			case <-broker.ctx.Done():
-				break Loop
-			case cmd, ok := <-ch:
-				if ok {
-					broker.mainOutputCommands <- cmd
-				} else {
-					break Loop
-				}
-			}
-
-		}
-	}()
-	return ch
-}
-
-// closeOnWg will close the channel once the the wait group is done waiting.
-func closeOnWg(wg *sync.WaitGroup, ch chan<- engineToClientCmd) {
-	wg.Wait()
-	close(ch)
-}
-
-// signalListener ensures that the uci engine broker context is cancelled when a sigterm or sigint is received.
+// This function will not return until
+// the UCI client requests the engine to shutdown,
+// the context is cancelled,
+// or there is an error.
+// Until then, it will read stdin for commands from the UCI client,
+// and it will send commands from the engine back to the UCI client via stdout.
 //
-// Should work on windows and linux.
-func (broker *UciEngineBroker) signalListener() {
+// The provided context will also be passed into the to [UciEngineBroker.Log] whenever it is called.
+//
+// Start returns an error if the broker is stopped for any reason besides
+// the context being cancelled,
+// or the quit command being received from the engine.
+func (broker *UciEngineBroker) Start(ctx context.Context) error {
+	// Make sure the error logger isn't nil.
+	if broker.Log == nil {
+		broker.Log = slog.New(slog.NewTextHandler(io.Discard, nil))
+	}
+	broker.Log.InfoContext(ctx, "starting UCI engine broker")
+
+	// setup cancellation context.
+	broker.ctx, broker.ctxCancel = context.WithCancelCause(ctx)
+	// setup signal handling
+	if !broker.DisableSignalHandling {
+		broker.Log.DebugContext(broker.ctx, "setting up os.Signal handling")
+		go broker.terminationListener()
+	}
+
+	// Start executing commands received from the client. Runs a loop until cancellation.
+	broker.executeCommands()
+	broker.quitWg.Wait()
+
+	// See if we stopped executing commands due to an error.
+	err := context.Cause(broker.ctx)
+	if err != context.Canceled {
+		return fmt.Errorf("UCI engine broker stopped with error: %w", err)
+	}
+	return nil
+}
+
+// sendCommand sends an engine command to the UCI client.
+func (broker *UciEngineBroker) sendCommand(cmd engineToClientCmd) {
+	text, err := cmd.marshalText()
+	if err != nil {
+		broker.Log.ErrorContext(broker.ctx, "failed to send command", slog.Any("command", cmd), slog.Any("error", err))
+		return
+	}
+
+	broker.outputLocker.Lock()
+	_, err = broker.Output.Write(text)
+	broker.outputLocker.Unlock()
+	if err != nil {
+		broker.Log.ErrorContext(broker.ctx, "failed to send command", slog.Any("error", err))
+		broker.Log.ErrorContext(broker.ctx, "shutting down UCI engine broker, got an error when trying to output commands")
+		broker.ctxCancel(fmt.Errorf("output writer error: %w", err))
+		return
+	}
+
+	broker.Log.DebugContext(broker.ctx, "sent command to client", slog.Any("text", text))
+}
+
+// terminationListener calls the cancel function when it receives an os request to shutdown.
+//
+// Specifically, it listens for os.Interrupt or syscall.SIGTERM.
+func (broker *UciEngineBroker) terminationListener() {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 
-	<-ch
-	broker.ctxCancel()
+	select {
+	case s := <-ch:
+		broker.ctxCancel(fmt.Errorf("os.Signal %v received", s))
+	case <-broker.ctx.Done():
+		// cleanup go routine.
+	}
 }
 
 // readLines reads lines from the brokers input and calls broker.ctxCancel() if there is an error reading.
@@ -181,184 +181,91 @@ func (broker *UciEngineBroker) readLines(line chan<- []byte) {
 		}
 	}
 
-	broker.ctxCancel()
+	broker.ctxCancel(fmt.Errorf("input reader error: %w", err))
 }
 
-// commandInputLoop reads from lines and parses them as [clientToEngineCmd]s.
-//
-// These commands are then sent to the provided output channel.
-// Onces all lines are read and the channel is closed, the commands channel is closed.
-//
-// As per the UCI specification unknown commands are simply ignored and new commands will continue to be parsed.
-func (broker *UciEngineBroker) commandInputLoop(commands chan<- clientToEngineCmd) {
-	defer close(commands)
-	defer broker.Input.Close()
-
-	line := make(chan []byte)
-	go broker.readLines(line)
-
+// executeCommands takes commands from the Input and translates them to functions calls to the engine.
+func (broker *UciEngineBroker) executeCommands() {
+	inputLines := make(chan []byte)
+	go broker.readLines(inputLines)
 Loop:
 	for {
 		select {
 		case <-broker.ctx.Done():
 			break Loop
-		case value, ok := <-line:
-			if ok {
-				cmd, err := parseClientToEngineCmd(value)
-				if err != nil {
-					broker.errorLocker.Lock()
-					fmt.Fprintln(broker.Error, err)
-					broker.errorLocker.Unlock()
-					continue Loop
-				}
-
-				select {
-				case <-broker.ctx.Done():
-					break Loop
-				case commands <- cmd:
-				}
-			} else {
+		case line, ok := <-inputLines:
+			if !ok {
 				break Loop
 			}
-		}
-	}
-}
-
-// commandOutputLoop marshals the engineToClientCommands and outputs them to the writer until the channel is closed.
-//
-// If there is an error when writing to the output the broker context is cancelled.
-// This is a pretty good sign that something has gone wrong and the engine should shut down.
-func (broker *UciEngineBroker) commandOutputLoop(commands <-chan engineToClientCmd) {
-	defer cleanOutChannel(commands)
-	defer broker.ctxCancel()
-	defer broker.Output.Close()
-
-Loop:
-	for {
-		select {
-		case <-broker.ctx.Done():
-			break Loop
-		case cmd, ok := <-commands:
-			if ok {
-				text, err := cmd.marshalText()
-				if err != nil {
-					broker.printError(fmt.Sprintf("engine to client command encountered an error while marshaling: %q This indicates an internal library error. Please report such errors to %v", err, errorReportingLocation))
-					continue Loop
-				}
-
-				_, err = broker.Output.Write(text)
-				if err != nil {
-					broker.printError(fmt.Sprintf("error encountered while trying to write to output, closing output writer and shutting down: %v", err))
-					break Loop
-				}
-			} else {
-				break Loop
+			cmd, err := parseClientToEngineCmd(line)
+			if err != nil {
+				broker.Log.ErrorContext(broker.ctx, "skipping client command", slog.Any("error", err))
 			}
-		}
-	}
-}
-
-// cleanOutChannel ensures that a channel is read from until it is closed to prevent deadlocks
-func cleanOutChannel[T any](ch <-chan T) {
-	for {
-		_, ok := <-ch
-		if !ok {
-			break
-		}
-	}
-}
-
-// executeCommands takes all the commands that are being parsed and translates them into function calls to the engine.
-func (broker *UciEngineBroker) executeCommands(inputCmds <-chan clientToEngineCmd, outputCmds chan<- engineToClientCmd) {
-	defer close(outputCmds)
-
-	for {
-		select {
-		case <-broker.ctx.Done():
-			return
-		case cmd, ok := <-inputCmds:
-			if ok {
-				broker.doCommand(cmd, outputCmds)
-			} else {
-				broker.ctxCancel()
-			}
+			broker.doCommand(cmd)
 		}
 	}
 }
 
 // doCommand calls different command handlers based on the underlying type of the cmd.
-func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd, outputCmds chan<- engineToClientCmd) {
+func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
 	switch c := cmd.(type) {
 	case *uciCmd:
-		broker.handleUciCommand(outputCmds)
+		broker.handleUciCommand()
 	case *debugCmd:
 		broker.handleDebugCommand(c.on)
 	case *isReadyCmd:
-		broker.handleIsReadyCommand(outputCmds)
+		broker.handleIsReadyCommand()
 	default:
-		broker.printError(fmt.Sprintf("command with unknown type %T received in UciEngineBroker. This indicates an internal library error. Please report such errors to %v", cmd, errorReportingLocation))
+		broker.Log.ErrorContext(broker.ctx, fmt.Sprintf("command with unknown type received, "+
+			"this indicates an internal library error, please report such errors to %v", errorReportingLocation),
+			slog.Any("unknownCommand", reflect.TypeOf(cmd)))
+
 	}
 }
 
-func (broker *UciEngineBroker) handleUciCommand(outputCmds chan<- engineToClientCmd) {
-	broker.Engine.Initialize(broker.makeInfoChannel())
+func (broker *UciEngineBroker) handleUciCommand() {
+	init := sync.OnceFunc(func() {
+		broker.Engine.Initialize(func(infoCmd *InfoCmd) {
+			broker.sendCommand(infoCmd)
+		})
+	},
+	)
 
 	// Increment the wait group so that the program doesn't exit until Quit has finished.
-	broker.engineQuitWg.Add(1)
+	broker.quitWg.Add(1)
 	context.AfterFunc(broker.ctx, func() {
-		defer broker.engineQuitWg.Done()
+		defer broker.quitWg.Done()
+		init() // make sure initialization is finished before calling quit.
 		broker.Engine.Quit()
 	})
 
+	init()
+
 	// send out the engine name
-	outputCmds <- &idCmd{
+	broker.sendCommand(&idCmd{
 		isAuthor: false,
 		id:       broker.Engine.Name(),
-	}
+	})
 
 	// send out the engine author
-	outputCmds <- &idCmd{
+	broker.sendCommand(&idCmd{
 		isAuthor: true,
 		id:       broker.Engine.Author(),
-	}
+	})
 
 	// send out the engine options
 	for _, opt := range broker.Engine.Options() {
-		outputCmds <- opt
+		broker.sendCommand(opt)
 	}
 
 	// send uciok
-	outputCmds <- &uciokCmd{}
-}
-
-func (broker *UciEngineBroker) makeInfoChannel() chan<- *InfoCmd {
-	ch := make(chan *InfoCmd, infoBufferSize)
-	broker.outputCommandsWg.Add(1)
-	go func() {
-		defer cleanOutChannel(ch)
-		defer broker.outputCommandsWg.Done()
-	Loop:
-		for {
-			select {
-			case <-broker.ctx.Done():
-				break Loop
-			case cmd, ok := <-ch:
-				if ok {
-					broker.mainOutputCommands <- cmd
-				} else {
-					break Loop
-				}
-			}
-
-		}
-	}()
-	return ch
+	broker.sendCommand(&uciokCmd{})
 }
 
 func (broker *UciEngineBroker) handleDebugCommand(debug bool) {
 	broker.Engine.SetDebug(debug)
 }
 
-func (broker *UciEngineBroker) handleIsReadyCommand(outputCmds chan<- engineToClientCmd) {
-	outputCmds <- &readyOkCmd{}
+func (broker *UciEngineBroker) handleIsReadyCommand() {
+	broker.sendCommand(&readyOkCmd{})
 }

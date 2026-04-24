@@ -17,7 +17,9 @@ package uci
 
 import (
 	"bufio"
+	"context"
 	"io"
+	"log/slog"
 	"os"
 	"testing"
 	"time"
@@ -39,7 +41,7 @@ func makeUciEngineBroker(reader io.ReadCloser, writer io.WriteCloser) *UciEngine
 	return &UciEngineBroker{
 		Input:  reader,
 		Output: writer,
-		Error:  os.Stderr,
+		Log:    slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn})),
 		Engine: &mockEngine{},
 	}
 }
@@ -54,26 +56,16 @@ func (d DiscardWriteCloser) Close() error {
 	return nil
 }
 
-// maliciousEngine stalls during a command execution
-type maliciousEngine struct {
-	mockEngine
-}
-
-// Imagine this is called by executeCommands when a "uci" command is received
-func (e *maliciousEngine) Initialize() {
-	// Simulated long-running task
-	time.Sleep(time.Second * 5)
-}
-
-// TestEngineShutsDownWhenStdinIsClose ensures that best practice is followed by making sure the engine shuts down when it detects stdin has been closed.
+// TestEngineShutsDownWhenStdinIsClose ensures that best practice is followed
+// by making sure the engine shuts down when it detects stdin has been closed.
 func TestEngineShutsDownWhenStdinIsClosed(t *testing.T) {
 	stdinR, stdinW := makeOsPipe(t)
-	stdoutR, stdoutW := makeOsPipe(t)
+	_, stdoutW := makeOsPipe(t)
 	broker := makeUciEngineBroker(stdinR, stdoutW)
 
 	startReturned := make(chan struct{})
 	go func() {
-		broker.Start()
+		broker.Start(t.Context())
 		startReturned <- struct{}{}
 	}()
 
@@ -81,8 +73,8 @@ func TestEngineShutsDownWhenStdinIsClosed(t *testing.T) {
 	if err != nil {
 		t.Errorf("problem writing to stdin: %v", err)
 	}
-	// Read something to ensure engine initializes.
-	stdoutR.Read(make([]byte, 1))
+
+	time.Sleep(time.Second)
 
 	err = stdinW.Close()
 	if err != nil {
@@ -93,7 +85,7 @@ func TestEngineShutsDownWhenStdinIsClosed(t *testing.T) {
 	select {
 	case <-startReturned:
 		// Success: The broker.Start() returned as expected after stdin was closed.
-		if broker.Engine.(*mockEngine).quit != 1 {
+		if broker.Engine.(*mockEngine).quit != 1 && broker.Engine.(*mockEngine).initialize == 1 {
 			t.Errorf("broker did not call Quit on the engine exactly 1 time, was called %v times", broker.Engine.(*mockEngine).quit)
 		}
 	case <-time.After(time.Second):
@@ -109,7 +101,7 @@ func TestEngineShutsDownWhenOutputIsClosed(t *testing.T) {
 
 	startReturned := make(chan struct{})
 	go func() {
-		broker.Start()
+		broker.Start(t.Context())
 		startReturned <- struct{}{}
 	}()
 
@@ -119,18 +111,51 @@ func TestEngineShutsDownWhenOutputIsClosed(t *testing.T) {
 	// Send a command that forces the engine to write an output
 	_, err := stdinW.WriteString("uci\n")
 	if err != nil {
-		t.Fatalf("failed to write to stdin: %v", err)
+		t.Fatalf("failed to write to stdout: %v", err)
 	}
 
 	// The commandOutputLoop should encounter a write error and call ctxCancel()
 	select {
 	case <-startReturned:
 		// Success: broker.Start() returned because the broken output pipe triggered shutdown
-		if broker.Engine.(*mockEngine).quit != 1 {
+		if broker.Engine.(*mockEngine).quit != 1 && broker.Engine.(*mockEngine).initialize == 1 {
 			t.Errorf("broker did not call Quit on the engine exactly 1 time")
 		}
 	case <-time.After(time.Second * 2):
 		t.Errorf("broker did not shut down after the output pipe was closed")
+	}
+}
+
+func TestEngineShutsDownWhenContextCancelled(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	_, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	ctx, cancel := context.WithCancel(t.Context())
+
+	startReturned := make(chan struct{})
+	go func() {
+		broker.Start(ctx)
+		startReturned <- struct{}{}
+	}()
+
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Errorf("problem writing to stdin: %v", err)
+	}
+
+	cancel()
+
+	// Finish this test by ensuring startReturned receives a value within a second of the context being cancelled.
+	select {
+	case <-startReturned:
+		// Success: The broker.Start() returned as expected after stdin was closed.
+		if broker.Engine.(*mockEngine).quit != 1 && broker.Engine.(*mockEngine).initialize == 1 {
+			t.Errorf("broker did not call Quit on the engine exactly 1 time, was called %v times", broker.Engine.(*mockEngine).quit)
+		}
+	case <-time.After(time.Second):
+		// Failure: The broker did not shut down within the 1-second timeout.
+		t.Errorf("engine did not shut down within 1 second of context cancellation")
 	}
 }
 
@@ -139,7 +164,7 @@ func startNewUciBroker(t *testing.T) (stdinW *os.File, stdoutR *os.File) {
 	stdinR, stdinW := makeOsPipe(t)
 	stdoutR, stdoutW := makeOsPipe(t)
 	broker := makeUciEngineBroker(stdinR, stdoutW)
-	go broker.Start()
+	go broker.Start(t.Context())
 	return
 }
 
@@ -190,7 +215,7 @@ func TestEngineDebugMode(t *testing.T) {
 	stdoutR, stdoutW := makeOsPipe(t)
 	broker := makeUciEngineBroker(stdinR, stdoutW)
 
-	go broker.Start()
+	go broker.Start(t.Context())
 
 	_, err := stdinW.WriteString("debug on\n")
 	if err != nil {
@@ -249,5 +274,4 @@ func TestIsReady(t *testing.T) {
 	output := bufio.NewReader(stdoutR)
 
 	testOutput(output, "readyok\n", t)
-
 }

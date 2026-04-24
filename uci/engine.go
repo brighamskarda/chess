@@ -23,16 +23,19 @@ package uci
 type ChessEngine interface {
 	// Initialize will be the first function called on the chess engine.
 	//
-	// It will be called exactly once and should be used to initialize any internal state the engine relies on.
+	// Initialize will be called exactly once and should be used to initialize any internal state the engine relies on.
 	//
-	// A channel is provided via which the engine can send info commands to the UCI chess client.
+	// A function is provided via which the engine can send info commands to the UCI chess client.
+	// The function should be stored and used for the duration of the program.
 	// The [InfoCmd] documentation should give a good idea of what kind of info can be sent.
 	// Sending commands with only [InfoCmd.StringMsg] can be very useful for debugging.
-	// The channel will be buffered and is designed to ingest large amounts of information at once.
-	// The channel is meant to be owned by the chess engine, and thus will not be closed outside of it.
 	//
-	// Keep in mind that if this function takes too long, the GUI may kill the engine.
-	Initialize(chan<- *InfoCmd)
+	// Keep in mind that the function is not buffered,
+	// so sending info commands during a move search can slow it down significantly.
+	// Implementing a buffered channel to asynchronously send info commands is a good idea.
+	//
+	// Keep in mind that if Initialize takes too long, the GUI may kill the engine.
+	Initialize(func(*InfoCmd))
 
 	// Name should return the name of the chess engine.
 	//
@@ -51,24 +54,23 @@ type ChessEngine interface {
 	// These options will be send to the GUI so the user may modify them.
 	Options() []OptionCmd
 
-	// SetDebug will receive a true when the client requests debug mode, otherwise will be false.
+	// SetDebug will receive a true when the client requests debug mode.
 	//
 	// This function can be called asynchronously at any time.
 	// The engine should default to normal operations (debug = false).
-	// When debug mode is on, the engine should send out additional infos that may aid development.
+	// When debug mode is on, the engine should send out additional infos to aid development.
 	SetDebug(bool)
 
-	// Quit can be called asynchronously at any time.
+	// Quit can be called asynchronously any time after Initialize.
 	//
-	// Quit should not return until all cleanup is complete.
 	// This is the broker's way of asking the engine to nicely stop its operations.
-	// Failure to do so promptly may result in the engine being forcibly stopped by the GUI or operating system.
+	// Failure to do so promptly may result in the engine being forcibly stopped.
+	// Quit should not return until all cleanup is complete.
 	//
-	// While many engines will not need to do anything in this function,
-	// there are some important things certain engines may need to do, such as:
-	//
-	// * Finishing writes to files (to prevent invalid file states)
-	// * Releasing remote software licenses
+	// The following are some (but not all) actions that should be taken to ensure a smooth shutdown.
+	//	* Stop ongoing searches
+	// 	* Close Open files
+	// 	* Release remote software licenses
 	//
 	// Quit will only be called once.
 	Quit()
