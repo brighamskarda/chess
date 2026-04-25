@@ -667,3 +667,38 @@ func TestSetPosition(t *testing.T) {
 		t.Errorf("expected move history to be %v, but was %v", expectedMoves, actualMoves)
 	}
 }
+
+func TestUciNewGame(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	go broker.Start(t.Context())
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("ucinewgame\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	_, err = stdinW.WriteString("isready\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	// wait for uciok to indicate the commands have been processed
+	out := bufio.NewReader(stdoutR)
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "readyok\n" {
+			break
+		}
+	}
+
+	expectedVal := 1
+	actualVal := broker.Engine.(*mockEngine).newGame
+	if expectedVal != actualVal {
+		t.Errorf("expected Engine.NewGame to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
+}

@@ -235,6 +235,8 @@ func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
 		broker.checkRegistration(c)
 	case SetOptionCmd:
 		broker.Engine.SetOption(c)
+	case *uciNewGameCmd:
+		broker.Engine.NewGame()
 	case *positionCmd:
 		broker.Engine.SetPosition(c.position, c.moves)
 	case *quitCmd:

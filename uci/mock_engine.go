@@ -34,6 +34,7 @@ type mockEngine struct {
 	options        int
 	debug          int
 	setOption      int
+	newGame        int
 	setPosition    int
 	quit           int
 }
@@ -98,6 +99,10 @@ func (engine *mockEngine) SetDebug(value bool) {
 
 func (engine *mockEngine) SetOption(option SetOptionCmd) {
 	engine.setOption++
+}
+
+func (engine *mockEngine) NewGame() {
+	engine.newGame++
 }
 
 func (engine *mockEngine) SetPosition(pos *chess.Position, his []chess.Move) {

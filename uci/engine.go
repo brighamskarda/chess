@@ -22,6 +22,10 @@ import "github.com/brighamskarda/chess/v2"
 // By following this interface,
 // users can plug their chess engine into a [UciEngineBroker]
 // to automatically gain all the benefits of having a UCI compliant chess engine.
+//
+// All functions in this interface will by called synchronously with two exceptions.
+// 	- [ChessEngine.Quit] can be called any time after [ChessEngine.Initialize].
+//	- [ChessEngine.Stop] can be called while the engine is evaluating.
 type ChessEngine interface {
 	// Initialize will be the first function called on the chess engine.
 	//
@@ -96,6 +100,11 @@ type ChessEngine interface {
 	//   - [SetStringOptionCmd] (which double as setting a combo option)
 	//   - [SetButtonOptionCmd]
 	SetOption(SetOptionCmd)
+
+	// NewGame is called when the next position to evaluate is part of a different game.
+	//
+	// This function allows the engine to clear any cached values it was using for evaluation.
+	NewGame()
 
 	// SetPosition tell the chess engine to setup a certain position prior to a search.
 	//
