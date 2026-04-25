@@ -933,3 +933,99 @@ func TestPonderThenStop(t *testing.T) {
 		t.Errorf("expected Engine.PonderHit to be called %v times, but was called %v times", expectedVal, actualVal)
 	}
 }
+
+func TestSetOptionIgnoredWhileEvaluating(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	go broker.Start(t.Context())
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("go mate 3\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("isready\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	out := bufio.NewReader(stdoutR)
+	// wait for readyok to indicate the commands have been processed
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "readyok\n" {
+			break
+		}
+	}
+
+	_, err = stdinW.WriteString("setoption name Nullmove value true\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	// wait for bestmove
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "bestmove e2e4 ponder d7d5\n" {
+			break
+		}
+	}
+
+	expectedVal := 0
+	actualVal := broker.Engine.(*mockEngine).setOption
+	if expectedVal != actualVal {
+		t.Errorf("expected Engine.SetOption to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
+}
+
+func TestDebugNotIgnoredWhileEvaluating(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	go broker.Start(t.Context())
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("go mate 3\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("isready\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	out := bufio.NewReader(stdoutR)
+	// wait for readyok to indicate the commands have been processed
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "readyok\n" {
+			break
+		}
+	}
+
+	_, err = stdinW.WriteString("debug on\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	// wait for bestmove
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "bestmove e2e4 ponder d7d5\n" {
+			break
+		}
+	}
+
+	expectedVal := 1
+	actualVal := broker.Engine.(*mockEngine).debug
+	if expectedVal != actualVal {
+		t.Errorf("expected Engine.Debug to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
+}

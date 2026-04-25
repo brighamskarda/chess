@@ -24,9 +24,9 @@ import "github.com/brighamskarda/chess/v2"
 // to automatically gain all the benefits of having a UCI compliant chess engine.
 //
 // All functions in this interface will by called synchronously with three exceptions.
-// 	- [ChessEngine.Quit] can be called any time after [ChessEngine.Initialize].
-//	- [ChessEngine.Stop] can be called while the engine is evaluating.
-// 	- [ChessEngine.PonderHit] can be called while the engine is evaluating.
+// 	- Quit can be called any time after Initialize.
+//	- Stop can be called while the engine is evaluating.
+// 	- PonderHit can be called while the engine is pondering/evaluating.
 type ChessEngine interface {
 	// Initialize will be the first function called on the chess engine.
 	//
@@ -81,7 +81,7 @@ type ChessEngine interface {
 	//
 	// These options will be send to the GUI so the user may modify them.
 	// There are no required options in the UCI specification.
-	Options() []OptionCmd
+	Options() []Option
 
 	// SetDebug will receive a true when the client requests debug mode.
 	//
@@ -128,7 +128,7 @@ type ChessEngine interface {
 	// it finds what it thinks is the best move,
 	// or Stop/Quit are called asynchronously,
 	// at which point it should return its best move as soon as possible.
-	Evaluate(*EvaluateCmd) *BestMoveCmd
+	Evaluate(*EvaluateCmd) *BestMove
 
 	// Stop asks the engine to stop its current move evaluation and return the best move.
 	//

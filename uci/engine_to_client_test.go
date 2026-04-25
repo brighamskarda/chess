@@ -78,8 +78,8 @@ func TestReadyokCommandMarshal(t *testing.T) {
 }
 
 func TestBestMoveCommandMarshal(t *testing.T) {
-	var cmd engineToClientCmd = &BestMoveCmd{
-		BestMove:   chess.Move{FromSquare: chess.A1, ToSquare: chess.A2},
+	var cmd engineToClientCmd = &BestMove{
+		Move:       chess.Move{FromSquare: chess.A1, ToSquare: chess.A2},
 		PonderMove: OptionalOf(chess.Move{FromSquare: chess.A1, ToSquare: chess.A2, Promotion: chess.Knight}),
 	}
 
@@ -92,8 +92,8 @@ func TestBestMoveCommandMarshal(t *testing.T) {
 		t.Errorf("got %q, expected %q", text, expected)
 	}
 
-	cmd = &BestMoveCmd{
-		BestMove: chess.Move{FromSquare: chess.A1, ToSquare: chess.A2},
+	cmd = &BestMove{
+		Move: chess.Move{FromSquare: chess.A1, ToSquare: chess.A2},
 	}
 
 	text, err = cmd.marshalText()
@@ -334,7 +334,7 @@ func TestOptionCommands_UCICompliance(t *testing.T) {
 	}{
 		{
 			name: "Type Check - Pondering ability",
-			cmd: &CheckOptionCmd{
+			cmd: &CheckOption{
 				Name:         "Ponder",
 				DefaultValue: true,
 			},
@@ -342,7 +342,7 @@ func TestOptionCommands_UCICompliance(t *testing.T) {
 		},
 		{
 			name: "Type Spin - Hash size with range",
-			cmd: &SpinOptionCmd{
+			cmd: &SpinOption{
 				Name:         "Hash",
 				DefaultValue: 1,
 				Min:          1,
@@ -352,7 +352,7 @@ func TestOptionCommands_UCICompliance(t *testing.T) {
 		},
 		{
 			name: "Type Combo - Playing styles",
-			cmd: &ComboOptionCmd{
+			cmd: &ComboOption{
 				Name:         "Style",
 				DefaultValue: "Normal",
 				Variants:     []string{"Solid", "Normal", "Risky"},
@@ -361,14 +361,14 @@ func TestOptionCommands_UCICompliance(t *testing.T) {
 		},
 		{
 			name: "Type Button - Clear internal state",
-			cmd: &ButtonOptionCmd{
+			cmd: &ButtonOption{
 				Name: "Clear Hash",
 			},
 			expected: "option name Clear Hash type button\n",
 		},
 		{
 			name: "Type String - Empty path handling",
-			cmd: &StringOptionCmd{
+			cmd: &StringOption{
 				Name:         "NalimovPath",
 				DefaultValue: "",
 			},

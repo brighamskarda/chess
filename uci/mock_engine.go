@@ -77,29 +77,29 @@ func (engine *mockEngine) Author() string {
 	return "Brigham Skarda"
 }
 
-func (engine *mockEngine) Options() []OptionCmd {
+func (engine *mockEngine) Options() []Option {
 	engine.options++
-	return []OptionCmd{
-		&CheckOptionCmd{
+	return []Option{
+		&CheckOption{
 			Name:         "checkOpt",
 			DefaultValue: true,
 		},
-		&SpinOptionCmd{
+		&SpinOption{
 			Name:         "spinOpt",
 			DefaultValue: 3,
 			Min:          1,
 			Max:          5,
 		},
-		&ComboOptionCmd{
+		&ComboOption{
 			Name:         "comboOpt",
 			DefaultValue: "one",
 			Variants:     []string{"one", "two", "three"},
 		},
-		&StringOptionCmd{
+		&StringOption{
 			Name:         "stringOpt",
 			DefaultValue: "sss",
 		},
-		&ButtonOptionCmd{
+		&ButtonOption{
 			Name: "buttonOpt",
 		},
 	}
@@ -124,15 +124,15 @@ func (engine *mockEngine) SetPosition(pos *chess.Position, his []chess.Move) {
 	engine.setPosition++
 }
 
-func (engine *mockEngine) Evaluate(cmd *EvaluateCmd) *BestMoveCmd {
+func (engine *mockEngine) Evaluate(cmd *EvaluateCmd) *BestMove {
 	engine.evaluate++
 	timer := time.After(mockEngineEvaluateTime)
 
 	if cmd.Ponder {
 		select {
 		case <-engine.shouldStop:
-			return &BestMoveCmd{
-				BestMove: chess.Move{
+			return &BestMove{
+				Move: chess.Move{
 					FromSquare: chess.E2,
 					ToSquare:   chess.E4,
 				},
@@ -151,8 +151,8 @@ func (engine *mockEngine) Evaluate(cmd *EvaluateCmd) *BestMoveCmd {
 	case <-timer:
 	}
 
-	return &BestMoveCmd{
-		BestMove: chess.Move{
+	return &BestMove{
+		Move: chess.Move{
 			FromSquare: chess.E2,
 			ToSquare:   chess.E4,
 		},

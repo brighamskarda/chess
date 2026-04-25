@@ -77,26 +77,24 @@ func (cmd *readyOkCmd) marshalText() ([]byte, error) {
 	return []byte("readyok\n"), nil
 }
 
-// BestMoveCmd - bestmove <move1> [ ponder <move2> ]
-// the engine has stopped searching and found the move <move> best in this position.
-//
-// The engine can send the move it likes to ponder on. The engine must not start pondering automatically.
-// this command must always be sent if the engine stops searching, also in pondering mode if there is a
-// "stop" command, so for every "go" command a "bestmove" command is needed!
-// Directly before that the engine should send a final "info" command with the final search information,
-// the the GUI has the complete statistics about the last search.
-type BestMoveCmd struct {
-	// BestMove is the best BestMove the engine found at the end of its search
-	BestMove chess.Move
-	// PonderMove is an optional move that can be sent to indicate what move the engine would like to ponder on.
+// BestMove gives results of an engine's evaluation.
+type BestMove struct {
+	// Move is the best move according to the engine's evaluation.
+	Move chess.Move
+	// PonderMove is an optional field that
+	// indicates the move the engine would like to ponder on
+	// (if given the opportunity).
+	//
+	// PonderMove should be a move the engine thinks the opponent will play
+	// in response to Move.
 	PonderMove Optional[chess.Move]
 }
 
-func (cmd *BestMoveCmd) marshalText() ([]byte, error) {
+func (cmd *BestMove) marshalText() ([]byte, error) {
 	text := bytes.Buffer{}
 	text.WriteString("bestmove ")
 
-	move, err := cmd.BestMove.MarshalText()
+	move, err := cmd.Move.MarshalText()
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal bestMoveCmd: %w", err)
 	}
@@ -483,98 +481,102 @@ type InfoScore struct {
 	IsUpperBound bool
 }
 
-// OptionCmd represents an option that the chess engine supports.
+// Option represents an option that the chess engine supports.
 //
-// This is sent to the client so it knows what options it can set in the engine.
+// Options are sent to the UCI client so it knows what it can modify in the engine.
 // There is no need to make any types implementing this interface
 // as all valid options can be represented using the structs provided in this module.
-// See [CheckOptionCmd], [SpinOptionCmd], [ComboOptionCmd], [StringOptionCmd], and [ButtonOptionCmd]
+// See [CheckOption], [SpinOption], [ComboOption], [StringOption], and [ButtonOption]
+//
+// When creating an option it is highly recommended to avoid the words
+// "value" and "name" in its parameters as these can confuse UCI parsers.
 //
 // The following options are predefined in the UCI chess standard.
 // Options with these names should not be used for anything else.
 // Furthermore any options not listed below that are still prepended with "UCI_" will likely be ignored by the GUI.
-//   - <id> = Hash, type is spin
-//     the value in MB for memory for hash tables can be changed,
+//   - <name> = Hash, type is spin
+//     The value in MB for memory for hash tables can be changed,
 //     this should be answered with the first "setoptions" command at program boot
 //     if the engine has sent the appropriate "option name Hash" command,
 //     which should be supported by all engines!
 //     So the engine should use a very small hash first as default.
-//   - <id> = NalimovPath, type string
-//     this is the path on the hard disk to the Nalimov compressed format.
+//   - <name> = NalimovPath, type string
+//     This is the path on the hard disk to the Nalimov compressed format.
 //     Multiple directories can be concatenated with ";"
-//   - <id> = NalimovCache, type spin
-//     this is the size in MB for the cache for the nalimov table bases
+//   - <name> = NalimovCache, type spin
+//     This is the size in MB for the cache for the nalimov table bases
 //     These last two options should also be present in the initial options exchange dialog
 //     when the engine is booted if the engine supports it
-//   - <id> = Ponder, type check
-//     this means that the engine is able to ponder.
+//   - <name> = Ponder, type check
+//     This means that the engine is able to ponder.
 //     The GUI will send this whenever pondering is possible or not.
 //     Note: The engine should not start pondering on its own if this is enabled, this option is only
 //     needed because the engine might change its time management algorithm when pondering is allowed.
-//   - <id> = OwnBook, type check
-//     this means that the engine has its own book which is accessed by the engine itself.
+//   - <name> = OwnBook, type check
+//     This means that the engine has its own book which is accessed by the engine itself.
 //     if this is set, the engine takes care of the opening book and the GUI will never
 //     execute a move out of its book for the engine. If this is set to false by the GUI,
 //     the engine should not access its own book.
-//   - <id> = MultiPV, type spin
-//     the engine supports multi best line or k-best mode. the default value is 1
-//   - <id> = UCI_ShowCurrLine, type check, should be false by default,
-//     the engine can show the current line it is calculating. see "info currline" above.
-//   - <id> = UCI_ShowRefutations, type check, should be false by default,
-//     the engine can show a move and its refutation in a line. see "info refutations" above.
-//   - <id> = UCI_LimitStrength, type check, should be false by default,
+//   - <name> = MultiPV, type spin
+//     The engine supports multi best line or k-best mode. the default value is 1
+//   - <name> = UCI_ShowCurrLine, type check, should be false by default,
+//     The engine can show the current line it is calculating. see "info currline" above.
+//   - <name> = UCI_ShowRefutations, type check, should be false by default,
+//     The engine can show a move and its refutation in a line. see "info refutations" above.
+//   - <name> = UCI_LimitStrength, type check, should be false by default,
 //     The engine is able to limit its strength to a specific Elo number,
 //     This should always be implemented together with "UCI_Elo".
-//   - <id> = UCI_Elo, type spin
+//   - <name> = UCI_Elo, type spin
 //     The engine can limit its strength in Elo within this interval.
 //     If UCI_LimitStrength is set to false, this value should be ignored.
 //     If UCI_LimitStrength is set to true, the engine should play with this specific strength.
 //     This should always be implemented together with "UCI_LimitStrength".
-//   - <id> = UCI_AnalyseMode, type check
+//   - <name> = UCI_AnalyseMode, type check
 //     The engine wants to behave differently when analysing or playing a game.
 //     For example when playing it can use some kind of learning.
 //     This is set to false if the engine is playing a game, otherwise it is true.
-//   - <id> = UCI_Opponent, type string
+//   - <name> = UCI_Opponent, type string
 //     With this command the GUI can send the name, title, elo and if the engine is playing a human
 //     or computer to the engine.
 //     The format of the string has to be [GM|IM|FM|WGM|WIM|none] [<elo>|none] [computer|human] <name>
 //     Examples:
 //     "setoption name UCI_Opponent value GM 2800 human Gary Kasparov"
 //     "setoption name UCI_Opponent value none none computer Shredder"
-//   - <id> = UCI_EngineAbout, type string
+//   - <name> = UCI_EngineAbout, type string
 //     With this command, the engine tells the GUI information about itself, for example a license text,
 //     usually it doesn't make sense that the GUI changes this text with the setoption command.
 //     Example:
 //     "option name UCI_EngineAbout type string default Shredder by Stefan Meyer-Kahlen, see www.shredderchess.com"
-//   - <id> = UCI_ShredderbasesPath, type string
+//   - <name> = UCI_ShredderbasesPath, type string
 //     this is either the path to the folder on the hard disk containing the Shredder endgame databases or
 //     the path and filename of one Shredder endgame datbase.
-//   - <id> = UCI_SetPositionValue, type string
+//   - <name> = UCI_SetPositionValue, type string
 //     the GUI can send this to the engine to tell the engine to use a certain value in centipawns from white's
 //     point of view if evaluating this specifix position.
 //     The string can have the formats:
 //     <value> + <fen> | clear + <fen> | clearall
-type OptionCmd interface {
+type Option interface {
 	engineToClientCmd
 	// optionName should return the name/id of the option.
 	optionName() string
 }
 
-// CheckOptionCmd - a checkbox that can either be true or false.
+// CheckOption represents an option of type Check that the engine supports.
 //
-// see [OptionCmd]
-type CheckOptionCmd struct {
-	// Name <id> - the option has the Name id.
+// Check options are simple true or false check boxes.
+//
+// See [Option] for more info.
+type CheckOption struct {
+	// Name is the name of the option.
 	//
-	// Certain options have a fixed value for <id>,
-	// which means that the semantics of this option is fixed.
-	// See [OptionCmd] for more info
+	// Certain options are expected to be of a specific type.
+	// See [Option] for more info.
 	Name string
-	// DefaultValue - the default value of this parameter is x
+	// DefaultValue is the default setting the engine uses for this option.
 	DefaultValue bool
 }
 
-func (cmd *CheckOptionCmd) marshalText() ([]byte, error) {
+func (cmd *CheckOption) marshalText() ([]byte, error) {
 	text := &bytes.Buffer{}
 	startOptionCmd(text, cmd.Name, "check")
 	text.WriteString(" default ")
@@ -583,29 +585,33 @@ func (cmd *CheckOptionCmd) marshalText() ([]byte, error) {
 	return text.Bytes(), nil
 }
 
-func (cmd *CheckOptionCmd) optionName() string {
+func (cmd *CheckOption) optionName() string {
 	return cmd.Name
 }
 
-// SpinOptionCmd - a spin wheel that can be an integer in a certain range.
+// SpinOption represents an option of type Spin that the engine supports.
 //
-// see [OptionCmd]
-type SpinOptionCmd struct {
-	// Name <id> - the option has the Name id.
+// Spin options are like a spin wheel that can represent numbers
+// between a defined minimum and maximum value.
+//
+// See [Option] for more info.
+type SpinOption struct {
+	// Name is the name of the option.
 	//
-	// Certain options have a fixed value for <id>,
-	// which means that the semantics of this option is fixed.
-	// See [OptionCmd] for more info
+	// Certain options are expected to be of a specific type.
+	// See [Option] for more info.
 	Name string
-	// DefaultValue - the default value of this parameter is x
+	// DefaultValue is the default setting the engine uses for this option.
+	//
+	// It should be between the minimum and maximum values.
 	DefaultValue int
-	// Min - the minimum value of this parameter is x
+	// Min is the minimum value (inclusive) that this option can be set to.
 	Min int
-	// Max - the maximum value of this parameter is x
+	// Max is the maximum value (inclusive) that this option can be set to.
 	Max int
 }
 
-func (cmd *SpinOptionCmd) marshalText() ([]byte, error) {
+func (cmd *SpinOption) marshalText() ([]byte, error) {
 	text := &bytes.Buffer{}
 	startOptionCmd(text, cmd.Name, "spin")
 	text.WriteString(" default ")
@@ -618,27 +624,32 @@ func (cmd *SpinOptionCmd) marshalText() ([]byte, error) {
 	return text.Bytes(), nil
 }
 
-func (cmd *SpinOptionCmd) optionName() string {
+func (cmd *SpinOption) optionName() string {
 	return cmd.Name
 }
 
-// ComboOptionCmd - a combo box that can have different predefined strings as a value.
+// ComboOption represents an option of type Combo that the engine supports.
 //
-// see [OptionCmd]
-type ComboOptionCmd struct {
-	// Name <id> - the option has the Name id.
+// Combo options can represent a predefined subset of strings.
+//
+// See [Option] for more info.
+type ComboOption struct {
+	// Name is the name of the option.
 	//
-	// Certain options have a fixed value for <id>,
-	// which means that the semantics of this option is fixed.
-	// See [OptionCmd] for more info
+	// Certain options are expected to be of a specific type.
+	// See [Option] for more info.
 	Name string
-	// DefaultValue - the default value of this parameter is x
+	// DefaultValue is the default setting the engine uses for this option.
+	//
+	// It should be one of the Variants.
 	DefaultValue string
-	// Variants - the predefined possible values for the parameter
+	// Variants are the predefined possible values for the option.
+	//
+	// All Variants should be unique, and an empty string is a valid variant.
 	Variants []string
 }
 
-func (cmd *ComboOptionCmd) marshalText() ([]byte, error) {
+func (cmd *ComboOption) marshalText() ([]byte, error) {
 	text := &bytes.Buffer{}
 	startOptionCmd(text, cmd.Name, "combo")
 	text.WriteString(" default ")
@@ -651,48 +662,53 @@ func (cmd *ComboOptionCmd) marshalText() ([]byte, error) {
 	return text.Bytes(), nil
 }
 
-func (cmd *ComboOptionCmd) optionName() string {
+func (cmd *ComboOption) optionName() string {
 	return cmd.Name
 }
 
-// ButtonOptionCmd - a button that can be pressed to send a command to the engine.
+// ButtonOption represents an option of type Button that the engine supports.
 //
-// see [OptionCmd]
-type ButtonOptionCmd struct {
-	// Name <id> - the option has the Name id.
+// Button options have no parameters.
+// Like a button, they are simply pressed.
+//
+// See [Option] for more info.
+type ButtonOption struct {
+	// Name is the name of the option.
 	//
-	// Certain options have a fixed value for <id>,
-	// which means that the semantics of this option is fixed.
-	// See [OptionCmd] for more info
+	// Certain options are expected to be of a specific type.
+	// See [Option] for more info.
 	Name string
 }
 
-func (cmd *ButtonOptionCmd) marshalText() ([]byte, error) {
+func (cmd *ButtonOption) marshalText() ([]byte, error) {
 	text := &bytes.Buffer{}
 	startOptionCmd(text, cmd.Name, "button")
 	text.WriteByte('\n')
 	return text.Bytes(), nil
 }
 
-func (cmd *ButtonOptionCmd) optionName() string {
+func (cmd *ButtonOption) optionName() string {
 	return cmd.Name
 }
 
-// StringOptionCmd - a text field that has a string as a value, an empty string has the value "<empty>".
+// StringOption represents an option of type String that the engine supports.
 //
-// see [OptionCmd]
-type StringOptionCmd struct {
-	// Name <id> - the option has the Name id.
+// String options can represent any string.
+//
+// See [Option] for more info.
+type StringOption struct {
+	// Name is the name of the option.
 	//
-	// Certain options have a fixed value for <id>,
-	// which means that the semantics of this option is fixed.
-	// See [OptionCmd] for more info
+	// Certain options are expected to be of a specific type.
+	// See [Option] for more info.
 	Name string
-	// DefaultValue - the default value of this parameter is x. An empty string will be encoded to <empty>.
+	// DefaultValue is the default setting the engine uses for this option.
+	//
+	// It may be an empty string.
 	DefaultValue string
 }
 
-func (cmd *StringOptionCmd) marshalText() ([]byte, error) {
+func (cmd *StringOption) marshalText() ([]byte, error) {
 	text := &bytes.Buffer{}
 	startOptionCmd(text, cmd.Name, "string")
 	text.WriteString(" default ")
@@ -705,7 +721,7 @@ func (cmd *StringOptionCmd) marshalText() ([]byte, error) {
 	return text.Bytes(), nil
 }
 
-func (cmd *StringOptionCmd) optionName() string {
+func (cmd *StringOption) optionName() string {
 	return cmd.Name
 }
 

@@ -25,6 +25,7 @@ import (
 	"os/signal"
 	"reflect"
 	"sync"
+	"sync/atomic"
 	"syscall"
 )
 
@@ -87,8 +88,11 @@ type UciEngineBroker struct {
 	// This functionality always desirable so this flag is provided.
 	DisableSignalHandling bool
 
-	// Initialized indicates if Initialize() has been called on the engine yet.
-	Initialized bool
+	// initialized indicates if Initialize() has been called on the engine yet.
+	initialized bool
+
+	// evaluating indicates if the engine is currently evaluating a position.
+	evaluating atomic.Bool
 }
 
 // Start the UciEngineBroker.
@@ -219,11 +223,41 @@ Loop:
 // doCommand calls different command handlers based on the underlying type of the cmd.
 func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
 	broker.Log.DebugContext(broker.ctx, "received command", slog.Any("cmd", cmd))
-	if !broker.Initialized && reflect.TypeOf(cmd) != reflect.TypeFor[*uciCmd]() {
+	if !broker.initialized && reflect.TypeOf(cmd) != reflect.TypeFor[*uciCmd]() {
 		broker.Log.WarnContext(broker.ctx, "skipping invalid first command, expected uciCmd", slog.Any("got", reflect.TypeOf(cmd)))
 		return
 	}
 
+	if broker.evaluating.Load() {
+		broker.doCommandWhileEvaluating(cmd)
+	} else {
+		broker.doCommandNoEval(cmd)
+	}
+}
+
+// doCommandNoEval handles commands while the engine is evaluating.
+//
+// Several commands are ignored while evaluating to simplify engine development.
+func (broker *UciEngineBroker) doCommandWhileEvaluating(cmd clientToEngineCmd) {
+	switch c := cmd.(type) {
+	case *debugCmd:
+		broker.handleDebugCommand(c.on)
+	case *isReadyCmd:
+		broker.handleIsReadyCommand()
+	case *stopCmd:
+		broker.Engine.Stop()
+	case *ponderHitCmd:
+		broker.Engine.PonderHit()
+	case *quitCmd:
+		broker.ctxCancel(nil)
+	default:
+		broker.Log.WarnContext(broker.ctx, "ignoring command while engine is evaluating",
+			slog.Any("cmd", reflect.TypeOf(cmd)))
+	}
+}
+
+// doCommandNoEval handles commands while the engine is not evaluating.
+func (broker *UciEngineBroker) doCommandNoEval(cmd clientToEngineCmd) {
 	switch c := cmd.(type) {
 	case *uciCmd:
 		broker.handleUciCommand()
@@ -256,8 +290,9 @@ func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
 }
 
 func (broker *UciEngineBroker) handleUciCommand() {
-	if broker.Initialized {
+	if broker.initialized {
 		broker.Log.WarnContext(broker.ctx, "uci command received more than once, skipping repeat occurrence")
+		return
 	}
 
 	broker.Log.InfoContext(broker.ctx, "initializing engine")
@@ -277,7 +312,7 @@ func (broker *UciEngineBroker) handleUciCommand() {
 	})
 
 	init()
-	broker.Initialized = true
+	broker.initialized = true
 
 	// send out the engine name
 	broker.sendCommand(&idCmd{
@@ -339,7 +374,9 @@ func (broker *UciEngineBroker) handleIsReadyCommand() {
 }
 
 func (broker *UciEngineBroker) handleEvaluateCommand(cmd *EvaluateCmd) {
+	broker.evaluating.Store(true)
 	result := broker.Engine.Evaluate(cmd)
+	broker.evaluating.Store(false)
 	if broker.ctx.Err() == nil {
 		broker.sendCommand(result)
 	}
