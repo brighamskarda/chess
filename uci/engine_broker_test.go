@@ -159,6 +159,41 @@ func TestEngineShutsDownWhenContextCancelled(t *testing.T) {
 	}
 }
 
+func TestNoOtherCommandsParsedBeforeInitialize(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	go broker.Start(t.Context())
+
+	_, err := stdinW.WriteString("debug on\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("isready\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("quit\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Errorf("problem writing to stdin: %v", err)
+	}
+
+	output := bufio.NewReader(stdoutR)
+	testOutput(output, "id name mockEngine v0.1\n", t)
+
+	if broker.Engine.(*mockEngine).debug != 0 {
+		t.Errorf("debug was called before initialize")
+	}
+	if broker.Engine.(*mockEngine).quit != 0 {
+		t.Errorf("quit was called before initialize")
+	}
+}
+
 // startNewUciBroker starts a new uci engine broker and returns the stdin and stdout pipes that the client would see.
 func startNewUciBroker(t *testing.T) (stdinW *os.File, stdoutR *os.File) {
 	stdinR, stdinW := makeOsPipe(t)
@@ -217,7 +252,11 @@ func TestEngineDebugMode(t *testing.T) {
 
 	go broker.Start(t.Context())
 
-	_, err := stdinW.WriteString("debug on\n")
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("debug on\n")
 	if err != nil {
 		t.Fatalf("error writing to stdin: %v", err)
 	}
@@ -226,7 +265,13 @@ func TestEngineDebugMode(t *testing.T) {
 		t.Fatalf("error writing to stdin: %v", err)
 	}
 	// wait for readyok to indicate the commands have been processed
-	stdoutR.Read(make([]byte, 256))
+	out := bufio.NewReader(stdoutR)
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "readyok\n" {
+			break
+		}
+	}
 
 	expectedVal := 1
 	actualVal := broker.Engine.(*mockEngine).debug
@@ -266,12 +311,23 @@ func TestEngineDebugMode(t *testing.T) {
 func TestIsReady(t *testing.T) {
 	stdinW, stdoutR := startNewUciBroker(t)
 
-	_, err := stdinW.WriteString("isready\n")
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("isready\n")
 	if err != nil {
 		t.Fatalf("error writing to stdin: %v", err)
 	}
 
-	output := bufio.NewReader(stdoutR)
+	// wait for uciok to indicate the commands have been processed
+	out := bufio.NewReader(stdoutR)
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "uciok\n" {
+			break
+		}
+	}
 
-	testOutput(output, "readyok\n", t)
+	testOutput(out, "readyok\n", t)
 }

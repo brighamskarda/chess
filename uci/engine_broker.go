@@ -86,6 +86,9 @@ type UciEngineBroker struct {
 	// when it receives the appropriate signal from the OS.
 	// This functionality always desirable so this flag is provided.
 	DisableSignalHandling bool
+
+	// isInitialized indicates if Initialize() has been called on the engine yet.
+	isInitialized bool
 }
 
 // Start the UciEngineBroker.
@@ -102,6 +105,9 @@ type UciEngineBroker struct {
 // Start returns an error if the broker is stopped for any reason besides
 // the context being cancelled,
 // or the quit command being received from the engine.
+//
+// A UciEngineBroker should only be started once.
+// To restart a chess engine make a new UciEngineBroker
 func (broker *UciEngineBroker) Start(ctx context.Context) error {
 	// Make sure the error logger isn't nil.
 	if broker.Log == nil {
@@ -208,6 +214,11 @@ Loop:
 
 // doCommand calls different command handlers based on the underlying type of the cmd.
 func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
+	if !broker.isInitialized && reflect.TypeOf(cmd) != reflect.TypeFor[*uciCmd]() {
+		broker.Log.WarnContext(broker.ctx, "skipping invalid first command, expected uciCmd", slog.Any("got", reflect.TypeOf(cmd)))
+		return
+	}
+
 	switch c := cmd.(type) {
 	case *uciCmd:
 		broker.handleUciCommand()
@@ -240,6 +251,7 @@ func (broker *UciEngineBroker) handleUciCommand() {
 	})
 
 	init()
+	broker.isInitialized = true
 
 	// send out the engine name
 	broker.sendCommand(&idCmd{
