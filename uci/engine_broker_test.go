@@ -21,8 +21,11 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"slices"
 	"testing"
 	"time"
+
+	"github.com/brighamskarda/chess/v2"
 )
 
 func makeOsPipe(t *testing.T) (*os.File, *os.File) {
@@ -564,5 +567,103 @@ func TestRegistrationBad(t *testing.T) {
 	actualVal := broker.Engine.(*mockEngineBadRegister).register
 	if expectedVal != actualVal {
 		t.Errorf("expected Engine.Register to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
+}
+
+func TestSetStartPosition(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	go broker.Start(t.Context())
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("position startpos moves e2e4 d7d5\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	_, err = stdinW.WriteString("isready\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	// wait for uciok to indicate the commands have been processed
+	out := bufio.NewReader(stdoutR)
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "readyok\n" {
+			break
+		}
+	}
+
+	expectedVal := 1
+	actualVal := broker.Engine.(*mockEngine).setPosition
+	if expectedVal != actualVal {
+		t.Errorf("expected Engine.SetPosition to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
+
+	expectedStr := chess.DefaultFEN
+	actualStr, _ := broker.Engine.(*mockEngine).position.MarshalText()
+	if expectedStr != string(actualStr) {
+		t.Errorf("expected position to be %q, but was %q", expectedStr, actualStr)
+	}
+
+	expectedMoves := []chess.Move{{FromSquare: chess.E2, ToSquare: chess.E4, Promotion: chess.NoPieceType},
+		{FromSquare: chess.D7, ToSquare: chess.D5, Promotion: chess.NoPieceType}}
+	actualMoves := broker.Engine.(*mockEngine).moveHistory
+	if !slices.Equal(expectedMoves, actualMoves) {
+		t.Errorf("expected move history to be %v, but was %v", expectedMoves, actualMoves)
+	}
+}
+
+func TestSetPosition(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	testPos := "1r6/5pp1/R1R4p/1r1pP3/2pkQPP1/7P/1P6/2K5 w - - 0 41"
+
+	go broker.Start(t.Context())
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("position fen " + testPos + " moves e2e4 d7d5\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	_, err = stdinW.WriteString("isready\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	// wait for uciok to indicate the commands have been processed
+	out := bufio.NewReader(stdoutR)
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "readyok\n" {
+			break
+		}
+	}
+
+	expectedVal := 1
+	actualVal := broker.Engine.(*mockEngine).setPosition
+	if expectedVal != actualVal {
+		t.Errorf("expected Engine.SetPosition to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
+
+	expectedStr := testPos
+	actualStr, _ := broker.Engine.(*mockEngine).position.MarshalText()
+	if expectedStr != string(actualStr) {
+		t.Errorf("expected position to be %q, but was %q", expectedStr, actualStr)
+	}
+
+	expectedMoves := []chess.Move{{FromSquare: chess.E2, ToSquare: chess.E4, Promotion: chess.NoPieceType},
+		{FromSquare: chess.D7, ToSquare: chess.D5, Promotion: chess.NoPieceType}}
+	actualMoves := broker.Engine.(*mockEngine).moveHistory
+	if !slices.Equal(expectedMoves, actualMoves) {
+		t.Errorf("expected move history to be %v, but was %v", expectedMoves, actualMoves)
 	}
 }

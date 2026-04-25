@@ -15,12 +15,16 @@
 
 package uci
 
+import "github.com/brighamskarda/chess/v2"
+
 // mockEngine simply keeps track of how many times each of its functions are called.
 //
 // Used for testing.
 type mockEngine struct {
-	output     func(*InfoCmd)
-	debugState bool
+	output      func(*InfoCmd)
+	debugState  bool
+	position    *chess.Position
+	moveHistory []chess.Move
 
 	initialize     int
 	copyProtection int
@@ -30,6 +34,7 @@ type mockEngine struct {
 	options        int
 	debug          int
 	setOption      int
+	setPosition    int
 	quit           int
 }
 
@@ -93,6 +98,12 @@ func (engine *mockEngine) SetDebug(value bool) {
 
 func (engine *mockEngine) SetOption(option SetOptionCmd) {
 	engine.setOption++
+}
+
+func (engine *mockEngine) SetPosition(pos *chess.Position, his []chess.Move) {
+	engine.position = pos
+	engine.moveHistory = his
+	engine.setPosition++
 }
 
 func (engine *mockEngine) Quit() {

@@ -15,6 +15,8 @@
 
 package uci
 
+import "github.com/brighamskarda/chess/v2"
+
 // ChessEngine is an interface that defines common functions a chess engine should have.
 //
 // By following this interface,
@@ -94,6 +96,16 @@ type ChessEngine interface {
 	//   - [SetStringOptionCmd] (which double as setting a combo option)
 	//   - [SetButtonOptionCmd]
 	SetOption(SetOptionCmd)
+
+	// SetPosition tell the chess engine to setup a certain position prior to a search.
+	//
+	// The position will always be provided with an optional list of moves.
+	// The moves should be applied to the position to get a final position.
+	// By providing the move history
+	// the engine can see if it is headed towards a draw by three-fold repetition.
+	//
+	// Both of the parameters may be consumed by this function.
+	SetPosition(*chess.Position, []chess.Move)
 
 	// Quit can be called asynchronously any time after Initialize.
 	//
