@@ -13,7 +13,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// uci is a package that provides utilities to assist the creation of chess clients and engines in Go using the [Universal Chess Interface].
+// uci is a package that provides an easy interface for
+// the creation of [UCI] compatible chess engines in Go.
 //
-// [Universal Chess Interface]: https://www.shredderchess.com/download/div/uci.zip
+// A copy of the Universal Chess Interface is available at
+// https://www.shredderchess.com/download/div/uci.zip.
+//
+// [UCI]: https://en.wikipedia.org/wiki/Universal_Chess_Interface
 package uci

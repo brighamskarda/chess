@@ -161,31 +161,31 @@ func getOptionValue(text []byte) string {
 	return string(bytes.TrimSpace(text[startIndex+6:]))
 }
 
-// SetOptionCmd is sent to change one of an engine's configurable options.
+// SetOption is sent to change one of an engine's configurable options.
 //
 // When passed to the engine this will be one of four types.
-//   - [SetCheckOptionCmd]
-//   - [SetSpinOptionCmd]
-//   - [SetStringOptionCmd] (which double as setting a combo option)
-//   - [SetButtonOptionCmd]
-type SetOptionCmd interface {
-	clientToEngineCmd
+//   - [SetCheckOption]
+//   - [SetSpinOption]
+//   - [SetStringOption] (which double as setting a combo option)
+//   - [SetButtonOption]
+type SetOption interface {
 	// optionName returns the name/id of the option.
 	OptionName() string
+	clientToEngineCmd
 }
 
-// SetCheckOptionCmd is an option with the check type.
+// SetCheckOption is an option with the check type.
 //
 //   - check - a checkbox that can either be true or false
-type SetCheckOptionCmd struct {
-	baseClientCommand
+type SetCheckOption struct {
+	// Checkbox is true if the "checkbox" for this command is set.
+	Checkbox bool
 	// name is the name/id of the option being set.
 	name string
-	// Is true if the "checkbox" for this command is set.
-	Checkbox bool
+	baseClientCommand
 }
 
-func (cmd *SetCheckOptionCmd) unmarshalText(text []byte) error {
+func (cmd *SetCheckOption) unmarshalText(text []byte) error {
 	err := validateSetOption(text)
 	if err != nil {
 		return err
@@ -211,22 +211,23 @@ func (cmd *SetCheckOptionCmd) unmarshalText(text []byte) error {
 	return nil
 }
 
-func (cmd *SetCheckOptionCmd) OptionName() string {
+// OptionName returns the name of the option being set.
+func (cmd *SetCheckOption) OptionName() string {
 	return cmd.name
 }
 
-// SetSpinOptionCmd is an option with the spin type.
+// SetSpinOption is an option with the spin type.
 //
-//   - spin - a spin wheel that can be an integer in a certain range
-type SetSpinOptionCmd struct {
+//   - spin - a spin wheel that can be an integer within a certain range
+type SetSpinOption struct {
+	// Value represents the numeric integer value for the spin option.
+	Value int
 	baseClientCommand
 	// name is the name/id of the option being set.
 	name string
-	// value represents the numeric integer value for the spin option.
-	Value int
 }
 
-func (cmd *SetSpinOptionCmd) unmarshalText(text []byte) error {
+func (cmd *SetSpinOption) unmarshalText(text []byte) error {
 	err := validateSetOption(text)
 	if err != nil {
 		return err
@@ -249,22 +250,23 @@ func (cmd *SetSpinOptionCmd) unmarshalText(text []byte) error {
 	return nil
 }
 
-func (cmd *SetSpinOptionCmd) OptionName() string {
+// OptionName returns the name of the option being set.
+func (cmd *SetSpinOption) OptionName() string {
 	return cmd.name
 }
 
-// SetStringOptionCmd is an option with the string **or combo** type.
+// SetStringOption is an option with the string **or combo** type.
 //
-//   - string - a text field that has a string as a value, an empty string has the value "<empty>"
-type SetStringOptionCmd struct {
+//   - string - a text field that has a string as a value.
+type SetStringOption struct {
+	// Value is the string content assigned to this option. If <empty> was sent then this will be an empty string.
+	Value string
 	baseClientCommand
 	// name is the name/id of the option being set.
 	name string
-	// Value is the string content assigned to this option. If <empty> was sent then this will be an empty string.
-	Value string
 }
 
-func (cmd *SetStringOptionCmd) unmarshalText(text []byte) error {
+func (cmd *SetStringOption) unmarshalText(text []byte) error {
 	err := validateSetOption(text)
 	if err != nil {
 		return err
@@ -290,20 +292,21 @@ func (cmd *SetStringOptionCmd) unmarshalText(text []byte) error {
 	return nil
 }
 
-func (cmd *SetStringOptionCmd) OptionName() string {
+// OptionName returns the name of the option being set.
+func (cmd *SetStringOption) OptionName() string {
 	return cmd.name
 }
 
-// SetButtonOptionCmd is an option with the button type.
+// SetButtonOption is an option with the button type.
 //
 //   - button - a button that can be pressed to send a command to the engine
-type SetButtonOptionCmd struct {
+type SetButtonOption struct {
 	baseClientCommand
 	// name is the name/id of the button to be "pressed".
 	name string
 }
 
-func (cmd *SetButtonOptionCmd) unmarshalText(text []byte) error {
+func (cmd *SetButtonOption) unmarshalText(text []byte) error {
 	err := validateSetOption(text)
 	if err != nil {
 		return err
@@ -318,33 +321,20 @@ func (cmd *SetButtonOptionCmd) unmarshalText(text []byte) error {
 	return nil
 }
 
-func (cmd *SetButtonOptionCmd) OptionName() string {
+func (cmd *SetButtonOption) OptionName() string {
 	return cmd.name
 }
 
 // RegisterCmd is the command to register an engine or to tell it that registration
 // will be done later.
-//
-// The following tokens are allowed:
-//   - later
-//     the user doesn't want to register the engine now.
-//   - name <x>
-//     the engine should be registered with the name <x>
-//   - code <y>
-//     the engine should be registered with the code <y>
-//
-// Example:
-//
-//	"register later"
-//	"register name Stefan MK code 4359874324"
 type RegisterCmd struct {
-	baseClientCommand
 	// Later indicates the user doesn't want to register the engine now.
 	Later bool
 	// Name indicates the name the engine should be registered with.
 	Name Optional[string]
 	// Code indicates the registration code.
 	Code Optional[string]
+	baseClientCommand
 }
 
 func (cmd *RegisterCmd) unmarshalText(text []byte) error {
@@ -504,7 +494,6 @@ func (cmd *positionCmd) parseMoves(text []byte) error {
 
 // EvaluateCmd contains parameters on how an engine should perform its evaluation.
 type EvaluateCmd struct {
-	baseClientCommand
 	// SearchMoves restrict search to these moves only.
 	//
 	// Example: After "position startpos" and "go infinite searchmoves e2e4 d2d4"
@@ -513,21 +502,23 @@ type EvaluateCmd struct {
 	// Ponder start searching in pondering mode.
 	//
 	// Do not exit the search in Ponder mode, even if it's mate!
-	// This means that the last move sent in the position string is the Ponder move.
+	// Wait for PonderHit or Stop.
+	//
+	// The last move sent in the position string is the Ponder move.
 	// The engine can do what it wants to do, but after a "ponderhit" command
 	// it should execute the suggested move to Ponder on. This means that the Ponder move sent by
-	// the GUI can be interpreted as a recommendation about which move to Ponder. However, if the
+	// the UCI client can be interpreted as a recommendation about which move to Ponder. However, if the
 	// engine decides to Ponder on a different move, it should not display any mainlines as they are
-	// likely to be misinterpreted by the GUI because the GUI expects the engine to Ponder
+	// likely to be misinterpreted by the UCI client because the UCI client expects the engine to Ponder
 	// on the suggested move.
 	Ponder bool
-	// Wtime - white has x msec left on the clock
+	// Wtime - white has x milliseconds left on the clock
 	Wtime Optional[int]
-	// Btime - black has x msec left on the clock
+	// Btime - black has x milliseconds left on the clock
 	Btime Optional[int]
-	// Winc - white increment per move in mseconds if x > 0
+	// Winc - white increment per move in milliseconds if x > 0
 	Winc Optional[int]
-	// Binc - black increment per move in mseconds if x > 0
+	// Binc - black increment per move in milliseconds if x > 0
 	Binc Optional[int]
 	// MovesToGo - there are x moves to the next time control, this will only be sent if x > 0,
 	// if you don't get this and get the wtime and btime it's sudden death
@@ -538,12 +529,13 @@ type EvaluateCmd struct {
 	Nodes Optional[int]
 	// Mate - search for a Mate in x moves
 	Mate Optional[int]
-	// MoveTime search exactly x mseconds
+	// MoveTime - search for exactly x milliseconds
 	MoveTime Optional[int]
 	// Infinite search until the "stop" command.
 	//
 	// Do not exit the search without being told so in this mode!
 	Infinite bool
+	baseClientCommand
 }
 
 func (cmd *EvaluateCmd) unmarshalText(text []byte) error {
@@ -691,25 +683,25 @@ func (cmd *quitCmd) unmarshalText(text []byte) error {
 // unmarshalOptionCommand first tries to unmarshal the check option, then the spin option, then the string option, then the button option.
 func unmarshalOptionCommand(text []byte) (clientToEngineCmd, error) {
 	// check option
-	cmd, err1 := unmarshalClientToEngineCmd[SetCheckOptionCmd](text)
+	cmd, err1 := unmarshalClientToEngineCmd[SetCheckOption](text)
 	if err1 == nil {
 		return cmd, nil
 	}
 
 	// spin option
-	cmd, err2 := unmarshalClientToEngineCmd[SetSpinOptionCmd](text)
+	cmd, err2 := unmarshalClientToEngineCmd[SetSpinOption](text)
 	if err2 == nil {
 		return cmd, nil
 	}
 
 	// string/combo option
-	cmd, err3 := unmarshalClientToEngineCmd[SetStringOptionCmd](text)
+	cmd, err3 := unmarshalClientToEngineCmd[SetStringOption](text)
 	if err3 == nil {
 		return cmd, nil
 	}
 
 	// button option
-	cmd, err4 := unmarshalClientToEngineCmd[SetButtonOptionCmd](text)
+	cmd, err4 := unmarshalClientToEngineCmd[SetButtonOption](text)
 	if err4 == nil {
 		return cmd, nil
 	}

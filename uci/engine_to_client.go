@@ -189,83 +189,84 @@ func (cmd *registrationCmd) marshalText() ([]byte, error) {
 	}
 }
 
-// InfoCmd - the engine wants to send information to the GUI. This should be done whenever one of the info has changed.
+// InfoCmd can be used to send information to the UCI client.
 //
-// The engine can send only selected infos or multiple infos with one info command,
-// e.g. "info currmove e2e4 currmovenumber 1" or
+// Ideally this should be done whenever one of the infos fields has changed.
+// The engine can send any combination of information at once.
 //
-//	"info depth 12 nodes 123456 nps 100000".
-//
-// Also all infos belonging to the pv should be sent together
-// e.g. "info depth 2 score cp 214 time 1242 nodes 2124 nps 34928 pv e2e4 e7e5 g1f3"
-// I suggest to start sending "currmove", "currmovenumber", "currline" and "refutation" only after one second
-// to avoid too much traffic.
+// I suggest to start sending "currmove", "currmovenumber", "currline" and "refutation"
+// only after one second of evaluation
+// to avoid the heavy traffic often associated
+// with the start of an evaluation.
 type InfoCmd struct {
 	// Depth <x> - search Depth in plies
 	Depth Optional[int]
 
-	// SelDepth <x> - selective search depth in plies.
+	// SelDepth - selective search depth in plies.
 	//
-	// If the engine sends SelDepth there must also be a "depth" present in the same string.
+	// If the engine sends SelDepth there must also be a "depth" present in the same command.
 	SelDepth Optional[int]
 
-	// Time <x> - the Time searched in ms, this should be sent together with the pv.
+	// Time Time searched in milliseconds, this should be sent together with the pv.
 	Time Optional[int]
 
-	// Nodes <x> - x Nodes searched, the engine should send this info regularly.
+	// Nodes Nodes searched, the engine should send this info regularly.
 	Nodes Optional[int]
 
-	// Pv <move1> ... <movei> - the best line found.
+	// Pv <move1> ... <movei> - the best line found. The primary variation.
 	Pv []chess.Move
 
 	// MultiPv <num> - this for the multi pv mode.
 	//
 	// For the best move/pv add "MultiPv 1" in the string when you send the pv.
-	// in k-best mode always send all k variants in k strings together.
+	// In k-best mode always send all k variants in k strings together.
 	MultiPv Optional[int]
 
 	// Score
 	//
-	// 	* cp <x>
+	// 	- cp <x>
 	// 		the Score from the engine's point of view in centipawns.
-	// 	* mate <y>
+	// 	- mate <y>
 	// 		mate in y moves, not plies.
 	// 		If the engine is getting mated use negative values for y.
-	// 	* lowerbound
+	// 	- lowerbound
 	//       the Score is just a lower bound.
-	// 	* upperbound
+	// 	- upperbound
 	// 	   the Score is just an upper bound.
 	Score Optional[InfoScore]
 
-	// CurrMove <move> - currently searching this move.
+	// CurrMove - currently searching this move.
 	CurrMove Optional[chess.Move]
 
-	// CurrMoveNumber <x> - currently searching move number x, for the first move x should be 1 not 0.
+	// CurrMoveNumber - currently searching move number x, for the first move x should be 1 not 0.
 	CurrMoveNumber Optional[int]
 
-	// HashFull <x> - the hash is x permill full, the engine should send this info regularly.
+	// HashFull - the hash is x permill full, the engine should send this info regularly.
 	HashFull Optional[int]
 
-	// Nps <x> - x nodes per second searched, the engine should send this info regularly.
+	// Nps - x nodes per second searched, the engine should send this info regularly.
 	Nps Optional[int]
 
-	// TbHits <x> - x positions where found in the endgame table bases.
+	// TbHits - x positions where found in the endgame table bases.
 	TbHits Optional[int]
 
-	// SbHits <x> - x positions where found in the shredder endgame databases.
+	// SbHits - x positions where found in the shredder endgame databases.
+	//
+	// This isn't really used.
 	SbHits Optional[int]
 
-	// CpuLoad <x> - the cpu usage of the engine is x permill.
+	// CpuLoad - the cpu usage of the engine is x permill.
 	CpuLoad Optional[int]
 
-	// string <str> - any string str which will be displayed by the engine.
+	// StringMsg - a generic string message.
 	//
-	// if there is a string command the rest of the line will be interpreted as <str>.
+	// This is very useful for debugging/development
+	// as you can effectively display anything you want.
 	StringMsg Optional[string]
 
 	// Refutation <move1> <move2> ... <movei>
 	//
-	// move <move1> is refuted by the line <move2> ... <movei>, i can be any number >= 1.
+	// Move <move1> is refuted by the line <move2> ... <movei>, i can be any number >= 1.
 	// Example: after move d1h5 is searched, the engine can send "info Refutation d1h5 g6h5"
 	// if g6h5 is the best answer after d1h5 or if g6h5 refutes the move d1h5.
 	// if there is no Refutation for d1h5 found, the engine should just send "info Refutation d1h5"
@@ -274,10 +275,9 @@ type InfoCmd struct {
 
 	// CurrLine <cpunr> <move1> ... <movei>
 	//
-	// This is the current line the engine is calculating. <cpunr> is the number of the cpu
-	// if the engine is running on more than one cpu. <cpunr> = 1,2,3....
-	// if the engine is just using one cpu, <cpunr> can be omitted.
-	// If <cpunr> is greater than 1, always send all k lines in k strings together.
+	// This is the current line the engine is calculating.
+	// If the engine is just using one cpu, <cpunr> can be omitted.
+	// If <cpunr> is greater than 1, always send all lines together.
 	// The engine should only send this if the option "UCI_ShowCurrLine" is set to true.
 	CurrLine Optional[CurrentLine]
 }
@@ -462,22 +462,25 @@ func (cmd *InfoCmd) marshalString(text *bytes.Buffer) {
 
 // CurrentLine is used in [InfoCmd] to show the current line the engine is calculating.
 type CurrentLine struct {
+	// CpuNr is the CPU number that is evaluating this line.
 	CpuNr Optional[int]
+	// Moves is the line of moves being evaluated.
 	Moves []chess.Move
 }
 
-// InfoScore is used in [InfoCmd] to show the current line the engine is calculating.
+// InfoScore is used in [InfoCmd] to show the engine's current evaluation of the position.
 type InfoScore struct {
-	// Score is the Score
+	// Score is either the number of plies until mate,
+	// or the engine's evaluation of the position in centipawns.
 	Score int
 	// IsMate is true if the score represents how many plies until mate.
 	// Otherwise score is assumed to be the engines evaluation in centipawns.
 	IsMate bool
-	// IsLowerBound indicates that this score is a IsLowerBound.
-	// Should be false if upperbound is set.
+	// IsLowerBound indicates that this score is a lower bound.
+	// Should be false if IsUpperBound is set.
 	IsLowerBound bool
-	// IsUpperBound indicates that this score is an IsUpperBound.
-	// Should be false if lowerbound is set.
+	// IsUpperBound indicates that this score is an upper bound.
+	// Should be false if IsLowerBound is set.
 	IsUpperBound bool
 }
 

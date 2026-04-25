@@ -23,35 +23,37 @@ import "github.com/brighamskarda/chess/v2"
 // users can plug their chess engine into a [UciEngineBroker]
 // to automatically gain all the benefits of having a UCI compliant chess engine.
 //
-// All functions in this interface will by called synchronously with three exceptions.
+// All functions in this interface will by called synchronously with a few exceptions.
 // 	- Quit can be called any time after Initialize.
-//	- Stop can be called while the engine is evaluating.
-// 	- PonderHit can be called while the engine is pondering/evaluating.
+// While the the engine is evaluating these functions can still be called.
+//		- Stop
+//		- PonderHit
+//		- SetDebug
 type ChessEngine interface {
 	// Initialize will be the first function called on the chess engine.
 	//
 	// Initialize will be called exactly once and should be used to initialize any internal state the engine relies on.
 	//
-	// A function is provided via which the engine can send info commands to the UCI chess client.
+	// A function is provided via which the engine can send info commands to the UCI client.
 	// The function should be stored and used for the duration of the program.
 	// The [InfoCmd] documentation should give a good idea of what kind of info can be sent.
-	// Sending commands with only [InfoCmd.StringMsg] can be very useful for debugging.
+	// InfoCmd.StringMsg can be very useful for debugging.
 	//
 	// Keep in mind that the function is not buffered,
 	// so sending info commands during a move search can slow it down significantly.
 	// Implementing a buffered channel to asynchronously send info commands is a good idea.
 	//
-	// Keep in mind that if Initialize takes too long, the GUI may kill the engine.
+	// If Initialize takes too long, the UCI client may kill the engine.
 	Initialize(func(*InfoCmd))
 
 	// CopyProtection provides the engine an opportunity to do copyright checks.
 	//
-	// CopyProtection will be called after [ChessEngine.Initialize] and
+	// CopyProtection will be called after Initialize and
 	// should return true if copy protection checks succeeded,
 	// or false if the engine could not perform its copy protection checks.
 	CopyProtection() bool
 
-	// Register provides and opportunity for the engine to register itself.
+	// Register provides an opportunity for the engine to register itself.
 	//
 	// If the engine is unable to register itself,
 	// the user may expect reduced functionality.
@@ -59,10 +61,10 @@ type ChessEngine interface {
 	// This function will by called after [ChessEngine.Initialize] and
 	// should return true if it can successfully register.
 	// The first time this function is called
-	// the RegisterCmd will be nil,
-	// and the engine may try to register without it.
+	// the RegisterCmd will be nil.
+	// The engine may try to register without it.
 	// If this function returns false (registration failed),
-	// future calls to it will have a RegisterCmd included.
+	// future calls to it will have a RegisterCmd included from the UCI client.
 	Register(*RegisterCmd) bool
 
 	// Name should return the name of the chess engine.
@@ -79,37 +81,38 @@ type ChessEngine interface {
 
 	// Options should return the options supported by this engine.
 	//
-	// These options will be send to the GUI so the user may modify them.
+	// These options will be send to the UCI client so it knows what can be modified.
 	// There are no required options in the UCI specification.
 	Options() []Option
 
 	// SetDebug will receive a true when the client requests debug mode.
 	//
-	// This function can be called asynchronously at any time.
+	// This function can be called asynchronously during evaluation.
 	// The engine should default to normal operations (debug = false).
 	// When debug mode is on, the engine should send out additional infos to aid development.
 	SetDebug(bool)
 
 	// SetOption sets engine parameters.
 	//
-	// SetOption will not be called while the engine is searching.
-	// If the engine does not support the given option then it can just ignore it.
+	// If the engine does not support the given option then it can be ignored.
 	//
-	// A type switch on OptionCmd with the following types will likely be necessary to implement this function.
-	//   - [SetCheckOptionCmd]
-	//   - [SetSpinOptionCmd]
-	//   - [SetStringOptionCmd] (which double as setting a combo option)
-	//   - [SetButtonOptionCmd]
-	SetOption(SetOptionCmd)
+	// A type switch on SetOption with the following types will likely be necessary to implement this function.
+	//   - [SetCheckOption]
+	//   - [SetSpinOption]
+	//   - [SetStringOption] (which double as setting a combo option)
+	//   - [SetButtonOption]
+	SetOption(SetOption)
 
 	// NewGame is called when the next position to evaluate is part of a different game.
 	//
-	// This function allows the engine to clear any cached values it was using for evaluation.
+	// While it isn't strictly required to implement new game,
+	// it is good practice to clear any cached values the engine was using.
 	NewGame()
 
-	// SetPosition tells the chess engine to setup a certain position prior to a search.
+	// SetPosition tells the chess engine to setup a certain position for its next search.
 	//
-	// The position will always be provided with an optional list of moves.
+	// The position will always be provided,
+	// but the list of moves may be empty or nil.
 	// The moves should be applied to the position to get a final position.
 	// By providing the move history
 	// the engine can see if it is headed towards a draw by three-fold repetition.
@@ -119,8 +122,8 @@ type ChessEngine interface {
 
 	// Evaluate tells the engine to start evaluating on its current position.
 	//
-	// Various options are provided via the *EvaluateCmd parameter
-	// to modify how the engine may want to think.
+	// Various options are provided via the EvaluateCmd parameter
+	// to modify how the engine behaves.
 	//
 	// **IF THE PONDER OPTION IS SET DO NOT RETURN UNTIL STOP OR PONDERHIT ARE CALLED.**
 	//
@@ -128,12 +131,15 @@ type ChessEngine interface {
 	// it finds what it thinks is the best move,
 	// or Stop/Quit are called asynchronously,
 	// at which point it should return its best move as soon as possible.
+	//
+	// Before returning, sending an InfoCmd with
+	// the final stats of the evaluation is recommended.
 	Evaluate(*EvaluateCmd) *BestMove
 
 	// Stop asks the engine to stop its current move evaluation and return the best move.
 	//
 	// Stop may be called asynchronously any time the engine is evaluating.
-	// If Stop is called and the engine is not evaluating, it can be ignored.
+	// If Stop is called and the engine is not evaluating, it should be ignored.
 	Stop()
 
 	// PonderHit tells the engine to switch from pondering to normal search.
@@ -148,19 +154,19 @@ type ChessEngine interface {
 	// then stop will be called instead and a new
 	// position will be set before calling Evaluate again.
 	//
-	// If PonderHit is called and the engine is not pondering, it can be ignored.
+	// If PonderHit is called and the engine is not pondering, it should be ignored.
 	PonderHit()
 
 	// Quit can be called asynchronously any time after Initialize.
 	//
-	// This is the broker's way of asking the engine to nicely stop its operations.
+	// This is the broker's way of nicely asking the engine to stop its operations.
 	// Failure to do so promptly may result in the engine being forcibly stopped.
 	// Quit should not return until all cleanup is complete.
 	//
 	// The following are some (but not all) actions that should be taken to ensure a smooth shutdown.
-	//	* Stop ongoing searches
-	// 	* Close Open files
-	// 	* Release remote software licenses
+	//	- Stop ongoing searches
+	// 	- Close Open files
+	// 	- Release remote software licenses
 	//
 	// Quit will only be called once.
 	Quit()

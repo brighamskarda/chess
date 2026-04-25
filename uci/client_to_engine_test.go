@@ -80,7 +80,7 @@ func TestIsReadyCommandUnmarshal(t *testing.T) {
 }
 
 func TestCheckOptionCommand(t *testing.T) {
-	checkOption := SetCheckOptionCmd{}
+	checkOption := SetCheckOption{}
 	if checkOption.unmarshalText([]byte("setoption name check  box value true\n")) != nil {
 		t.Errorf("incorrect result for valid setOption command, got error")
 	}
@@ -110,7 +110,7 @@ func TestCheckOptionCommand(t *testing.T) {
 }
 
 func TestSpinOptionCommand(t *testing.T) {
-	spinOption := SetSpinOptionCmd{}
+	spinOption := SetSpinOption{}
 
 	// Valid case
 	if err := spinOption.unmarshalText([]byte("setoption name Selectivity value 2\n")); err != nil {
@@ -135,7 +135,7 @@ func TestSpinOptionCommand(t *testing.T) {
 }
 
 func TestStringOptionCommand(t *testing.T) {
-	strOption := SetStringOptionCmd{}
+	strOption := SetStringOption{}
 
 	// Valid case
 	if err := strOption.unmarshalText([]byte("setoption name Nalimov  Path value C:\\che  ss\\tablebases\n")); err != nil {
@@ -160,7 +160,7 @@ func TestStringOptionCommand(t *testing.T) {
 }
 
 func TestButtonOptionCommand(t *testing.T) {
-	btnOption := SetButtonOptionCmd{}
+	btnOption := SetButtonOption{}
 
 	// Valid case: Button options do not have a "value" suffix
 	if err := btnOption.unmarshalText([]byte("setoption name Clear  Hash\n")); err != nil {
@@ -460,10 +460,10 @@ func TestParseClientToEngineCmd_AllTypes(t *testing.T) {
 		{"uci", "uci \n", "*uci.uciCmd"},
 		{"debug", "debug on\n", "*uci.debugCmd"},
 		{"isready", "isready \n", "*uci.isReadyCmd"},
-		{"setoption check", "setoption name MyCheck value true\n", "*uci.SetCheckOptionCmd"},
-		{"setoption spin", "setoption name MySpin value 10\n", "*uci.SetSpinOptionCmd"},
-		{"setoption string", "setoption name MyStr value hello\n", "*uci.SetStringOptionCmd"},
-		{"setoption button", "setoption name MyButton\n", "*uci.SetButtonOptionCmd"},
+		{"setoption check", "setoption name MyCheck value true\n", "*uci.SetCheckOption"},
+		{"setoption spin", "setoption name MySpin value 10\n", "*uci.SetSpinOption"},
+		{"setoption string", "setoption name MyStr value hello\n", "*uci.SetStringOption"},
+		{"setoption button", "setoption name MyButton\n", "*uci.SetButtonOption"},
 		{"register", "register later\n", "*uci.RegisterCmd"},
 		{"ucinewgame", "ucinewgame \n", "*uci.uciNewGameCmd"},
 		{"position", "position startpos moves e2e4\n", "*uci.positionCmd"},

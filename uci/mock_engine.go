@@ -110,7 +110,7 @@ func (engine *mockEngine) SetDebug(value bool) {
 	engine.debug++
 }
 
-func (engine *mockEngine) SetOption(option SetOptionCmd) {
+func (engine *mockEngine) SetOption(option SetOption) {
 	engine.setOption++
 }
 

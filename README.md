@@ -1,6 +1,6 @@
 # brighamskarda/chess
 
-**chess** is a go module with useful utilities for playing and manipulating the game of chess. It was created to expand the selection of chess libraries available in golang. As of now, there are few fleshed out libraries that are documented and performant. Some of the functionality provided in this library includes:
+**chess** is a go module with useful utilities for playing and manipulating the game of chess. It was created to expand the selection of chess libraries available in Go. As of now, there are few fleshed out libraries that are documented and performant. Some of the functionality provided in this library includes:
 
 - Magic bitboard accelerated move generation
 - Pseudo-legal move generation
@@ -8,6 +8,7 @@
 - FEN position parsing
 - Extensive PGN support
 - Bitboard utilities
+- A [one of a kind interface](https://pkg.go.dev/github.com/brighamskarda/chess/v2/uci) that makes developing a UCI-compliant chess engine a cinch.
 
 ## Performance
 
@@ -24,7 +25,7 @@ This module is designed with performance in mind. It aims to be performant enoug
 | malbrecht/chess       | 77.39                       | 147.97                      | 5.44                   |
 | eightsquared/chess    | 7.075                       | 22.35                       | 1.01                   |
 
-<sub>All tests done on an Intel I7-1265U (I know a laptop is not the best for benchmarks, but you can at least get a general idea for how each of the libraries perform)</sub>
+<sub>All tests done on an Intel I7-1265U in June 2025 (I know a laptop is not the best for benchmarks, but you can at least get a general idea for how each of the libraries perform)</sub>
 
 <sub>Starting Position - `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`</sub>
 
@@ -40,10 +41,14 @@ The fastest time I got for Perft 6 from the starting position was 6.5 seconds. U
 
 ## Future Development
 
-There is still a lot of work to do to make this library as great as possible. Currently there are two future releases planned.
+While I plan to keep supporting this library for the foreseeable future, 
+I will be moving on to other projects.
 
-- v2.1 - UCI support to aid engine development
-- v2.2 - Chess 960 support
+If you are looking to make a contribution here are some things I would like to add:
+
+ - A UCI client framework for interacting with other chess engines.
+ - Chess 960 support
+ - Any great ideas you have
 
 ## Contributing
 

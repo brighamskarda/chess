@@ -17,7 +17,7 @@ package uci
 
 // Optional is a generic value-based optional type specialized for uci chess engines.
 //
-// By being value-based this type introduces zero garbage collection overhead which is ideal for high performance scenarios.
+// By being value-based this type introduces zero garbage collection overhead which is ideal in high performance scenarios.
 // Consequently, performance may suffer if the type being passed in is very large.
 //
 // In many cases a zero value or nil should be used instead.

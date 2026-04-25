@@ -40,15 +40,15 @@ type UciEngineBroker struct {
 	// Engine is where the actual logic of the chess engine is contained.
 	//
 	// When the broker receives commands from the UCI client,
-	// it will translate those commands into the appropriate calls to the engine.
+	// they will be translated into function calls to this engine.
 	Engine ChessEngine
 
-	// Input is the source from which the UciEngineBroker will read commands from the UCI client.
+	// Input is where the UciEngineBroker will read commands from the UCI client.
 	//
 	// In most cases this should be [os.Stdin]
 	Input io.Reader
 
-	// Output is the destination to which the engine commands will be sent to the UCI client.
+	// Output is where the UciEngineBroker will send commands intended for the UCI client.
 	//
 	// In most cases this should be [os.Stdout].
 	Output io.Writer
@@ -56,17 +56,17 @@ type UciEngineBroker struct {
 	// outputLocker ensures only one go routine writes to Error at a time.
 	outputLocker sync.Mutex
 
-	// Log is where the broker can output information outside of normal engine communication.
+	// Log is where the broker can write information outside of normal engine communication.
 	//
 	// Log is an optional field.
-	// But Logs provide information on how the broker is running,
+	// Logs provide information on how the broker is running,
 	// and report errors that are encountered.
 	// It is recommended that a logger with at least a level of [slog.Error] is provided.
 	// Here is a simple logger you can provided that logs errors to [os.Stderr].
 	//
 	//		slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
 	//
-	// Log should not write to the same location as [UciEngineBroker.Output].
+	// Log should not write to the same location as Output.
 	// [os.Stderr] and external files are great places to log to.
 	Log *slog.Logger
 
@@ -81,11 +81,11 @@ type UciEngineBroker struct {
 	// quitWg makes sure the engine has shutdown before the broker stops.
 	quitWg sync.WaitGroup
 
-	// DisableSignalHandling removes the default signaling functionality.
+	// DisableSignalHandling removes the default signal handling functionality.
 	//
 	// By default the broker will automatically shutdown
-	// when it receives the appropriate signal from the OS.
-	// This functionality always desirable so this flag is provided.
+	// when it receives a SIGINT or SIGTERM from the OS.
+	// This functionality isn't always desirable so this flag is provided.
 	DisableSignalHandling bool
 
 	// initialized indicates if Initialize() has been called on the engine yet.
@@ -100,11 +100,11 @@ type UciEngineBroker struct {
 // This function will not return until
 // the UCI client requests the engine to shutdown,
 // the context is cancelled,
-// or there is an error.
-// Until then, it will read stdin for commands from the UCI client,
-// and it will send commands from the engine back to the UCI client via stdout.
+// or there is an unrecoverable error.
+// Until then, it will read Input for commands from the UCI client,
+// and will send commands from the engine back to the UCI client via the Output.
 //
-// The provided context will also be passed into the to [UciEngineBroker.Log] whenever it is called.
+// The provided context will be passed into the to the Logger whenever it is called.
 //
 // Start returns an error if the broker is stopped for any reason besides
 // the context being cancelled,
@@ -267,7 +267,7 @@ func (broker *UciEngineBroker) doCommandNoEval(cmd clientToEngineCmd) {
 		broker.handleIsReadyCommand()
 	case *RegisterCmd:
 		broker.checkRegistration(c)
-	case SetOptionCmd:
+	case SetOption:
 		broker.Engine.SetOption(c)
 	case *uciNewGameCmd:
 		broker.Engine.NewGame()
@@ -276,9 +276,9 @@ func (broker *UciEngineBroker) doCommandNoEval(cmd clientToEngineCmd) {
 	case *EvaluateCmd:
 		go broker.handleEvaluateCommand(c)
 	case *stopCmd:
-		broker.Engine.Stop()
+		// don't need to call stop if there is no evaluation happening.
 	case *ponderHitCmd:
-		broker.Engine.PonderHit()
+		// don't need to call PonderHit if there is no evaluation happening.
 	case *quitCmd:
 		broker.ctxCancel(nil)
 	default:
