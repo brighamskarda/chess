@@ -27,6 +27,7 @@ type mockEngine struct {
 	author     int
 	options    int
 	debug      int
+	setOption  int
 	quit       int
 }
 
@@ -76,6 +77,10 @@ func (engine *mockEngine) Options() []OptionCmd {
 func (engine *mockEngine) SetDebug(value bool) {
 	engine.debugState = value
 	engine.debug++
+}
+
+func (engine *mockEngine) SetOption(option SetOptionCmd) {
+	engine.setOption++
 }
 
 func (engine *mockEngine) Quit() {

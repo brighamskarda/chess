@@ -23,7 +23,7 @@ import (
 	"github.com/brighamskarda/chess/v2"
 )
 
-// clientToEngineCmd is an interface under which all uci commands from the engine to the client will be contained.
+// engineToClientCmd is an interface under which all uci commands from the engine to the client will be contained.
 type engineToClientCmd interface {
 	marshalText() ([]byte, error)
 }

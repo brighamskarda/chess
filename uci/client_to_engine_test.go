@@ -80,11 +80,11 @@ func TestIsReadyCommandUnmarshal(t *testing.T) {
 }
 
 func TestCheckOptionCommand(t *testing.T) {
-	checkOption := setCheckOptionCmd{}
+	checkOption := SetCheckOptionCmd{}
 	if checkOption.UnmarshalText([]byte("setoption name check  box value true\n")) != nil {
 		t.Errorf("incorrect result for valid setOption command, got error")
 	}
-	if checkOption.checkbox != true {
+	if checkOption.Checkbox != true {
 		t.Errorf("incorrect result for valid setOption command, checkbox should be true")
 	}
 	if checkOption.name != "check  box" {
@@ -94,7 +94,7 @@ func TestCheckOptionCommand(t *testing.T) {
 	if checkOption.UnmarshalText([]byte("setoption name the best option value false\n")) != nil {
 		t.Errorf("incorrect result for valid setOption command, got error")
 	}
-	if checkOption.checkbox != false {
+	if checkOption.Checkbox != false {
 		t.Errorf("incorrect result for valid setOption command, checkbox should be true")
 	}
 	if checkOption.name != "the best option" {
@@ -110,14 +110,14 @@ func TestCheckOptionCommand(t *testing.T) {
 }
 
 func TestSpinOptionCommand(t *testing.T) {
-	spinOption := setSpinOptionCmd{}
+	spinOption := SetSpinOptionCmd{}
 
 	// Valid case
 	if err := spinOption.UnmarshalText([]byte("setoption name Selectivity value 2\n")); err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
-	if spinOption.value != 2 || spinOption.name != "Selectivity" {
-		t.Errorf("incorrect parse: got value %d, id %s", spinOption.value, spinOption.name)
+	if spinOption.Value != 2 || spinOption.name != "Selectivity" {
+		t.Errorf("incorrect parse: got value %d, id %s", spinOption.Value, spinOption.name)
 	}
 
 	// Valid case with spaces in name
@@ -135,17 +135,17 @@ func TestSpinOptionCommand(t *testing.T) {
 }
 
 func TestStringOptionCommand(t *testing.T) {
-	strOption := setStringOptionCmd{}
+	strOption := SetStringOptionCmd{}
 
 	// Valid case
 	if err := strOption.UnmarshalText([]byte("setoption name Nalimov  Path value C:\\che  ss\\tablebases\n")); err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
-	if strOption.value != "C:\\che  ss\\tablebases" {
-		t.Errorf("expected path string, got %s", strOption.value)
+	if strOption.Value != "C:\\che  ss\\tablebases" {
+		t.Errorf("expected path string, got %s", strOption.Value)
 	}
 	if strOption.name != "Nalimov  Path" {
-		t.Errorf("expected two spaces in string, got %s", strOption.value)
+		t.Errorf("expected two spaces in string, got %s", strOption.Value)
 	}
 
 	// Valid case: empty string
@@ -160,7 +160,7 @@ func TestStringOptionCommand(t *testing.T) {
 }
 
 func TestButtonOptionCommand(t *testing.T) {
-	btnOption := setButtonOptionCmd{}
+	btnOption := SetButtonOptionCmd{}
 
 	// Valid case: Button options do not have a "value" suffix
 	if err := btnOption.UnmarshalText([]byte("setoption name Clear  Hash\n")); err != nil {
@@ -441,10 +441,10 @@ func TestParseClientToEngineCmd_AllTypes(t *testing.T) {
 		{"uci", "uci \n", "*uci.uciCmd"},
 		{"debug", "debug on\n", "*uci.debugCmd"},
 		{"isready", "isready \n", "*uci.isReadyCmd"},
-		{"setoption check", "setoption name MyCheck value true\n", "*uci.setCheckOptionCmd"},
-		{"setoption spin", "setoption name MySpin value 10\n", "*uci.setSpinOptionCmd"},
-		{"setoption string", "setoption name MyStr value hello\n", "*uci.setStringOptionCmd"},
-		{"setoption button", "setoption name MyButton\n", "*uci.setButtonOptionCmd"},
+		{"setoption check", "setoption name MyCheck value true\n", "*uci.SetCheckOptionCmd"},
+		{"setoption spin", "setoption name MySpin value 10\n", "*uci.SetSpinOptionCmd"},
+		{"setoption string", "setoption name MyStr value hello\n", "*uci.SetStringOptionCmd"},
+		{"setoption button", "setoption name MyButton\n", "*uci.SetButtonOptionCmd"},
 		{"register", "register later\n", "*uci.registerCmd"},
 		{"ucinewgame", "ucinewgame \n", "*uci.uciNewGameCmd"},
 		{"position", "position startpos moves e2e4\n", "*uci.positionCmd"},

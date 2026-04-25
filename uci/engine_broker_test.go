@@ -278,7 +278,6 @@ func TestEngineQuitsOnInterrupt(t *testing.T) {
 	t.Log("Unfortunately there is no great way to test signals on windows, this is a test that needs to be done by hand.")
 }
 
-// TestEngineInitialization tests that the broker outputs id, author, options, and uciok after receiving a uci command.
 func TestEngineDebugMode(t *testing.T) {
 	stdinR, stdinW := makeOsPipe(t)
 	stdoutR, stdoutW := makeOsPipe(t)
@@ -341,7 +340,6 @@ func TestEngineDebugMode(t *testing.T) {
 	}
 }
 
-// TestEngineInitialization tests that the broker outputs id, author, options, and uciok after receiving a uci command.
 func TestIsReady(t *testing.T) {
 	stdinW, stdoutR := startNewUciBroker(t)
 
@@ -364,4 +362,39 @@ func TestIsReady(t *testing.T) {
 	}
 
 	testOutput(out, "readyok\n", t)
+}
+
+func TestSetOption(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	go broker.Start(t.Context())
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("setoption name Nullmove value true\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("isready\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	// wait for uciok to indicate the commands have been processed
+	out := bufio.NewReader(stdoutR)
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "readyok\n" {
+			break
+		}
+	}
+
+	expectedVal := 1
+	actualVal := broker.Engine.(*mockEngine).setOption
+	if expectedVal != actualVal {
+		t.Errorf("expected Engine.SetOption to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
 }

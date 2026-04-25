@@ -230,6 +230,8 @@ func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
 		broker.handleDebugCommand(c.on)
 	case *isReadyCmd:
 		broker.handleIsReadyCommand()
+	case SetOptionCmd:
+		broker.Engine.SetOption(c)
 	case *quitCmd:
 		broker.ctxCancel(nil)
 	default:

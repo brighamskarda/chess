@@ -52,6 +52,7 @@ type ChessEngine interface {
 	// Options should return the options supported by this engine.
 	//
 	// These options will be send to the GUI so the user may modify them.
+	// There are no required options in the UCI specification.
 	Options() []OptionCmd
 
 	// SetDebug will receive a true when the client requests debug mode.
@@ -60,6 +61,18 @@ type ChessEngine interface {
 	// The engine should default to normal operations (debug = false).
 	// When debug mode is on, the engine should send out additional infos to aid development.
 	SetDebug(bool)
+
+	// SetOption sets engine parameters.
+	//
+	// SetOption will not be called while the engine is searching.
+	// If the engine does not support the given option then it can just ignore it.
+	//
+	// A type switch on OptionCmd with the following types will likely be necessary to implement this function.
+	//   - [SetCheckOptionCmd]
+	//   - [SetSpinOptionCmd]
+	//   - [SetStringOptionCmd] (which double as setting a combo option)
+	//   - [SetButtonOptionCmd]
+	SetOption(SetOptionCmd)
 
 	// Quit can be called asynchronously any time after Initialize.
 	//

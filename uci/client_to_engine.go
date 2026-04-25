@@ -162,30 +162,31 @@ func getOptionValue(text []byte) string {
 	return string(bytes.TrimSpace(text[startIndex+6:]))
 }
 
-// setCheckOptionCmd is an option with the check type.
+// SetOptionCmd is sent to change one of an engine's configurable options.
 //
-//   - check
-//     a checkbox that can either be true or false
+// When passed to the engine this will be one of four types.
+//   - [SetCheckOptionCmd]
+//   - [SetSpinOptionCmd]
+//   - [SetStringOptionCmd] (which double as setting a combo option)
+//   - [SetButtonOptionCmd]
+type SetOptionCmd interface {
+	clientToEngineCmd
+	// optionName returns the name/id of the option.
+	OptionName() string
+}
+
+// SetCheckOptionCmd is an option with the check type.
 //
-// name <id> [value <x>]
-//
-// This is sent to the engine when the user wants to change the internal parameters of the engine.
-// For the "button" type no value is needed.
-// One string will be sent for each parameter and this will only be sent when the engine is waiting.
-// The name and value of the option in <id> should not be case sensitive and can include spaces.
-// The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing,
-// for example do not use <name> = "draw value". Here are some strings for the example below:
-//
-//	"setoption name Nullmove value true\n"
-type setCheckOptionCmd struct {
+//   - check - a checkbox that can either be true or false
+type SetCheckOptionCmd struct {
 	baseClientCommand
 	// name is the name/id of the option being set.
 	name string
 	// Is true if the "checkbox" for this command is set.
-	checkbox bool
+	Checkbox bool
 }
 
-func (cmd *setCheckOptionCmd) UnmarshalText(text []byte) error {
+func (cmd *SetCheckOptionCmd) UnmarshalText(text []byte) error {
 	err := validateSetOption(text)
 	if err != nil {
 		return err
@@ -200,9 +201,9 @@ func (cmd *setCheckOptionCmd) UnmarshalText(text []byte) error {
 
 	switch value {
 	case "true":
-		cmd.checkbox = true
+		cmd.Checkbox = true
 	case "false":
-		cmd.checkbox = false
+		cmd.Checkbox = false
 	default:
 		return fmt.Errorf("could not unmarshal setOption command %q: check type options should only have values of true or false", text)
 	}
@@ -211,30 +212,22 @@ func (cmd *setCheckOptionCmd) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// setSpinOptionCmd is an option with the spin type.
+func (cmd *SetCheckOptionCmd) OptionName() string {
+	return cmd.name
+}
+
+// SetSpinOptionCmd is an option with the spin type.
 //
-//   - spin
-//     a spin wheel that can be an integer in a certain range
-//
-// name <id> [value <x>]
-//
-// This is sent to the engine when the user wants to change the internal parameters of the engine.
-// For the "button" type no value is needed.
-// One string will be sent for each parameter and this will only be sent when the engine is waiting.
-// The name and value of the option in <id> should not be case sensitive and can include spaces.
-// The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing,
-// for example do not use <name> = "draw value". Here are some strings for the example below:
-//
-//	"setoption name Selectivity value 3\n"
-type setSpinOptionCmd struct {
+//   - spin - a spin wheel that can be an integer in a certain range
+type SetSpinOptionCmd struct {
 	baseClientCommand
 	// name is the name/id of the option being set.
 	name string
 	// value represents the numeric integer value for the spin option.
-	value int
+	Value int
 }
 
-func (cmd *setSpinOptionCmd) UnmarshalText(text []byte) error {
+func (cmd *SetSpinOptionCmd) UnmarshalText(text []byte) error {
 	err := validateSetOption(text)
 	if err != nil {
 		return err
@@ -252,35 +245,27 @@ func (cmd *setSpinOptionCmd) UnmarshalText(text []byte) error {
 		return fmt.Errorf("could not unmarshal setOption command %q: spin type options should only represent integer values", text)
 	}
 
-	cmd.value = int(i)
+	cmd.Value = int(i)
 	cmd.initBaseEngineCommand(text)
 	return nil
 }
 
-// setStringOptionCmd is an option with the string **or combo** type.
+func (cmd *SetSpinOptionCmd) OptionName() string {
+	return cmd.name
+}
+
+// SetStringOptionCmd is an option with the string **or combo** type.
 //
-//   - string
-//     a text field that has a string as a value, an empty string has the value "<empty>"
-//
-// name <id> [value <x>]
-//
-// This is sent to the engine when the user wants to change the internal parameters of the engine.
-// For the "button" type no value is needed.
-// One string will be sent for each parameter and this will only be sent when the engine is waiting.
-// The name and value of the option in <id> should not be case sensitive and can include spaces.
-// The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing,
-// for example do not use <name> = "draw value". Here are some strings for the example below:
-//
-//	"setoption name Style value Risky\n"
-type setStringOptionCmd struct {
+//   - string - a text field that has a string as a value, an empty string has the value "<empty>"
+type SetStringOptionCmd struct {
 	baseClientCommand
 	// name is the name/id of the option being set.
 	name string
-	// value is the string content assigned to this option. If <empty> was sent then this will be an empty string.
-	value string
+	// Value is the string content assigned to this option. If <empty> was sent then this will be an empty string.
+	Value string
 }
 
-func (cmd *setStringOptionCmd) UnmarshalText(text []byte) error {
+func (cmd *SetStringOptionCmd) UnmarshalText(text []byte) error {
 	err := validateSetOption(text)
 	if err != nil {
 		return err
@@ -297,38 +282,29 @@ func (cmd *setStringOptionCmd) UnmarshalText(text []byte) error {
 	case "":
 		return fmt.Errorf("could not unmarshal setStringOption command %q: empty value", text)
 	case "<empty>":
-		cmd.value = ""
+		cmd.Value = ""
 	default:
-		cmd.value = value
+		cmd.Value = value
 	}
 
 	cmd.initBaseEngineCommand(text)
 	return nil
 }
 
-// setButtonOptionCmd is an option with the button type.
+func (cmd *SetStringOptionCmd) OptionName() string {
+	return cmd.name
+}
+
+// SetButtonOptionCmd is an option with the button type.
 //
-//   - button
-//     a button that can be pressed to send a command to the engine
-//
-// name <id> [value <x>]
-//
-// This is sent to the engine when the user wants to change the internal parameters of the engine.
-// For the "button" type no value is needed.
-// One string will be sent for each parameter and this will only be sent when the engine is waiting.
-// The name and value of the option in <id> should not be case sensitive and can include spaces.
-// The substrings "value" and "name" should be avoided in <id> and <x> to allow unambiguous parsing,
-// for example do not use <name> = "draw value".
-// Here are some strings for the example below:
-//
-//	"setoption name Clear Hash\n"
-type setButtonOptionCmd struct {
+//   - button - a button that can be pressed to send a command to the engine
+type SetButtonOptionCmd struct {
 	baseClientCommand
 	// name is the name/id of the button to be "pressed".
 	name string
 }
 
-func (cmd *setButtonOptionCmd) UnmarshalText(text []byte) error {
+func (cmd *SetButtonOptionCmd) UnmarshalText(text []byte) error {
 	err := validateSetOption(text)
 	if err != nil {
 		return err
@@ -341,6 +317,10 @@ func (cmd *setButtonOptionCmd) UnmarshalText(text []byte) error {
 
 	cmd.initBaseEngineCommand(text)
 	return nil
+}
+
+func (cmd *SetButtonOptionCmd) OptionName() string {
+	return cmd.name
 }
 
 // registrationType is an enum indicating the type of a registerCmd.
@@ -708,25 +688,25 @@ func (cmd *quitCmd) UnmarshalText(text []byte) error {
 // unmarshalOptionCommand first tries to unmarshal the check option, then the spin option, then the string option, then the button option.
 func unmarshalOptionCommand(text []byte) (clientToEngineCmd, error) {
 	// check option
-	cmd, err1 := unmarshalClientToEngineCmd[setCheckOptionCmd](text)
+	cmd, err1 := unmarshalClientToEngineCmd[SetCheckOptionCmd](text)
 	if err1 == nil {
 		return cmd, nil
 	}
 
 	// spin option
-	cmd, err2 := unmarshalClientToEngineCmd[setSpinOptionCmd](text)
+	cmd, err2 := unmarshalClientToEngineCmd[SetSpinOptionCmd](text)
 	if err2 == nil {
 		return cmd, nil
 	}
 
 	// string/combo option
-	cmd, err3 := unmarshalClientToEngineCmd[setStringOptionCmd](text)
+	cmd, err3 := unmarshalClientToEngineCmd[SetStringOptionCmd](text)
 	if err3 == nil {
 		return cmd, nil
 	}
 
 	// button option
-	cmd, err4 := unmarshalClientToEngineCmd[setButtonOptionCmd](text)
+	cmd, err4 := unmarshalClientToEngineCmd[SetButtonOptionCmd](text)
 	if err4 == nil {
 		return cmd, nil
 	}
