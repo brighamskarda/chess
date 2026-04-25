@@ -218,6 +218,7 @@ Loop:
 
 // doCommand calls different command handlers based on the underlying type of the cmd.
 func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
+	broker.Log.DebugContext(broker.ctx, "received command", slog.Any("cmd", cmd))
 	if !broker.isInitialized && reflect.TypeOf(cmd) != reflect.TypeFor[*uciCmd]() {
 		broker.Log.WarnContext(broker.ctx, "skipping invalid first command, expected uciCmd", slog.Any("got", reflect.TypeOf(cmd)))
 		return
@@ -243,6 +244,11 @@ func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
 }
 
 func (broker *UciEngineBroker) handleUciCommand() {
+	if broker.isInitialized {
+		broker.Log.WarnContext(broker.ctx, "uci command received more than once, skipping repeat occurrence")
+	}
+
+	broker.Log.InfoContext(broker.ctx, "initializing engine")
 	init := sync.OnceFunc(func() {
 		broker.Engine.Initialize(func(infoCmd *InfoCmd) {
 			broker.sendCommand(infoCmd)
@@ -280,6 +286,22 @@ func (broker *UciEngineBroker) handleUciCommand() {
 
 	// send uciok
 	broker.sendCommand(&uciokCmd{})
+
+	// check copy protection
+	broker.checkCopyProtection()
+}
+
+func (broker *UciEngineBroker) checkCopyProtection() {
+	broker.Log.InfoContext(broker.ctx, "checking copy protection")
+	checking := copyProtectChecking
+	broker.sendCommand(&checking)
+	if broker.Engine.CopyProtection() {
+		ok := copyProtectOk
+		broker.sendCommand(&ok)
+	} else {
+		err := copyProtectError
+		broker.sendCommand(&err)
+	}
 }
 
 func (broker *UciEngineBroker) handleDebugCommand(debug bool) {

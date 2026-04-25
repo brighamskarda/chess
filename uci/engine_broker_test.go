@@ -161,7 +161,7 @@ func TestEngineShutsDownWhenContextCancelled(t *testing.T) {
 
 func TestEngineShutsDownWhenQuit(t *testing.T) {
 	stdinR, stdinW := makeOsPipe(t)
-	_, stdoutW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
 	broker := makeUciEngineBroker(stdinR, stdoutW)
 
 	startReturned := make(chan struct{})
@@ -173,6 +173,14 @@ func TestEngineShutsDownWhenQuit(t *testing.T) {
 	_, err := stdinW.WriteString("uci\n")
 	if err != nil {
 		t.Errorf("problem writing to stdin: %v", err)
+	}
+
+	out := bufio.NewReader(stdoutR)
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "uciok\n" {
+			break
+		}
 	}
 
 	_, err = stdinW.WriteString("quit\n")
@@ -356,7 +364,7 @@ func TestIsReady(t *testing.T) {
 	out := bufio.NewReader(stdoutR)
 	for {
 		text, _ := out.ReadString('\n')
-		if text == "uciok\n" {
+		if text == "copyprotection ok\n" {
 			break
 		}
 	}
@@ -396,5 +404,79 @@ func TestSetOption(t *testing.T) {
 	actualVal := broker.Engine.(*mockEngine).setOption
 	if expectedVal != actualVal {
 		t.Errorf("expected Engine.SetOption to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
+}
+
+func TestCopyProtection(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	go broker.Start(t.Context())
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	// wait for uciok to indicate the commands have been processed
+	out := bufio.NewReader(stdoutR)
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "uciok\n" {
+			break
+		}
+	}
+
+	testOutput(out, "copyprotection checking\n", t)
+	testOutput(out, "copyprotection ok\n", t)
+
+	expectedVal := 1
+	actualVal := broker.Engine.(*mockEngine).copyProtection
+	if expectedVal != actualVal {
+		t.Errorf("expected Engine.CopyProtection to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
+}
+
+type mockEngineBadCopyProtect struct {
+	mockEngine
+}
+
+func (engine *mockEngineBadCopyProtect) CopyProtection() bool {
+	engine.copyProtection++
+	return false
+}
+
+func TestCopyProtectionBad(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := &UciEngineBroker{
+		Input:  stdinR,
+		Output: stdoutW,
+		Log:    slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn})),
+		Engine: &mockEngineBadCopyProtect{},
+	}
+
+	go broker.Start(t.Context())
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	// wait for uciok to indicate the commands have been processed
+	out := bufio.NewReader(stdoutR)
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "uciok\n" {
+			break
+		}
+	}
+
+	testOutput(out, "copyprotection checking\n", t)
+	testOutput(out, "copyprotection error\n", t)
+
+	expectedVal := 1
+	actualVal := broker.Engine.(*mockEngineBadCopyProtect).copyProtection
+	if expectedVal != actualVal {
+		t.Errorf("expected Engine.CopyProtection to be called %v times, but was called %v times", expectedVal, actualVal)
 	}
 }

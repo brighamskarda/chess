@@ -22,18 +22,24 @@ type mockEngine struct {
 	output     func(*InfoCmd)
 	debugState bool
 
-	initialize int
-	name       int
-	author     int
-	options    int
-	debug      int
-	setOption  int
-	quit       int
+	initialize     int
+	copyProtection int
+	name           int
+	author         int
+	options        int
+	debug          int
+	setOption      int
+	quit           int
 }
 
 func (engine *mockEngine) Initialize(o func(*InfoCmd)) {
 	engine.output = o
 	engine.initialize++
+}
+
+func (engine *mockEngine) CopyProtection() bool {
+	engine.copyProtection++
+	return true
 }
 
 func (engine *mockEngine) Name() string {

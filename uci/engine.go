@@ -37,6 +37,13 @@ type ChessEngine interface {
 	// Keep in mind that if Initialize takes too long, the GUI may kill the engine.
 	Initialize(func(*InfoCmd))
 
+	// CopyProtection provides the engine an opportunity to do copyright checks.
+	//
+	// CopyProtection will be called after [ChessEngine.Initialize] and
+	// should return true if copy protection checks succeeded,
+	// or false if the engine could not perform its copy protection checks.
+	CopyProtection() bool
+
 	// Name should return the name of the chess engine.
 	//
 	// It can contain spaces, but should not contain new lines.
