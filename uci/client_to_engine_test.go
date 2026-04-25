@@ -172,33 +172,52 @@ func TestButtonOptionCommand(t *testing.T) {
 }
 
 func TestRegisterCommand(t *testing.T) {
-	registerCmd := registerCmd{}
+	registerCmd := RegisterCmd{}
 
 	if err := registerCmd.UnmarshalText([]byte("register later\n")); err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
-	if registerCmd.regType != later {
-		t.Errorf("expected regType to be %d, got %d", later, registerCmd.regType)
+	if !registerCmd.Later {
+		t.Errorf("expected Later to be %v, got %v", true, registerCmd.Later)
 	}
 
 	if err := registerCmd.UnmarshalText([]byte("register name cornelius the  third\n")); err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
-	if registerCmd.regType != name {
-		t.Errorf("expected regType to be %d, got %d", name, registerCmd.regType)
+	if registerCmd.Later {
+		t.Errorf("expected Later to be %v, got %v", false, registerCmd.Later)
 	}
-	if registerCmd.value != "cornelius the  third" {
-		t.Errorf("expected regType to be %q, got %q", "cornelius the  third", registerCmd.value)
+	if registerCmd.Name.Value() != "cornelius the  third" {
+		t.Errorf("expected Name to be %q, got %v", "cornelius the  third", registerCmd.Name)
+	}
+	if registerCmd.Code.HasValue() {
+		t.Errorf("expected Code to be empty, got %v", registerCmd.Code)
 	}
 
 	if err := registerCmd.UnmarshalText([]byte("register code cornelius the  third\n")); err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
-	if registerCmd.regType != code {
-		t.Errorf("expected regType to be %d, got %d", name, registerCmd.regType)
+	if registerCmd.Later {
+		t.Errorf("expected Later to be %v, got %v", false, registerCmd.Later)
 	}
-	if registerCmd.value != "cornelius the  third" {
-		t.Errorf("expected regType to be %q, got %q", "cornelius the  third", registerCmd.value)
+	if registerCmd.Code.Value() != "cornelius the  third" {
+		t.Errorf("expected Code to be %q, got %v", "cornelius the  third", registerCmd.Code)
+	}
+	if registerCmd.Name.HasValue() {
+		t.Errorf("expected Name to be empty, got %v", registerCmd.Name)
+	}
+
+	if err := registerCmd.UnmarshalText([]byte("register name cornelius the  third code 433\n")); err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+	if registerCmd.Later {
+		t.Errorf("expected Later to be %v, got %v", false, registerCmd.Later)
+	}
+	if registerCmd.Name.Value() != "cornelius the  third" {
+		t.Errorf("expected Name to be %q, got %v", "cornelius the  third", registerCmd.Name)
+	}
+	if registerCmd.Code.Value() != "433" {
+		t.Errorf("expected Code to be %q, got %v", "433", registerCmd.Code)
 	}
 
 	if err := registerCmd.UnmarshalText([]byte("register code\n")); err == nil {
@@ -445,7 +464,7 @@ func TestParseClientToEngineCmd_AllTypes(t *testing.T) {
 		{"setoption spin", "setoption name MySpin value 10\n", "*uci.SetSpinOptionCmd"},
 		{"setoption string", "setoption name MyStr value hello\n", "*uci.SetStringOptionCmd"},
 		{"setoption button", "setoption name MyButton\n", "*uci.SetButtonOptionCmd"},
-		{"register", "register later\n", "*uci.registerCmd"},
+		{"register", "register later\n", "*uci.RegisterCmd"},
 		{"ucinewgame", "ucinewgame \n", "*uci.uciNewGameCmd"},
 		{"position", "position startpos moves e2e4\n", "*uci.positionCmd"},
 		{"go", "go infinite\n", "*uci.goCmd"},

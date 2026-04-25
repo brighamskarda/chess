@@ -44,6 +44,20 @@ type ChessEngine interface {
 	// or false if the engine could not perform its copy protection checks.
 	CopyProtection() bool
 
+	// Register provides and opportunity for the engine to register itself.
+	//
+	// If the engine is unable to register itself,
+	// the user may expect reduced functionality.
+	//
+	// This function will by called after [ChessEngine.Initialize] and
+	// should return true if it can successfully register.
+	// The first time this function is called
+	// the RegisterCmd will be nil,
+	// and the engine may try to register without it.
+	// If this function returns false (registration failed),
+	// future calls to it will have a RegisterCmd included.
+	Register(*RegisterCmd) bool
+
 	// Name should return the name of the chess engine.
 	//
 	// It can contain spaces, but should not contain new lines.

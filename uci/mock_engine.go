@@ -24,6 +24,7 @@ type mockEngine struct {
 
 	initialize     int
 	copyProtection int
+	register       int
 	name           int
 	author         int
 	options        int
@@ -39,6 +40,11 @@ func (engine *mockEngine) Initialize(o func(*InfoCmd)) {
 
 func (engine *mockEngine) CopyProtection() bool {
 	engine.copyProtection++
+	return true
+}
+
+func (engine *mockEngine) Register(cmd *RegisterCmd) bool {
+	engine.register++
 	return true
 }
 

@@ -364,7 +364,7 @@ func TestIsReady(t *testing.T) {
 	out := bufio.NewReader(stdoutR)
 	for {
 		text, _ := out.ReadString('\n')
-		if text == "copyprotection ok\n" {
+		if text == "registration ok\n" {
 			break
 		}
 	}
@@ -478,5 +478,91 @@ func TestCopyProtectionBad(t *testing.T) {
 	actualVal := broker.Engine.(*mockEngineBadCopyProtect).copyProtection
 	if expectedVal != actualVal {
 		t.Errorf("expected Engine.CopyProtection to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
+}
+
+func TestRegistration(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	go broker.Start(t.Context())
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	// wait for uciok to indicate the commands have been processed
+	out := bufio.NewReader(stdoutR)
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "copyprotection ok\n" {
+			break
+		}
+	}
+
+	testOutput(out, "registration checking\n", t)
+	testOutput(out, "registration ok\n", t)
+
+	expectedVal := 1
+	actualVal := broker.Engine.(*mockEngine).register
+	if expectedVal != actualVal {
+		t.Errorf("expected Engine.Register to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
+}
+
+type mockEngineBadRegister struct {
+	mockEngine
+}
+
+func (engine *mockEngineBadRegister) Register(cmd *RegisterCmd) bool {
+	engine.register++
+	if cmd == nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+func TestRegistrationBad(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := &UciEngineBroker{
+		Input:  stdinR,
+		Output: stdoutW,
+		Log:    slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelWarn})),
+		Engine: &mockEngineBadRegister{},
+	}
+
+	go broker.Start(t.Context())
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	// wait for uciok to indicate the commands have been processed
+	out := bufio.NewReader(stdoutR)
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "copyprotection ok\n" {
+			break
+		}
+	}
+
+	testOutput(out, "registration checking\n", t)
+	testOutput(out, "registration error\n", t)
+
+	_, err = stdinW.WriteString("register name bs code 123\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	testOutput(out, "registration checking\n", t)
+	testOutput(out, "registration ok\n", t)
+
+	expectedVal := 2
+	actualVal := broker.Engine.(*mockEngineBadRegister).register
+	if expectedVal != actualVal {
+		t.Errorf("expected Engine.Register to be called %v times, but was called %v times", expectedVal, actualVal)
 	}
 }

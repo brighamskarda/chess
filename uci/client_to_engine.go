@@ -323,20 +323,9 @@ func (cmd *SetButtonOptionCmd) OptionName() string {
 	return cmd.name
 }
 
-// registrationType is an enum indicating the type of a registerCmd.
-type registrationType uint8
-
-const (
-	later registrationType = iota
-	name
-	code
-)
-
-// registerCmd is the command to try to register an engine or to tell the engine that registration
+// RegisterCmd is the command to register an engine or to tell it that registration
 // will be done later.
 //
-// This command should always be sent if the engine	has sent "registration error"
-// at program startup.
 // The following tokens are allowed:
 //   - later
 //     the user doesn't want to register the engine now.
@@ -349,34 +338,55 @@ const (
 //
 //	"register later"
 //	"register name Stefan MK code 4359874324"
-type registerCmd struct {
+type RegisterCmd struct {
 	baseClientCommand
-	// registration is type of registration command this is.
-	regType registrationType
-	// value is the value of the registration. Empty if the registrationType == later.
-	value string
+	// Later indicates the user doesn't want to register the engine now.
+	Later bool
+	// Name indicates the name the engine should be registered with.
+	Name Optional[string]
+	// Code indicates the registration code.
+	Code Optional[string]
 }
 
-func (cmd *registerCmd) UnmarshalText(text []byte) error {
-	words := bytes.Fields(text)
-	if len(words) < 2 || string(words[0]) != "register" {
+func (cmd *RegisterCmd) UnmarshalText(text []byte) error {
+	wordsIterator := bytes.FieldsSeq(text)
+	firstTwoWords := make([]string, 0, 2)
+	wordsIterator(func(val []byte) bool {
+		firstTwoWords = append(firstTwoWords, string(val))
+		return len(firstTwoWords) < 2
+	})
+
+	if len(firstTwoWords) != 2 || firstTwoWords[0] != "register" {
 		return fmt.Errorf("could not unmarshal register command %q: should start with \"register <later|name|code>\"", text)
 	}
 
-	switch string(words[1]) {
+	switch string(firstTwoWords[1]) {
 	case "later":
-		cmd.regType = later
-	case "name":
-		cmd.regType = name
-		cmd.value = string(bytes.TrimSpace(text[bytes.Index(text, []byte("name"))+5:]))
-	case "code":
-		cmd.regType = code
-		cmd.value = string(bytes.TrimSpace(text[bytes.Index(text, []byte("code"))+5:]))
+		cmd.Later = true
+		cmd.Name = OptionalEmpty[string]()
+		cmd.Code = OptionalEmpty[string]()
+	case "name", "code":
+		cmd.Later = false
+		nameIndex := bytes.Index(text, []byte("name"))
+		codeIndex := bytes.Index(text, []byte("code"))
+		if codeIndex == -1 {
+			cmd.Name = OptionalOf(string(bytes.TrimSpace(text[nameIndex+5:])))
+			cmd.Code = OptionalEmpty[string]()
+		} else if nameIndex == -1 {
+			cmd.Name = OptionalEmpty[string]()
+			cmd.Code = OptionalOf(string(bytes.TrimSpace(text[codeIndex+5:])))
+		} else if nameIndex < codeIndex {
+			cmd.Name = OptionalOf(string(bytes.TrimSpace(text[nameIndex+5 : codeIndex])))
+			cmd.Code = OptionalOf(string(bytes.TrimSpace(text[codeIndex+5:])))
+		} else if nameIndex > codeIndex {
+			cmd.Name = OptionalOf(string(bytes.TrimSpace(text[nameIndex+5:])))
+			cmd.Code = OptionalOf(string(bytes.TrimSpace(text[codeIndex+5 : nameIndex])))
+		}
 	default:
 		return fmt.Errorf("could not unmarshal register command %q: should start with \"register <later|name|code>\"", text)
 	}
 
-	if (cmd.regType == name || cmd.regType == code) && cmd.value == "" {
+	if (cmd.Name.HasValue() && len(cmd.Name.Value()) == 0) || (cmd.Code.HasValue() && len(cmd.Code.Value()) == 0) {
 		return fmt.Errorf("could not unmarshal register command %q: name and code register commands should have a value", text)
 
 	}
@@ -722,7 +732,7 @@ var commandSet = map[string]func([]byte) (clientToEngineCmd, error){
 	"debug":      unmarshalClientToEngineCmd[debugCmd],
 	"isready":    unmarshalClientToEngineCmd[isReadyCmd],
 	"setoption":  unmarshalOptionCommand,
-	"register":   unmarshalClientToEngineCmd[registerCmd],
+	"register":   unmarshalClientToEngineCmd[RegisterCmd],
 	"ucinewgame": unmarshalClientToEngineCmd[uciNewGameCmd],
 	"position":   unmarshalClientToEngineCmd[positionCmd],
 	"go":         unmarshalClientToEngineCmd[goCmd],

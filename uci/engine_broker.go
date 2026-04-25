@@ -231,6 +231,8 @@ func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
 		broker.handleDebugCommand(c.on)
 	case *isReadyCmd:
 		broker.handleIsReadyCommand()
+	case *RegisterCmd:
+		broker.checkRegistration(c)
 	case SetOptionCmd:
 		broker.Engine.SetOption(c)
 	case *quitCmd:
@@ -289,6 +291,7 @@ func (broker *UciEngineBroker) handleUciCommand() {
 
 	// check copy protection
 	broker.checkCopyProtection()
+	broker.checkRegistration(nil)
 }
 
 func (broker *UciEngineBroker) checkCopyProtection() {
@@ -300,6 +303,19 @@ func (broker *UciEngineBroker) checkCopyProtection() {
 		broker.sendCommand(&ok)
 	} else {
 		err := copyProtectError
+		broker.sendCommand(&err)
+	}
+}
+
+func (broker *UciEngineBroker) checkRegistration(cmd *RegisterCmd) {
+	broker.Log.InfoContext(broker.ctx, "checking registration", slog.Any("RegisterCmd", cmd))
+	checking := registerChecking
+	broker.sendCommand(&checking)
+	if broker.Engine.Register(cmd) {
+		ok := registerOk
+		broker.sendCommand(&ok)
+	} else {
+		err := registerError
 		broker.sendCommand(&err)
 	}
 }
