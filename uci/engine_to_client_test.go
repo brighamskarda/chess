@@ -78,9 +78,9 @@ func TestReadyokCommandMarshal(t *testing.T) {
 }
 
 func TestBestMoveCommandMarshal(t *testing.T) {
-	var cmd engineToClientCmd = &bestMoveCmd{
-		move:       chess.Move{FromSquare: chess.A1, ToSquare: chess.A2},
-		ponderMove: &chess.Move{FromSquare: chess.A1, ToSquare: chess.A2, Promotion: chess.Knight},
+	var cmd engineToClientCmd = &BestMoveCmd{
+		BestMove:   chess.Move{FromSquare: chess.A1, ToSquare: chess.A2},
+		PonderMove: OptionalOf(chess.Move{FromSquare: chess.A1, ToSquare: chess.A2, Promotion: chess.Knight}),
 	}
 
 	text, err := cmd.marshalText()
@@ -92,8 +92,8 @@ func TestBestMoveCommandMarshal(t *testing.T) {
 		t.Errorf("got %q, expected %q", text, expected)
 	}
 
-	cmd = &bestMoveCmd{
-		move: chess.Move{FromSquare: chess.A1, ToSquare: chess.A2},
+	cmd = &BestMoveCmd{
+		BestMove: chess.Move{FromSquare: chess.A1, ToSquare: chess.A2},
 	}
 
 	text, err = cmd.marshalText()

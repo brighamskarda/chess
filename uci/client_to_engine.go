@@ -17,7 +17,6 @@ package uci
 
 import (
 	"bytes"
-	"encoding"
 	"fmt"
 	"strconv"
 	"unicode"
@@ -27,7 +26,7 @@ import (
 
 // clientToEngineCmd is an interface under which all uci commands from the client to the engine will be contained.
 type clientToEngineCmd interface {
-	encoding.TextUnmarshaler
+	unmarshalText(text []byte) error
 	// getCmdText returns the full message received to construct the command.
 	//
 	// The message should be copied so the user can modify it.
@@ -63,7 +62,7 @@ type uciCmd struct {
 	baseClientCommand
 }
 
-func (cmd *uciCmd) UnmarshalText(text []byte) error {
+func (cmd *uciCmd) unmarshalText(text []byte) error {
 	if string(bytes.TrimSpace(text)) != "uci" {
 		return fmt.Errorf("could not unmarshal uci command %q", text)
 	}
@@ -83,7 +82,7 @@ type debugCmd struct {
 	on bool
 }
 
-func (cmd *debugCmd) UnmarshalText(text []byte) error {
+func (cmd *debugCmd) unmarshalText(text []byte) error {
 	words := bytes.Fields(text)
 	if len(words) != 2 {
 		return fmt.Errorf("could not unmarshal debug command %q: expected only two fields", text)
@@ -116,7 +115,7 @@ type isReadyCmd struct {
 	baseClientCommand
 }
 
-func (cmd *isReadyCmd) UnmarshalText(text []byte) error {
+func (cmd *isReadyCmd) unmarshalText(text []byte) error {
 	if string(bytes.TrimSpace(text)) != "isready" {
 		return fmt.Errorf("could not unmarshal isready command %q", text)
 	}
@@ -186,7 +185,7 @@ type SetCheckOptionCmd struct {
 	Checkbox bool
 }
 
-func (cmd *SetCheckOptionCmd) UnmarshalText(text []byte) error {
+func (cmd *SetCheckOptionCmd) unmarshalText(text []byte) error {
 	err := validateSetOption(text)
 	if err != nil {
 		return err
@@ -227,7 +226,7 @@ type SetSpinOptionCmd struct {
 	Value int
 }
 
-func (cmd *SetSpinOptionCmd) UnmarshalText(text []byte) error {
+func (cmd *SetSpinOptionCmd) unmarshalText(text []byte) error {
 	err := validateSetOption(text)
 	if err != nil {
 		return err
@@ -265,7 +264,7 @@ type SetStringOptionCmd struct {
 	Value string
 }
 
-func (cmd *SetStringOptionCmd) UnmarshalText(text []byte) error {
+func (cmd *SetStringOptionCmd) unmarshalText(text []byte) error {
 	err := validateSetOption(text)
 	if err != nil {
 		return err
@@ -304,7 +303,7 @@ type SetButtonOptionCmd struct {
 	name string
 }
 
-func (cmd *SetButtonOptionCmd) UnmarshalText(text []byte) error {
+func (cmd *SetButtonOptionCmd) unmarshalText(text []byte) error {
 	err := validateSetOption(text)
 	if err != nil {
 		return err
@@ -348,7 +347,7 @@ type RegisterCmd struct {
 	Code Optional[string]
 }
 
-func (cmd *RegisterCmd) UnmarshalText(text []byte) error {
+func (cmd *RegisterCmd) unmarshalText(text []byte) error {
 	wordsIterator := bytes.FieldsSeq(text)
 	firstTwoWords := make([]string, 0, 2)
 	wordsIterator(func(val []byte) bool {
@@ -409,7 +408,7 @@ type uciNewGameCmd struct {
 	baseClientCommand
 }
 
-func (cmd *uciNewGameCmd) UnmarshalText(text []byte) error {
+func (cmd *uciNewGameCmd) unmarshalText(text []byte) error {
 	if string(bytes.TrimSpace(text)) != "ucinewgame" {
 		return fmt.Errorf("could not unmarshal ucinewgame command %q", text)
 	}
@@ -433,7 +432,7 @@ type positionCmd struct {
 	moves []chess.Move
 }
 
-func (cmd *positionCmd) UnmarshalText(text []byte) error {
+func (cmd *positionCmd) unmarshalText(text []byte) error {
 	words := bytes.Fields(text)
 	if len(words) < 2 ||
 		string(words[0]) != "position" ||
@@ -503,58 +502,52 @@ func (cmd *positionCmd) parseMoves(text []byte) error {
 	return nil
 }
 
-// goCmd start calculating on the current position set up with the "position" command.
-//
-// There are a number of commands that can follow this command, all will be sent in the same string.
-// If one command is not sent its value should be interpreted as it would not influence the search.
-//
-// In this struct nil means that the command was not present.
-type goCmd struct {
+// EvaluateCmd contains parameters on how an engine should perform its evaluation.
+type EvaluateCmd struct {
 	baseClientCommand
-	// searchmoves <move1> .... <movei>
+	// SearchMoves restrict search to these moves only.
 	//
-	// restrict search to this moves only
 	// Example: After "position startpos" and "go infinite searchmoves e2e4 d2d4"
 	// the engine should only search the two moves e2e4 and d2d4 in the initial position.
-	searchMoves []chess.Move
-	// ponder start searching in pondering mode.
+	SearchMoves []chess.Move
+	// Ponder start searching in pondering mode.
 	//
-	// Do not exit the search in ponder mode, even if it's mate!
-	// This means that the last move sent in in the position string is the ponder move.
+	// Do not exit the search in Ponder mode, even if it's mate!
+	// This means that the last move sent in the position string is the Ponder move.
 	// The engine can do what it wants to do, but after a "ponderhit" command
-	// it should execute the suggested move to ponder on. This means that the ponder move sent by
-	// the GUI can be interpreted as a recommendation about which move to ponder. However, if the
-	// engine decides to ponder on a different move, it should not display any mainlines as they are
-	// likely to be misinterpreted by the GUI because the GUI expects the engine to ponder
+	// it should execute the suggested move to Ponder on. This means that the Ponder move sent by
+	// the GUI can be interpreted as a recommendation about which move to Ponder. However, if the
+	// engine decides to Ponder on a different move, it should not display any mainlines as they are
+	// likely to be misinterpreted by the GUI because the GUI expects the engine to Ponder
 	// on the suggested move.
-	ponder bool
-	// wtime - white has x msec left on the clock
-	wtime Optional[int]
-	// btime - black has x msec left on the clock
-	btime Optional[int]
-	// winc - white increment per move in mseconds if x > 0
-	winc Optional[int]
-	// binc - black increment per move in mseconds if x > 0
-	binc Optional[int]
-	// movestogo - there are x moves to the next time control, this will only be sent if x > 0,
+	Ponder bool
+	// Wtime - white has x msec left on the clock
+	Wtime Optional[int]
+	// Btime - black has x msec left on the clock
+	Btime Optional[int]
+	// Winc - white increment per move in mseconds if x > 0
+	Winc Optional[int]
+	// Binc - black increment per move in mseconds if x > 0
+	Binc Optional[int]
+	// MovesToGo - there are x moves to the next time control, this will only be sent if x > 0,
 	// if you don't get this and get the wtime and btime it's sudden death
-	movestogo Optional[int]
-	// depth - search x plies only
-	depth Optional[int]
-	// nodes - search x nodes only
-	nodes Optional[int]
-	// mate - search for a mate in x moves
-	mate Optional[int]
-	// movetime search exactly x mseconds
-	movetime Optional[int]
-	// infinite search until the "stop" command.
+	MovesToGo Optional[int]
+	// Depth - search x plies only
+	Depth Optional[int]
+	// Nodes - search x Nodes only
+	Nodes Optional[int]
+	// Mate - search for a Mate in x moves
+	Mate Optional[int]
+	// MoveTime search exactly x mseconds
+	MoveTime Optional[int]
+	// Infinite search until the "stop" command.
 	//
 	// Do not exit the search without being told so in this mode!
-	infinite bool
+	Infinite bool
 }
 
-func (cmd *goCmd) UnmarshalText(text []byte) error {
-	*cmd = goCmd{}
+func (cmd *EvaluateCmd) unmarshalText(text []byte) error {
+	*cmd = EvaluateCmd{}
 
 	fields := bytes.Fields(text)
 	if string(fields[0]) != "go" {
@@ -569,22 +562,22 @@ func (cmd *goCmd) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func (cmd *goCmd) parseFields(fields [][]byte) error {
+func (cmd *EvaluateCmd) parseFields(fields [][]byte) error {
 	for i := 1; i < len(fields); i++ {
 		f := string(fields[i])
 		switch f {
 		case "searchmoves":
-			cmd.searchMoves = parseSearchMoves(fields[i+1:])
-			i += len(cmd.searchMoves)
+			cmd.SearchMoves = parseSearchMoves(fields[i+1:])
+			i += len(cmd.SearchMoves)
 		case "ponder":
-			cmd.ponder = true
+			cmd.Ponder = true
 		case "wtime", "btime", "winc", "binc", "movestogo", "depth", "nodes", "mate", "movetime":
 			if err := cmd.parseFieldWithValue(fields[i:]); err != nil {
 				return err
 			}
 			i++
 		case "infinite":
-			cmd.infinite = true
+			cmd.Infinite = true
 		default:
 			return fmt.Errorf("could not unmarshal unknown command %q", f)
 		}
@@ -597,7 +590,7 @@ func (cmd *goCmd) parseFields(fields [][]byte) error {
 // Expects the first field to be the name, and the second field to be the value.
 // Returns an error if there is no second field, or there was a problem parsing it.
 // A first field is expected though.
-func (cmd *goCmd) parseFieldWithValue(fields [][]byte) error {
+func (cmd *EvaluateCmd) parseFieldWithValue(fields [][]byte) error {
 	fieldName := string(fields[0])
 	if len(fields) < 2 {
 		return fmt.Errorf("could not unmarshal %v: no value present", fieldName)
@@ -610,23 +603,23 @@ func (cmd *goCmd) parseFieldWithValue(fields [][]byte) error {
 
 	switch fieldName {
 	case "wtime":
-		cmd.wtime = OptionalOf(v)
+		cmd.Wtime = OptionalOf(v)
 	case "btime":
-		cmd.btime = OptionalOf(v)
+		cmd.Btime = OptionalOf(v)
 	case "winc":
-		cmd.winc = OptionalOf(v)
+		cmd.Winc = OptionalOf(v)
 	case "binc":
-		cmd.binc = OptionalOf(v)
+		cmd.Binc = OptionalOf(v)
 	case "movestogo":
-		cmd.movestogo = OptionalOf(v)
+		cmd.MovesToGo = OptionalOf(v)
 	case "depth":
-		cmd.depth = OptionalOf(v)
+		cmd.Depth = OptionalOf(v)
 	case "nodes":
-		cmd.nodes = OptionalOf(v)
+		cmd.Nodes = OptionalOf(v)
 	case "mate":
-		cmd.mate = OptionalOf(v)
+		cmd.Mate = OptionalOf(v)
 	case "movetime":
-		cmd.movetime = OptionalOf(v)
+		cmd.MoveTime = OptionalOf(v)
 	default:
 		return fmt.Errorf("could not unmarshal %v %q: unknown command, this indicates an error uci library, not user code.", fieldName, valueString)
 	}
@@ -658,7 +651,7 @@ type stopCmd struct {
 	baseClientCommand
 }
 
-func (cmd *stopCmd) UnmarshalText(text []byte) error {
+func (cmd *stopCmd) unmarshalText(text []byte) error {
 	if string(bytes.TrimSpace(text)) != "stop" {
 		return fmt.Errorf("could not unmarshal stop command %q", text)
 	}
@@ -674,7 +667,7 @@ type ponderhitCmd struct {
 	baseClientCommand
 }
 
-func (cmd *ponderhitCmd) UnmarshalText(text []byte) error {
+func (cmd *ponderhitCmd) unmarshalText(text []byte) error {
 	if string(bytes.TrimSpace(text)) != "ponderhit" {
 		return fmt.Errorf("could not unmarshal ponderhit command %q", text)
 	}
@@ -687,7 +680,7 @@ type quitCmd struct {
 	baseClientCommand
 }
 
-func (cmd *quitCmd) UnmarshalText(text []byte) error {
+func (cmd *quitCmd) unmarshalText(text []byte) error {
 	if string(bytes.TrimSpace(text)) != "quit" {
 		return fmt.Errorf("could not unmarshal quit command %q", text)
 	}
@@ -735,7 +728,7 @@ var commandSet = map[string]func([]byte) (clientToEngineCmd, error){
 	"register":   unmarshalClientToEngineCmd[RegisterCmd],
 	"ucinewgame": unmarshalClientToEngineCmd[uciNewGameCmd],
 	"position":   unmarshalClientToEngineCmd[positionCmd],
-	"go":         unmarshalClientToEngineCmd[goCmd],
+	"go":         unmarshalClientToEngineCmd[EvaluateCmd],
 	"stop":       unmarshalClientToEngineCmd[stopCmd],
 	"ponderhit":  unmarshalClientToEngineCmd[ponderhitCmd],
 	"quit":       unmarshalClientToEngineCmd[quitCmd],
@@ -786,13 +779,13 @@ func parseClientToEngineCmd(text []byte) (clientToEngineCmd, error) {
 
 // A generic function that will parse an engine command an return the value or an error, all at once.
 //
-// (no need for a separate declaration and call to UnmarshalText)
+// (no need for a separate declaration and call to unmarshalText)
 func unmarshalClientToEngineCmd[T any, PT interface {
 	*T
 	clientToEngineCmd
 }](text []byte) (clientToEngineCmd, error) {
 	var result PT = new(T)
-	err := result.UnmarshalText(text)
+	err := result.unmarshalText(text)
 	if err != nil {
 		return nil, err
 	}

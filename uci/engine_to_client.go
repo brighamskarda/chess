@@ -77,7 +77,7 @@ func (cmd *readyOkCmd) marshalText() ([]byte, error) {
 	return []byte("readyok\n"), nil
 }
 
-// bestMoveCmd - bestmove <move1> [ ponder <move2> ]
+// BestMoveCmd - bestmove <move1> [ ponder <move2> ]
 // the engine has stopped searching and found the move <move> best in this position.
 //
 // The engine can send the move it likes to ponder on. The engine must not start pondering automatically.
@@ -85,27 +85,27 @@ func (cmd *readyOkCmd) marshalText() ([]byte, error) {
 // "stop" command, so for every "go" command a "bestmove" command is needed!
 // Directly before that the engine should send a final "info" command with the final search information,
 // the the GUI has the complete statistics about the last search.
-type bestMoveCmd struct {
-	// move is the best move the engine found at the end of its search
-	move chess.Move
-	// ponderMove is an optional move that can be sent to indicate what move the engine would like to ponder on.
-	ponderMove *chess.Move
+type BestMoveCmd struct {
+	// BestMove is the best BestMove the engine found at the end of its search
+	BestMove chess.Move
+	// PonderMove is an optional move that can be sent to indicate what move the engine would like to ponder on.
+	PonderMove Optional[chess.Move]
 }
 
-func (cmd *bestMoveCmd) marshalText() ([]byte, error) {
+func (cmd *BestMoveCmd) marshalText() ([]byte, error) {
 	text := bytes.Buffer{}
 	text.WriteString("bestmove ")
 
-	move, err := cmd.move.MarshalText()
+	move, err := cmd.BestMove.MarshalText()
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal bestMoveCmd: %w", err)
 	}
 	text.Write(move)
 
-	if cmd.ponderMove != nil {
+	if cmd.PonderMove.HasValue() {
 		text.WriteString(" ponder ")
 
-		ponderMove, err := cmd.ponderMove.MarshalText()
+		ponderMove, err := cmd.PonderMove.Value().MarshalText()
 		if err != nil {
 			return nil, fmt.Errorf("could not marshal bestMoveCmd: %w", err)
 		}

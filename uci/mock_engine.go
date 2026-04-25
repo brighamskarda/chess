@@ -15,7 +15,13 @@
 
 package uci
 
-import "github.com/brighamskarda/chess/v2"
+import (
+	"time"
+
+	"github.com/brighamskarda/chess/v2"
+)
+
+const mockEngineEvaluateTime = time.Millisecond * 500
 
 // mockEngine simply keeps track of how many times each of its functions are called.
 //
@@ -25,6 +31,7 @@ type mockEngine struct {
 	debugState  bool
 	position    *chess.Position
 	moveHistory []chess.Move
+	shouldStop  chan struct{}
 
 	initialize     int
 	copyProtection int
@@ -36,11 +43,14 @@ type mockEngine struct {
 	setOption      int
 	newGame        int
 	setPosition    int
+	evaluate       int
+	stop           int
 	quit           int
 }
 
 func (engine *mockEngine) Initialize(o func(*InfoCmd)) {
 	engine.output = o
+	engine.shouldStop = make(chan struct{})
 	engine.initialize++
 }
 
@@ -109,6 +119,32 @@ func (engine *mockEngine) SetPosition(pos *chess.Position, his []chess.Move) {
 	engine.position = pos
 	engine.moveHistory = his
 	engine.setPosition++
+}
+
+func (engine *mockEngine) Evaluate(*EvaluateCmd) *BestMoveCmd {
+	engine.evaluate++
+
+	select {
+	case <-engine.shouldStop:
+	case <-time.After(mockEngineEvaluateTime):
+	}
+
+	return &BestMoveCmd{
+		BestMove: chess.Move{
+			FromSquare: chess.E2,
+			ToSquare:   chess.E4,
+		},
+		PonderMove: OptionalOf(chess.Move{
+			FromSquare: chess.D7,
+			ToSquare:   chess.D5,
+		},
+		),
+	}
+}
+
+func (engine *mockEngine) Stop() {
+	engine.stop++
+	engine.shouldStop <- struct{}{}
 }
 
 func (engine *mockEngine) Quit() {

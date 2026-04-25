@@ -106,7 +106,7 @@ type ChessEngine interface {
 	// This function allows the engine to clear any cached values it was using for evaluation.
 	NewGame()
 
-	// SetPosition tell the chess engine to setup a certain position prior to a search.
+	// SetPosition tells the chess engine to setup a certain position prior to a search.
 	//
 	// The position will always be provided with an optional list of moves.
 	// The moves should be applied to the position to get a final position.
@@ -115,6 +115,23 @@ type ChessEngine interface {
 	//
 	// Both of the parameters may be consumed by this function.
 	SetPosition(*chess.Position, []chess.Move)
+
+	// Evaluate tells the engine to start evaluating on its current position.
+	//
+	// Various options are provided via the *EvaluateCmd parameter
+	// to modify how the engine may want to think.
+	//
+	// This function should evaluate until
+	// it finds what it thinks is the best move,
+	// or Stop/Quit are called asynchronously,
+	// at which point it should return its best move as soon as possible.
+	Evaluate(*EvaluateCmd) *BestMoveCmd
+
+	// Stop asks the engine to stop its current move evaluation and return the best move.
+	//
+	// Stop may be called asynchronously any time the engine is evaluating.
+	// If stop is called and the engine is not evaluating, it can be ignored.
+	Stop()
 
 	// Quit can be called asynchronously any time after Initialize.
 	//

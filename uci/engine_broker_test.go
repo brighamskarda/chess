@@ -363,7 +363,7 @@ func TestIsReady(t *testing.T) {
 		t.Fatalf("error writing to stdin: %v", err)
 	}
 
-	// wait for uciok to indicate the commands have been processed
+	// wait for registration ok to indicate the commands have been processed
 	out := bufio.NewReader(stdoutR)
 	for {
 		text, _ := out.ReadString('\n')
@@ -394,7 +394,7 @@ func TestSetOption(t *testing.T) {
 		t.Fatalf("error writing to stdin: %v", err)
 	}
 
-	// wait for uciok to indicate the commands have been processed
+	// wait for readyok to indicate the commands have been processed
 	out := bufio.NewReader(stdoutR)
 	for {
 		text, _ := out.ReadString('\n')
@@ -495,7 +495,7 @@ func TestRegistration(t *testing.T) {
 		t.Fatalf("error writing to stdin: %v", err)
 	}
 
-	// wait for uciok to indicate the commands have been processed
+	// wait for copyprotection ok to indicate the commands have been processed
 	out := bufio.NewReader(stdoutR)
 	for {
 		text, _ := out.ReadString('\n')
@@ -543,7 +543,7 @@ func TestRegistrationBad(t *testing.T) {
 		t.Fatalf("error writing to stdin: %v", err)
 	}
 
-	// wait for uciok to indicate the commands have been processed
+	// wait for copyprotection ok to indicate the commands have been processed
 	out := bufio.NewReader(stdoutR)
 	for {
 		text, _ := out.ReadString('\n')
@@ -589,7 +589,7 @@ func TestSetStartPosition(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error writing to stdin: %v", err)
 	}
-	// wait for uciok to indicate the commands have been processed
+	// wait for readyok to indicate the commands have been processed
 	out := bufio.NewReader(stdoutR)
 	for {
 		text, _ := out.ReadString('\n')
@@ -639,7 +639,7 @@ func TestSetPosition(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error writing to stdin: %v", err)
 	}
-	// wait for uciok to indicate the commands have been processed
+	// wait for readyok to indicate the commands have been processed
 	out := bufio.NewReader(stdoutR)
 	for {
 		text, _ := out.ReadString('\n')
@@ -687,7 +687,7 @@ func TestUciNewGame(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error writing to stdin: %v", err)
 	}
-	// wait for uciok to indicate the commands have been processed
+	// wait for readyok to indicate the commands have been processed
 	out := bufio.NewReader(stdoutR)
 	for {
 		text, _ := out.ReadString('\n')
@@ -700,5 +700,102 @@ func TestUciNewGame(t *testing.T) {
 	actualVal := broker.Engine.(*mockEngine).newGame
 	if expectedVal != actualVal {
 		t.Errorf("expected Engine.NewGame to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
+}
+
+func TestEvaluate(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	go broker.Start(t.Context())
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("go mate 3\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	_, err = stdinW.WriteString("isready\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	readyChan := make(chan struct{})
+	out := bufio.NewReader(stdoutR)
+
+	// wait for readyok to indicate the commands have been processed
+	go func() {
+		for {
+			text, _ := out.ReadString('\n')
+			if text == "readyok\n" {
+				break
+			}
+		}
+		readyChan <- struct{}{}
+	}()
+
+	select {
+	case <-readyChan:
+		break
+	case <-time.After(mockEngineEvaluateTime / 2):
+		t.Errorf("broker is blocking on go command, it shouldn't")
+	}
+
+	expectedVal := 1
+	actualVal := broker.Engine.(*mockEngine).evaluate
+	if expectedVal != actualVal {
+		t.Errorf("expected Engine.Evaluate to be called %v times, but was called %v times", expectedVal, actualVal)
+	}
+
+	testOutput(out, "bestmove e2e4 ponder d7d5\n", t)
+}
+
+func TestEvaluateThenStop(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	go broker.Start(t.Context())
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("go mate 3\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+	_, err = stdinW.WriteString("stop\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	readyChan := make(chan struct{})
+	out := bufio.NewReader(stdoutR)
+
+	// wait for bestmove
+	go func() {
+		for {
+			text, _ := out.ReadString('\n')
+			if text == "bestmove e2e4 ponder d7d5\n" {
+				break
+			}
+		}
+		readyChan <- struct{}{}
+	}()
+
+	select {
+	case <-readyChan:
+		break
+	case <-time.After(mockEngineEvaluateTime / 2):
+		t.Errorf("stop did not stop the engine, it shouldn't")
+	}
+
+	expectedVal := 1
+	actualVal := broker.Engine.(*mockEngine).stop
+	if expectedVal != actualVal {
+		t.Errorf("expected Engine.Stop to be called %v times, but was called %v times", expectedVal, actualVal)
 	}
 }

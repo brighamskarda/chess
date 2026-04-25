@@ -87,8 +87,8 @@ type UciEngineBroker struct {
 	// This functionality always desirable so this flag is provided.
 	DisableSignalHandling bool
 
-	// isInitialized indicates if Initialize() has been called on the engine yet.
-	isInitialized bool
+	// Initialized indicates if Initialize() has been called on the engine yet.
+	Initialized bool
 }
 
 // Start the UciEngineBroker.
@@ -219,7 +219,7 @@ Loop:
 // doCommand calls different command handlers based on the underlying type of the cmd.
 func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
 	broker.Log.DebugContext(broker.ctx, "received command", slog.Any("cmd", cmd))
-	if !broker.isInitialized && reflect.TypeOf(cmd) != reflect.TypeFor[*uciCmd]() {
+	if !broker.Initialized && reflect.TypeOf(cmd) != reflect.TypeFor[*uciCmd]() {
 		broker.Log.WarnContext(broker.ctx, "skipping invalid first command, expected uciCmd", slog.Any("got", reflect.TypeOf(cmd)))
 		return
 	}
@@ -239,6 +239,10 @@ func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
 		broker.Engine.NewGame()
 	case *positionCmd:
 		broker.Engine.SetPosition(c.position, c.moves)
+	case *EvaluateCmd:
+		go broker.handleEvaluateCommand(c)
+	case *stopCmd:
+		broker.Engine.Stop()
 	case *quitCmd:
 		broker.ctxCancel(nil)
 	default:
@@ -250,7 +254,7 @@ func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
 }
 
 func (broker *UciEngineBroker) handleUciCommand() {
-	if broker.isInitialized {
+	if broker.Initialized {
 		broker.Log.WarnContext(broker.ctx, "uci command received more than once, skipping repeat occurrence")
 	}
 
@@ -271,7 +275,7 @@ func (broker *UciEngineBroker) handleUciCommand() {
 	})
 
 	init()
-	broker.isInitialized = true
+	broker.Initialized = true
 
 	// send out the engine name
 	broker.sendCommand(&idCmd{
@@ -330,4 +334,11 @@ func (broker *UciEngineBroker) handleDebugCommand(debug bool) {
 
 func (broker *UciEngineBroker) handleIsReadyCommand() {
 	broker.sendCommand(&readyOkCmd{})
+}
+
+func (broker *UciEngineBroker) handleEvaluateCommand(cmd *EvaluateCmd) {
+	result := broker.Engine.Evaluate(cmd)
+	if broker.ctx.Err() == nil {
+		broker.sendCommand(result)
+	}
 }
