@@ -196,6 +196,10 @@ func (broker *UciEngineBroker) executeCommands() {
 	go broker.readLines(inputLines)
 Loop:
 	for {
+		if broker.ctx.Err() != nil {
+			break Loop
+		}
+
 		select {
 		case <-broker.ctx.Done():
 			break Loop
@@ -226,6 +230,8 @@ func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
 		broker.handleDebugCommand(c.on)
 	case *isReadyCmd:
 		broker.handleIsReadyCommand()
+	case *quitCmd:
+		broker.ctxCancel(nil)
 	default:
 		broker.Log.ErrorContext(broker.ctx, fmt.Sprintf("command with unknown type received, "+
 			"this indicates an internal library error, please report such errors to %v", errorReportingLocation),

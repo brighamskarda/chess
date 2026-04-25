@@ -159,6 +159,40 @@ func TestEngineShutsDownWhenContextCancelled(t *testing.T) {
 	}
 }
 
+func TestEngineShutsDownWhenQuit(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	_, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	startReturned := make(chan struct{})
+	go func() {
+		broker.Start(t.Context())
+		startReturned <- struct{}{}
+	}()
+
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Errorf("problem writing to stdin: %v", err)
+	}
+
+	_, err = stdinW.WriteString("quit\n")
+	if err != nil {
+		t.Errorf("problem writing to stdin: %v", err)
+	}
+
+	// Finish this test by ensuring startReturned receives a value within a second of the context being cancelled.
+	select {
+	case <-startReturned:
+		// Success: The broker.Start() returned as expected after stdin was closed.
+		if broker.Engine.(*mockEngine).quit != 1 && broker.Engine.(*mockEngine).initialize == 1 {
+			t.Errorf("broker did not call Quit on the engine exactly 1 time, was called %v times", broker.Engine.(*mockEngine).quit)
+		}
+	case <-time.After(time.Second):
+		// Failure: The broker did not shut down within the 1-second timeout.
+		t.Errorf("engine did not shut down within 1 second of quit being called")
+	}
+}
+
 func TestNoOtherCommandsParsedBeforeInitialize(t *testing.T) {
 	stdinR, stdinW := makeOsPipe(t)
 	stdoutR, stdoutW := makeOsPipe(t)
