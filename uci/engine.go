@@ -23,9 +23,10 @@ import "github.com/brighamskarda/chess/v2"
 // users can plug their chess engine into a [UciEngineBroker]
 // to automatically gain all the benefits of having a UCI compliant chess engine.
 //
-// All functions in this interface will by called synchronously with two exceptions.
+// All functions in this interface will by called synchronously with three exceptions.
 // 	- [ChessEngine.Quit] can be called any time after [ChessEngine.Initialize].
 //	- [ChessEngine.Stop] can be called while the engine is evaluating.
+// 	- [ChessEngine.PonderHit] can be called while the engine is evaluating.
 type ChessEngine interface {
 	// Initialize will be the first function called on the chess engine.
 	//
@@ -121,6 +122,8 @@ type ChessEngine interface {
 	// Various options are provided via the *EvaluateCmd parameter
 	// to modify how the engine may want to think.
 	//
+	// **IF THE PONDER OPTION IS SET DO NOT RETURN UNTIL STOP OR PONDERHIT ARE CALLED.**
+	//
 	// This function should evaluate until
 	// it finds what it thinks is the best move,
 	// or Stop/Quit are called asynchronously,
@@ -130,8 +133,23 @@ type ChessEngine interface {
 	// Stop asks the engine to stop its current move evaluation and return the best move.
 	//
 	// Stop may be called asynchronously any time the engine is evaluating.
-	// If stop is called and the engine is not evaluating, it can be ignored.
+	// If Stop is called and the engine is not evaluating, it can be ignored.
 	Stop()
+
+	// PonderHit tells the engine to switch from pondering to normal search.
+	//
+	// If the engine was told to ponder on a move
+	// and the opponent plays that move
+	// then PonderHit is called to indicate that the
+	// engine was pondering on the correct move
+	// and that it can now return its best move when its ready.
+	//
+	// If the opponent plays another move
+	// then stop will be called instead and a new
+	// position will be set before calling Evaluate again.
+	//
+	// If PonderHit is called and the engine is not pondering, it can be ignored.
+	PonderHit()
 
 	// Quit can be called asynchronously any time after Initialize.
 	//

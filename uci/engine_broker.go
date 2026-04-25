@@ -243,6 +243,8 @@ func (broker *UciEngineBroker) doCommand(cmd clientToEngineCmd) {
 		go broker.handleEvaluateCommand(c)
 	case *stopCmd:
 		broker.Engine.Stop()
+	case *ponderHitCmd:
+		broker.Engine.PonderHit()
 	case *quitCmd:
 		broker.ctxCancel(nil)
 	default:

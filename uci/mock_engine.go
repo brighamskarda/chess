@@ -32,6 +32,7 @@ type mockEngine struct {
 	position    *chess.Position
 	moveHistory []chess.Move
 	shouldStop  chan struct{}
+	stopPonder  chan struct{}
 
 	initialize     int
 	copyProtection int
@@ -45,12 +46,14 @@ type mockEngine struct {
 	setPosition    int
 	evaluate       int
 	stop           int
+	ponderHit      int
 	quit           int
 }
 
 func (engine *mockEngine) Initialize(o func(*InfoCmd)) {
 	engine.output = o
 	engine.shouldStop = make(chan struct{})
+	engine.stopPonder = make(chan struct{})
 	engine.initialize++
 }
 
@@ -121,12 +124,31 @@ func (engine *mockEngine) SetPosition(pos *chess.Position, his []chess.Move) {
 	engine.setPosition++
 }
 
-func (engine *mockEngine) Evaluate(*EvaluateCmd) *BestMoveCmd {
+func (engine *mockEngine) Evaluate(cmd *EvaluateCmd) *BestMoveCmd {
 	engine.evaluate++
+	timer := time.After(mockEngineEvaluateTime)
+
+	if cmd.Ponder {
+		select {
+		case <-engine.shouldStop:
+			return &BestMoveCmd{
+				BestMove: chess.Move{
+					FromSquare: chess.E2,
+					ToSquare:   chess.E4,
+				},
+				PonderMove: OptionalOf(chess.Move{
+					FromSquare: chess.D7,
+					ToSquare:   chess.D5,
+				},
+				),
+			}
+		case <-engine.stopPonder:
+		}
+	}
 
 	select {
 	case <-engine.shouldStop:
-	case <-time.After(mockEngineEvaluateTime):
+	case <-timer:
 	}
 
 	return &BestMoveCmd{
@@ -145,6 +167,11 @@ func (engine *mockEngine) Evaluate(*EvaluateCmd) *BestMoveCmd {
 func (engine *mockEngine) Stop() {
 	engine.stop++
 	engine.shouldStop <- struct{}{}
+}
+
+func (engine *mockEngine) PonderHit() {
+	engine.ponderHit++
+	engine.stopPonder <- struct{}{}
 }
 
 func (engine *mockEngine) Quit() {

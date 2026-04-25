@@ -659,15 +659,15 @@ func (cmd *stopCmd) unmarshalText(text []byte) error {
 	return nil
 }
 
-// ponderhitCmd - the user has played the expected move.
+// ponderHitCmd - the user has played the expected move.
 //
 // This will be sent if the engine was told to ponder on the same move the user has played.
 // The engine should continue searching but switch from pondering to normal search.
-type ponderhitCmd struct {
+type ponderHitCmd struct {
 	baseClientCommand
 }
 
-func (cmd *ponderhitCmd) unmarshalText(text []byte) error {
+func (cmd *ponderHitCmd) unmarshalText(text []byte) error {
 	if string(bytes.TrimSpace(text)) != "ponderhit" {
 		return fmt.Errorf("could not unmarshal ponderhit command %q", text)
 	}
@@ -730,7 +730,7 @@ var commandSet = map[string]func([]byte) (clientToEngineCmd, error){
 	"position":   unmarshalClientToEngineCmd[positionCmd],
 	"go":         unmarshalClientToEngineCmd[EvaluateCmd],
 	"stop":       unmarshalClientToEngineCmd[stopCmd],
-	"ponderhit":  unmarshalClientToEngineCmd[ponderhitCmd],
+	"ponderhit":  unmarshalClientToEngineCmd[ponderHitCmd],
 	"quit":       unmarshalClientToEngineCmd[quitCmd],
 }
 

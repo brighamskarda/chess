@@ -336,11 +336,11 @@ func TestStopCommandUnmarshal(t *testing.T) {
 }
 
 func TestPonderHitCommandUnmarshal(t *testing.T) {
-	if (&ponderhitCmd{}).unmarshalText([]byte("ponderhit\n")) != nil {
+	if (&ponderHitCmd{}).unmarshalText([]byte("ponderhit\n")) != nil {
 		t.Errorf("incorrect result for valid ponderhit command, got error")
 	}
 
-	if (&ponderhitCmd{}).unmarshalText([]byte("ui\n")) == nil {
+	if (&ponderHitCmd{}).unmarshalText([]byte("ui\n")) == nil {
 		t.Errorf("incorrect result for valid ponderhit command, did not get error")
 	}
 }
@@ -469,7 +469,7 @@ func TestParseClientToEngineCmd_AllTypes(t *testing.T) {
 		{"position", "position startpos moves e2e4\n", "*uci.positionCmd"},
 		{"go", "go infinite\n", "*uci.EvaluateCmd"},
 		{"stop", "stop \n", "*uci.stopCmd"},
-		{"ponderhit", "ponderhit \n", "*uci.ponderhitCmd"},
+		{"ponderhit", "ponderhit \n", "*uci.ponderHitCmd"},
 		{"quit", "quit \n", "*uci.quitCmd"},
 	}
 
