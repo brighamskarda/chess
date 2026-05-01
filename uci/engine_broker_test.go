@@ -287,6 +287,65 @@ func TestEngineInitialization(t *testing.T) {
 	testOutput(output, "uciok\n", t)
 }
 
+func TestOutputOnDuplicateUCICalls(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+	go broker.Start(t.Context())
+
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	output := bufio.NewReader(stdoutR)
+
+	testOutput(output, "id name mockEngine v0.1\n", t)
+	testOutput(output, "id author Brigham Skarda\n", t)
+	testOutput(output, "option name checkOpt type check default true\n", t)
+	testOutput(output, "option name spinOpt type spin default 3 min 1 max 5\n", t)
+	testOutput(output, "option name comboOpt type combo default one var one var two var three\n", t)
+	testOutput(output, "option name stringOpt type string default sss\n", t)
+	testOutput(output, "option name buttonOpt type button\n", t)
+	testOutput(output, "uciok\n", t)
+	testOutput(output, "copyprotection checking\n", t)
+	testOutput(output, "copyprotection ok\n", t)
+	testOutput(output, "registration checking\n", t)
+	testOutput(output, "registration ok\n", t)
+
+	_, err = stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	testOutput(output, "id name mockEngine v0.1\n", t)
+	testOutput(output, "id author Brigham Skarda\n", t)
+	testOutput(output, "option name checkOpt type check default true\n", t)
+	testOutput(output, "option name spinOpt type spin default 3 min 1 max 5\n", t)
+	testOutput(output, "option name comboOpt type combo default one var one var two var three\n", t)
+	testOutput(output, "option name stringOpt type string default sss\n", t)
+	testOutput(output, "option name buttonOpt type button\n", t)
+	testOutput(output, "uciok\n", t)
+
+	_, err = stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	testOutput(output, "id name mockEngine v0.1\n", t)
+	testOutput(output, "id author Brigham Skarda\n", t)
+	testOutput(output, "option name checkOpt type check default true\n", t)
+	testOutput(output, "option name spinOpt type spin default 3 min 1 max 5\n", t)
+	testOutput(output, "option name comboOpt type combo default one var one var two var three\n", t)
+	testOutput(output, "option name stringOpt type string default sss\n", t)
+	testOutput(output, "option name buttonOpt type button\n", t)
+	testOutput(output, "uciok\n", t)
+
+	if broker.Engine.(*mockEngine).initialize != 1 {
+		t.Errorf("engine initialized %d times, should be done exactly once", broker.Engine.(*mockEngine).initialize)
+	}
+}
+
 func TestEngineQuitsOnInterrupt(t *testing.T) {
 	t.Log("Unfortunately there is no great way to test signals on windows, this is a test that needs to be done by hand.")
 }

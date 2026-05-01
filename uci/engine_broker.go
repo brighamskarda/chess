@@ -290,29 +290,9 @@ func (broker *UciEngineBroker) doCommandNoEval(cmd clientToEngineCmd) {
 }
 
 func (broker *UciEngineBroker) handleUciCommand() {
-	if broker.initialized {
-		broker.Log.WarnContext(broker.ctx, "uci command received more than once, skipping repeat occurrence")
-		return
+	if !broker.initialized {
+		broker.doFirstTimeInitialization()
 	}
-
-	broker.Log.InfoContext(broker.ctx, "initializing engine")
-	init := sync.OnceFunc(func() {
-		broker.Engine.Initialize(func(infoCmd *InfoCmd) {
-			broker.sendCommand(infoCmd)
-		})
-	},
-	)
-
-	// Increment the wait group so that the program doesn't exit until Quit has finished.
-	broker.quitWg.Add(1)
-	context.AfterFunc(broker.ctx, func() {
-		defer broker.quitWg.Done()
-		init() // make sure initialization is finished before calling quit.
-		broker.Engine.Quit()
-	})
-
-	init()
-	broker.initialized = true
 
 	// send out the engine name
 	broker.sendCommand(&idCmd{
@@ -334,9 +314,33 @@ func (broker *UciEngineBroker) handleUciCommand() {
 	// send uciok
 	broker.sendCommand(&uciokCmd{})
 
-	// check copy protection
-	broker.checkCopyProtection()
-	broker.checkRegistration(nil)
+	// check copy protection and registration
+	if !broker.initialized {
+		broker.checkCopyProtection()
+		broker.checkRegistration(nil)
+	}
+
+	broker.initialized = true
+}
+
+func (broker *UciEngineBroker) doFirstTimeInitialization() {
+	broker.Log.InfoContext(broker.ctx, "initializing engine")
+	init := sync.OnceFunc(func() {
+		broker.Engine.Initialize(func(infoCmd *InfoCmd) {
+			broker.sendCommand(infoCmd)
+		})
+	},
+	)
+
+	// Increment the wait group so that the program doesn't exit until Quit has finished.
+	broker.quitWg.Add(1)
+	context.AfterFunc(broker.ctx, func() {
+		defer broker.quitWg.Done()
+		init() // make sure initialization is finished before calling quit.
+		broker.Engine.Quit()
+	})
+
+	init()
 }
 
 func (broker *UciEngineBroker) checkCopyProtection() {
