@@ -18,10 +18,12 @@ package uci
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"os"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -40,7 +42,7 @@ func makeOsPipe(t *testing.T) (*os.File, *os.File) {
 	return reader, writer
 }
 
-func makeUciEngineBroker(reader io.ReadCloser, writer io.WriteCloser) *UciEngineBroker {
+func makeUciEngineBroker(reader io.Reader, writer io.Writer) *UciEngineBroker {
 	return &UciEngineBroker{
 		Input:  reader,
 		Output: writer,
@@ -1028,4 +1030,82 @@ func TestDebugNotIgnoredWhileEvaluating(t *testing.T) {
 	if expectedVal != actualVal {
 		t.Errorf("expected Engine.Debug to be called %v times, but was called %v times", expectedVal, actualVal)
 	}
+}
+
+func FuzzEngineInput(f *testing.F) {
+	// Add your seed corpus
+	f.Add([]byte("uci\n"))
+	f.Add([]byte("isready\n"))
+	f.Add([]byte("position startpos e2e4 d7d5\n"))
+	f.Add([]byte("quit\n"))
+	f.Add([]byte("uci\nisready\ngo depth 10\nquit\n"))
+	f.Add([]byte("\n\nposition startpos\n\n"))
+	f.Add([]byte("uci\nisready\nucinewgame\nisready\n"))
+	f.Add([]byte("position startpos moves e2e4 e7e5 g1f3\ngo movetime 100\n"))
+	f.Add([]byte("position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1\ngo depth 5\n"))
+	f.Add([]byte("go wtime 300000 btime 300000 winc 0 binc 0 movestogo 40 depth 10 nodes 1000000 mate 5 movetime 1000 infinite\n"))
+	f.Add([]byte("position startpos moves " + strings.Repeat("e2e4 e7e5 ", 50) + "\n"))
+	f.Add([]byte("setoption name Hash value 1024\nsetoption name MultiPV value 4\nsetoption name OwnBook value true\n"))
+	f.Add([]byte("\n  uci  \n\n  isready  \n  \n  ucinewgame  \n"))
+	f.Add([]byte("position fen\n"))
+	f.Add([]byte("position moves\n"))
+	f.Add([]byte("setoption name \n"))
+	f.Add([]byte("go infinite\nstop\ngo depth 1\nstop\nisready\n"))
+	f.Add([]byte("position fen 8/8/8/8/8/8/8/8/8/8 w - - 0 1\n"))
+	f.Add([]byte("info string this is not a command\n"))
+	f.Add([]byte("ponderhit but without a search running\n"))
+	f.Add([]byte("uci\x00\xff\n"))
+
+	f.Fuzz(func(t *testing.T, data []byte) {
+		// Use io.Pipe for faster in-memory fuzzing
+		stdinR, stdinW := io.Pipe()
+		defer stdinW.Close()
+		defer stdinR.Close()
+
+		broker := &UciEngineBroker{
+			Input:  stdinR,
+			Output: io.Discard,
+			Engine: &mockEngine{},
+		}
+
+		done := make(chan error, 1)
+		brokerContext, cancel := context.WithCancel(t.Context())
+		defer cancel()
+
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Errorf("Broker panicked!\nInput: %q\nPanic: %v", data, r)
+					done <- fmt.Errorf("panic: %v", r)
+				}
+			}()
+
+			done <- broker.Start(brokerContext)
+		}()
+
+		_, _ = stdinW.Write(data)
+		_, _ = stdinW.Write([]byte("\nquit\n"))
+
+		select {
+		case err := <-done:
+			if err != nil {
+				t.Errorf("broker.Start() returned error: %v", err)
+			}
+		case <-time.After(100 * time.Millisecond):
+			if broker.initialized {
+				t.Error("Broker is hanging: failed to exit after quit")
+			} else {
+				cancel()
+				select {
+				case err := <-done:
+
+					if err != nil {
+						t.Errorf("broker.Start() returned error: %v", err)
+					}
+				case <-time.After(100 * time.Millisecond):
+					t.Error("Broker is hanging: failed to exit after context cancellation.")
+				}
+			}
+		}
+	})
 }
