@@ -135,11 +135,18 @@ func main() {
 	// context.Background(), is the default context for the go program.
 	broker.Start(context.Background())
 
-	// Voilà!!! You are now running a fully compliant UCI chess engine. Go ahead and try it.
+	// Voilà!!! You are now running a compliant UCI chess engine. Go ahead and try it.
 	// I ran this engine in the Arena Chess, Lucas Chess, and En Croissant GUIs
 	// and it worked flawlessly in all of them.
 }
 ```
+
+I've tested engines developed with this library in multiple chess GUIs 
+including Arena Chess, Lucas Chess, and En Croissant.
+By following the guidelines below 
+it is quite easy to develop a chess engine that
+passes the UCI compliance checks provided by the
+[fastchess](https://github.com/Disservin/fastchess/tree/master) developers.
 
 I hope you enjoy developing chess engines with this library.
 Happy Coding!
@@ -158,6 +165,8 @@ the scores and lines of play that you see are made possible by the info command.
 
 Just be sure to use it with a buffered channel
 so you don't slow down your engine.
+
+**At a minimum it is recommended to at least send a final score info when finishing an evaluation.**
 
 ### Copy Protection and Registration
 
