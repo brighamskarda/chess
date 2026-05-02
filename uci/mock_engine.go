@@ -124,14 +124,14 @@ func (engine *mockEngine) SetPosition(pos *chess.Position, his []chess.Move) {
 	engine.setPosition++
 }
 
-func (engine *mockEngine) Evaluate(cmd *EvaluateCmd) *BestMove {
+func (engine *mockEngine) Evaluate(cmd *EvaluateCmd) BestMove {
 	engine.evaluate++
 	timer := time.After(mockEngineEvaluateTime)
 
 	if cmd.Ponder {
 		select {
 		case <-engine.shouldStop:
-			return &BestMove{
+			return BestMove{
 				Move: chess.Move{
 					FromSquare: chess.E2,
 					ToSquare:   chess.E4,
@@ -151,7 +151,7 @@ func (engine *mockEngine) Evaluate(cmd *EvaluateCmd) *BestMove {
 	case <-timer:
 	}
 
-	return &BestMove{
+	return BestMove{
 		Move: chess.Move{
 			FromSquare: chess.E2,
 			ToSquare:   chess.E4,

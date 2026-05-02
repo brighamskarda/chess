@@ -412,6 +412,29 @@ func TestEngineDebugMode(t *testing.T) {
 	}
 }
 
+func TestSendingNilInfoCommandDoesNotPanic(t *testing.T) {
+	stdinR, stdinW := makeOsPipe(t)
+	stdoutR, stdoutW := makeOsPipe(t)
+	broker := makeUciEngineBroker(stdinR, stdoutW)
+
+	go broker.Start(t.Context())
+
+	_, err := stdinW.WriteString("uci\n")
+	if err != nil {
+		t.Fatalf("error writing to stdin: %v", err)
+	}
+
+	out := bufio.NewReader(stdoutR)
+	for {
+		text, _ := out.ReadString('\n')
+		if text == "uciok\n" {
+			break
+		}
+	}
+
+	broker.Engine.(*mockEngine).output(nil)
+}
+
 func TestIsReady(t *testing.T) {
 	stdinW, stdoutR := startNewUciBroker(t)
 

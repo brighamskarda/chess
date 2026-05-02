@@ -97,13 +97,13 @@ func (engine *MinimalEngine) SetPosition(pos *chess.Position, moves []chess.Move
 	// but this engine doesn't care.
 }
 
-func (engine *MinimalEngine) Evaluate(ignore *uci.EvaluateCmd) *uci.BestMove {
+func (engine *MinimalEngine) Evaluate(ignore *uci.EvaluateCmd) uci.BestMove {
 	// This is the brains of our engine.
 	// For a super simple engine like this we don't need to worry about the options given in EvaluateCmd.
 
 	// We will just return the first valid Move
 	thisIsTheBest := chess.LegalMoves(engine.position)[0]
-	return &uci.BestMove{
+	return uci.BestMove{
 		Move: thisIsTheBest,
 	}
 }

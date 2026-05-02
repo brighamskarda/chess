@@ -327,6 +327,10 @@ func (broker *UciEngineBroker) doFirstTimeInitialization() {
 	broker.Log.InfoContext(broker.ctx, "initializing engine")
 	init := sync.OnceFunc(func() {
 		broker.Engine.Initialize(func(infoCmd *InfoCmd) {
+			if infoCmd == nil {
+				broker.Log.DebugContext(broker.ctx, "ignoring nil info command to be sent to engine")
+				return
+			}
 			broker.sendCommand(infoCmd)
 		})
 	},
@@ -382,6 +386,6 @@ func (broker *UciEngineBroker) handleEvaluateCommand(cmd *EvaluateCmd) {
 	result := broker.Engine.Evaluate(cmd)
 	broker.evaluating.Store(false)
 	if broker.ctx.Err() == nil {
-		broker.sendCommand(result)
+		broker.sendCommand(&result)
 	}
 }

@@ -38,6 +38,7 @@ type ChessEngine interface {
 	// The function should be stored and used for the duration of the program.
 	// The [InfoCmd] documentation should give a good idea of what kind of info can be sent.
 	// InfoCmd.StringMsg can be very useful for debugging.
+	// nil commands are ignored.
 	//
 	// Keep in mind that the function is not buffered,
 	// so sending info commands during a move search can slow it down significantly.
@@ -134,7 +135,7 @@ type ChessEngine interface {
 	//
 	// Before returning, sending an InfoCmd with
 	// the final stats of the evaluation is recommended.
-	Evaluate(*EvaluateCmd) *BestMove
+	Evaluate(*EvaluateCmd) BestMove
 
 	// Stop asks the engine to stop its current move evaluation and return the best move.
 	//
