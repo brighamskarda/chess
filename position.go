@@ -65,6 +65,11 @@ type Position struct {
 }
 
 // Copy creates a copy of the current position.
+//
+// This function is primarily provided for convenience.
+// You can safely pass positions around as values,
+// though it can be expensive.
+// There is no intention to change this functionality in the future.
 func (pos *Position) Copy() *Position {
 	newPos := *pos
 	return &newPos
