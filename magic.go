@@ -17,7 +17,6 @@ package chess
 
 import (
 	"math/bits"
-	"sync"
 )
 
 // Huge thanks to Chess Programming and his example implementation of magic bitboards.
@@ -185,36 +184,32 @@ var bishopMagics = [64]uint64{
 	0x40102000a0a60140,
 }
 
-var sliderAttacksOnce sync.Once
+func init() {
+	for square := 0; square < 64; square++ {
+		bishopMasks[square] = maskBishopAttacks(square)
+		rookMasks[square] = maskRookAttacks(square)
 
-func initSliderAttacks() {
-	sliderAttacksOnce.Do(func() {
-		for square := 0; square < 64; square++ {
-			bishopMasks[square] = maskBishopAttacks(square)
-			rookMasks[square] = maskRookAttacks(square)
+		currentBishopMask := bishopMasks[square]
+		currentRookMask := rookMasks[square]
 
-			currentBishopMask := bishopMasks[square]
-			currentRookMask := rookMasks[square]
+		bishopBitCount := bits.OnesCount64(currentBishopMask)
+		rookBitCount := bits.OnesCount64(currentRookMask)
 
-			bishopBitCount := bits.OnesCount64(currentBishopMask)
-			rookBitCount := bits.OnesCount64(currentRookMask)
+		bishopOccupancyVariations := 1 << bishopBitCount
+		rookOccupancyVariations := 1 << rookBitCount
 
-			bishopOccupancyVariations := 1 << bishopBitCount
-			rookOccupancyVariations := 1 << rookBitCount
-
-			for count := 0; count < bishopOccupancyVariations; count++ {
-				occupancy := setOccupancy(count, bishopBitCount, currentBishopMask)
-				magic_index := (occupancy * bishopMagics[square]) >> (64 - bishopRelevantBits[square])
-				bishopAttacks[square][magic_index] = bishopAttacksOnTheFly(square, occupancy)
-			}
-
-			for count := 0; count < rookOccupancyVariations; count++ {
-				occupancy := setOccupancy(count, rookBitCount, currentRookMask)
-				magic_index := (occupancy * rookMagics[square]) >> (64 - rookRelevantBits[square])
-				rookAttacks[square][magic_index] = rookAttacksOnTheFly(square, occupancy)
-			}
+		for count := 0; count < bishopOccupancyVariations; count++ {
+			occupancy := setOccupancy(count, bishopBitCount, currentBishopMask)
+			magic_index := (occupancy * bishopMagics[square]) >> (64 - bishopRelevantBits[square])
+			bishopAttacks[square][magic_index] = bishopAttacksOnTheFly(square, occupancy)
 		}
-	})
+
+		for count := 0; count < rookOccupancyVariations; count++ {
+			occupancy := setOccupancy(count, rookBitCount, currentRookMask)
+			magic_index := (occupancy * rookMagics[square]) >> (64 - rookRelevantBits[square])
+			rookAttacks[square][magic_index] = rookAttacksOnTheFly(square, occupancy)
+		}
+	}
 }
 
 func maskBishopAttacks(square int) uint64 {

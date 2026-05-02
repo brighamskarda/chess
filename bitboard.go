@@ -133,8 +133,6 @@ func (bb Bitboard) pawnAttacksSW() Bitboard {
 //
 // occupied should indicate all squares on the board occupied by either color, including the rooks that are moving.
 func (bb Bitboard) RookAttacks(occupied Bitboard) Bitboard {
-	initSliderAttacks()
-
 	var attacks Bitboard = 0
 	for bb != 0 {
 		index := bits.TrailingZeros(uint(bb))
@@ -167,8 +165,6 @@ func (bb Bitboard) KnightAttacks() Bitboard {
 //
 // occupied should indicate all squares on the board occupied by either color, including the bishops that are moving.
 func (bb Bitboard) BishopAttacks(occupied Bitboard) Bitboard {
-	initSliderAttacks()
-
 	var attacks Bitboard = 0
 	for bb != 0 {
 		index := bits.TrailingZeros(uint(bb))
