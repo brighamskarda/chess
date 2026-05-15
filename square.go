@@ -1,15 +1,15 @@
 // Copyright (C) 2025 Brigham Skarda
-
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -19,7 +19,9 @@ import (
 	"fmt"
 )
 
-// File is a vertical column of squares as seen on a chess board. The zero value is [NoFile], and the files A-H can be represented.
+// File is a vertical column of squares as seen on a chess board.
+//
+// The zero value is [NoFile], and the files A-H can be represented.
 type File uint8
 
 const (
@@ -34,7 +36,9 @@ const (
 	FileH
 )
 
-// String returns a single lowercase letter representation of f if valid, else an error string. NoFile returns "-".
+// String returns a single lowercase letter representation of f if valid, else an error string.
+//
+// NoFile returns "-".
 func (f File) String() string {
 	switch f {
 	case NoFile:
@@ -60,7 +64,9 @@ func (f File) String() string {
 	}
 }
 
-// Rank is a horizontal row of squares as seen on a chess board. The zero value is [NoRank], and the ranks 1-8 can be represented.
+// Rank is a horizontal row of squares as seen on a chess board.
+//
+// The zero value is [NoRank], and the ranks 1-8 can be represented.
 type Rank uint8
 
 const (
@@ -75,7 +81,9 @@ const (
 	Rank8
 )
 
-// String returns a single number representation of r if valid, else an error string. NoRank returns "-".
+// String returns a single number representation of r if valid, else an error string.
+//
+// NoRank returns "-".
 func (r Rank) String() string {
 	switch r {
 	case NoRank:
@@ -101,7 +109,9 @@ func (r Rank) String() string {
 	}
 }
 
-// Square represents one of 64 squares on a chess board. The zero value represents [NoSquare].
+// Square represents one of 64 squares on a chess board.
+//
+// The zero value represents [NoSquare].
 type Square struct {
 	File File
 	Rank Rank
@@ -195,7 +205,11 @@ var AllSquares = [64]Square{
 	H1, H2, H3, H4, H5, H6, H7, H8,
 }
 
-// MarshalText is an implementation of the [encoding.TextMarshaler] interface. It provides the square in the form "a1". An error is returned if the square is not valid. [NoSquare] produces "-". See also [Square.String]
+// MarshalText provides the square in the form "a1".
+//
+// An error is returned if the square is not valid.
+// [NoSquare] produces "-".
+// See also [Square.String]
 func (s Square) MarshalText() (text []byte, err error) {
 	if s == NoSquare {
 		return []byte{'-'}, nil
@@ -206,7 +220,10 @@ func (s Square) MarshalText() (text []byte, err error) {
 	return []byte{s.File.String()[0], s.Rank.String()[0]}, nil
 }
 
-// String provides a two letter textual representation of s in the form "a1". [NoSquare] produces "-". If s is invalid and error string is returned.
+// String provides a two letter textual representation of s in the form "a1".
+//
+// [NoSquare] produces "-".
+// If s is invalid an error string is returned.
 func (s Square) String() string {
 	text, err := s.MarshalText()
 	if err != nil {
@@ -215,7 +232,10 @@ func (s Square) String() string {
 	return string(text)
 }
 
-// UnmarshalText is an implementation of the [encoding.TextUnmarshaler] interface. It expects text in the form of a two character square like "a1" or "A1". A "-" will provide [NoSquare]. All other cases result in an error, and s is unmodified.
+// UnmarshalText expects text in the form of a two character square like "a1" or "A1".
+//
+// A "-" will provide [NoSquare].
+// All other cases result in an error, and s is unmodified.
 func (s *Square) UnmarshalText(text []byte) error {
 	if string(text) == "-" {
 		*s = NoSquare

@@ -34,3 +34,4 @@ testdata/fuzz/
 testdata/extra_pgns
 todo
 benchmarkdata.csv
+uci/testdata/fuzz

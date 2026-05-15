@@ -1,15 +1,15 @@
 // Copyright (C) 2025 Brigham Skarda
-
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -20,7 +20,10 @@ import (
 	"slices"
 )
 
-// PseudoLegalMoves are moves that are legal except they leave one's king in check. Returns nil if moves could not be generated (for example if pos.SideToMove was not set). Returns an empty slice if move generation was successful, but no moves were found.
+// PseudoLegalMoves are moves that are legal except they leave one's king in check.
+//
+// Returns nil if moves could not be generated (for example if pos.SideToMove was not set).
+// Returns an empty slice if move generation was successful, but no moves were found.
 func PseudoLegalMoves(pos *Position) []Move {
 	if pos.SideToMove != White && pos.SideToMove != Black {
 		return nil

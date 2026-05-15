@@ -1,15 +1,15 @@
 // Copyright (C) 2025 Brigham Skarda
-
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -17,10 +17,10 @@ package chess
 
 import (
 	"math/bits"
-	"sync"
 )
 
-// Huge thanks to Chess Programming and his example implementation of magic bitboards. It was extremely useful. https://youtu.be/4ohJQ9pCkHI?si=4QQG2BntrELO2JYi
+// Huge thanks to Chess Programming and his example implementation of magic bitboards.
+// It was extremely useful. https://youtu.be/4ohJQ9pCkHI?si=4QQG2BntrELO2JYi
 
 var rookRelevantBits = [64]int{
 	12, 11, 11, 11, 11, 11, 11, 12,
@@ -184,36 +184,32 @@ var bishopMagics = [64]uint64{
 	0x40102000a0a60140,
 }
 
-var sliderAttacksOnce sync.Once
+func init() {
+	for square := 0; square < 64; square++ {
+		bishopMasks[square] = maskBishopAttacks(square)
+		rookMasks[square] = maskRookAttacks(square)
 
-func initSliderAttacks() {
-	sliderAttacksOnce.Do(func() {
-		for square := 0; square < 64; square++ {
-			bishopMasks[square] = maskBishopAttacks(square)
-			rookMasks[square] = maskRookAttacks(square)
+		currentBishopMask := bishopMasks[square]
+		currentRookMask := rookMasks[square]
 
-			currentBishopMask := bishopMasks[square]
-			currentRookMask := rookMasks[square]
+		bishopBitCount := bits.OnesCount64(currentBishopMask)
+		rookBitCount := bits.OnesCount64(currentRookMask)
 
-			bishopBitCount := bits.OnesCount64(currentBishopMask)
-			rookBitCount := bits.OnesCount64(currentRookMask)
+		bishopOccupancyVariations := 1 << bishopBitCount
+		rookOccupancyVariations := 1 << rookBitCount
 
-			bishopOccupancyVariations := 1 << bishopBitCount
-			rookOccupancyVariations := 1 << rookBitCount
-
-			for count := 0; count < bishopOccupancyVariations; count++ {
-				occupancy := setOccupancy(count, bishopBitCount, currentBishopMask)
-				magic_index := (occupancy * bishopMagics[square]) >> (64 - bishopRelevantBits[square])
-				bishopAttacks[square][magic_index] = bishopAttacksOnTheFly(square, occupancy)
-			}
-
-			for count := 0; count < rookOccupancyVariations; count++ {
-				occupancy := setOccupancy(count, rookBitCount, currentRookMask)
-				magic_index := (occupancy * rookMagics[square]) >> (64 - rookRelevantBits[square])
-				rookAttacks[square][magic_index] = rookAttacksOnTheFly(square, occupancy)
-			}
+		for count := 0; count < bishopOccupancyVariations; count++ {
+			occupancy := setOccupancy(count, bishopBitCount, currentBishopMask)
+			magic_index := (occupancy * bishopMagics[square]) >> (64 - bishopRelevantBits[square])
+			bishopAttacks[square][magic_index] = bishopAttacksOnTheFly(square, occupancy)
 		}
-	})
+
+		for count := 0; count < rookOccupancyVariations; count++ {
+			occupancy := setOccupancy(count, rookBitCount, currentRookMask)
+			magic_index := (occupancy * rookMagics[square]) >> (64 - rookRelevantBits[square])
+			rookAttacks[square][magic_index] = rookAttacksOnTheFly(square, occupancy)
+		}
+	}
 }
 
 func maskBishopAttacks(square int) uint64 {

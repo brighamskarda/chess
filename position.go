@@ -1,15 +1,15 @@
 // Copyright (C) 2025 Brigham Skarda
-
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
-
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
-
+//
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
@@ -27,7 +27,8 @@ const DefaultFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 // Position represents all parts of a chess position as specified by [Forsyth-Edwards Notation].
 //
-// The zero value is usable, though not very useful. See example for how to initialize the starting position.
+// The zero value is usable, though not very useful.
+// See example for how to initialize the starting position.
 //
 // [Forsyth-Edwards Notation]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c16.1
 type Position struct {
@@ -64,6 +65,11 @@ type Position struct {
 }
 
 // Copy creates a copy of the current position.
+//
+// This function is primarily provided for convenience.
+// You can safely pass positions around as values,
+// though it can be expensive.
+// There is no intention to change this functionality in the future.
 func (pos *Position) Copy() *Position {
 	newPos := *pos
 	return &newPos
@@ -91,7 +97,7 @@ func (pos *Position) Equal(other *Position) bool {
 		pos.EnPassant == other.EnPassant
 }
 
-// equal returns true if the positions are the same, excluding move counters and enPassant.
+// equalNoEnPassant returns true if the positions are the same, excluding move counters and enPassant.
 func (pos *Position) equalNoEnPassant(other *Position) bool {
 	return pos.whitePawns == other.whitePawns &&
 		pos.whiteRooks == other.whiteRooks &&
@@ -112,7 +118,10 @@ func (pos *Position) equalNoEnPassant(other *Position) bool {
 		pos.BlackQsCastle == other.BlackQsCastle
 }
 
-// UnmarshalText is an implementation of the [encoding.TextUnmarshaler] interface. It expects text in [Forsyth-Edwards Notation]. It returns an error if it could not parse fen. It was likely malformed or missing important pieces.
+// UnmarshalText expects text in [Forsyth-Edwards Notation] and sets the position accordingly.
+//
+// It returns an error if it could not parse fen.
+// It was likely malformed or missing important pieces.
 //
 // [Forsyth-Edwards Notation]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c16.1
 func (pos *Position) UnmarshalText(fen []byte) error {
@@ -251,7 +260,10 @@ func (pos *Position) parseFullMove(fullMove string) error {
 	return nil
 }
 
-// MarshalText is an implementation of the [encoding.TextMarshaler] interface. It provides the [FEN] representation of the board and returns an error if position contains invalid fields. See also [Position.String] for a more human readable form of the position.
+// MarshalText provides the [FEN] representation of the board.
+//
+// It returns an error if position contains invalid fields.
+// See also [Position.String] for a more human readable form of the position.
 //
 // [FEN]: https://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c16.1
 func (pos *Position) MarshalText() (text []byte, err error) {
@@ -330,9 +342,12 @@ func (pos *Position) sideToMoveString() (string, error) {
 	return "", errors.New("side to move not set")
 }
 
-// String returns a board like representation of the current position. Uppercase letters are white and lowercase letters are black.
+// String returns a board-like representation of the current position.
 //
-// Set whitesPerspective to true to see the board from white's side. Set extraInfo to false to just see the board. Set extraInfo to true to see all the other information stored in an FEN.
+// Uppercase letters are white and lowercase letters are black.
+// Set whitesPerspective to true to see the board from white's side.
+// Set extraInfo to false to just see the board.
+// Set extraInfo to true to see all the other information stored in an FEN.
 func (pos *Position) String(whitesPerspective bool, extraInfo bool) string {
 	s := ""
 	if whitesPerspective {
@@ -406,7 +421,9 @@ func (pos *Position) extraInfo() string {
 	return s
 }
 
-// Piece gets the piece on the given square. [NoPiece] is returned if no piece is present, or square is invalid.
+// Piece gets the piece on the given square.
+//
+// [NoPiece] is returned if no piece is present, or square is invalid.
 func (pos *Position) Piece(s Square) Piece {
 	if !squareOnBoard(s) {
 		return NoPiece
@@ -452,7 +469,9 @@ func (pos *Position) Piece(s Square) Piece {
 	return NoPiece
 }
 
-// SetPiece sets p on square s. If p or s are invalid nothings happens.
+// SetPiece sets p on square s.
+//
+// If p or s are invalid nothings happens.
 func (pos *Position) SetPiece(p Piece, s Square) {
 	if !squareOnBoard(s) {
 		return
@@ -512,7 +531,11 @@ func (pos *Position) ClearPiece(s Square) {
 	pos.blackKings = pos.blackKings.ClearBit(squareIndex)
 }
 
-// Bitboard returns a bitboard for the given piece. If p is [NoPiece] then a bitboard with all the unoccupied squares is returned. If p is invalid 0 is returned. See also [Position.OccupiedBitboard] and [Position.ColorBitboard].
+// Bitboard returns a bitboard representing all squares with the given piece.
+//
+// If p is [NoPiece] then a bitboard with all the unoccupied squares is returned.
+// If p is invalid 0 is returned.
+// See also [Position.OccupiedBitboard] and [Position.ColorBitboard].
 func (pos *Position) Bitboard(p Piece) Bitboard {
 	switch p {
 	case WhitePawn:
@@ -557,7 +580,9 @@ func (pos *Position) OccupiedBitboard() Bitboard {
 		pos.blackPawns | pos.blackKnights | pos.blackBishops | pos.blackRooks | pos.blackQueens | pos.blackKings
 }
 
-// ColorBitboard returns a bitboard indicating all the squares occupied by pieces of a certain color. Returns 0 if NoColor or invalid color.
+// ColorBitboard returns a bitboard indicating all the squares occupied by pieces of a certain color.
+//
+// Returns 0 if NoColor or invalid color.
 func (pos *Position) ColorBitboard(c Color) Bitboard {
 	switch c {
 	case White:
@@ -569,7 +594,9 @@ func (pos *Position) ColorBitboard(c Color) Bitboard {
 	}
 }
 
-// IsCheck returns true if the side to move has a king under attack from an enemy piece. If side to move is not set false is returned.
+// IsCheck returns true if the side to move has a king under attack from an enemy piece.
+//
+// If side to move is not set false is returned.
 func (pos *Position) IsCheck() bool {
 	occupied := pos.OccupiedBitboard()
 
@@ -614,7 +641,11 @@ func (pos *Position) getAttackedSquares(side Color) Bitboard {
 	return attackedSquares
 }
 
-// Move performs chess moves in such a way that if all moves are legal, the FEN will always be properly updated. If m contains invalid squares or promotions the results are undefined. The rules it follows are listed below.
+// Move performs legal chess moves according to the official rules of chess.
+//
+// Moves are not checked for legality so this function can run quickly for chess engines.
+// Moves with invalid squares or promotions are undefined.
+// While it is not recommended, passing illegal moves into this function will follow these rules:
 //
 //  1. By default the following happens:
 //

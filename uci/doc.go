@@ -13,5 +13,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// chess is a package the provides pgn parsing, bitboard utilities, and performant move generation for the game of chess.
-package chess
+// uci is a package that provides an easy interface for
+// the creation of [UCI] compatible chess engines in Go.
+//
+// A copy of the Universal Chess Interface is available at
+// https://www.shredderchess.com/download/div/uci.zip.
+//
+// [UCI]: https://en.wikipedia.org/wiki/Universal_Chess_Interface
+package uci
